@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle } from 'lucide-react';
+import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle, Globe, EyeOff } from 'lucide-react';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
-import { db, doc, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
 
 interface Props {
   userName: string;
@@ -31,11 +31,63 @@ export const CertificateView: React.FC<Props> = ({
   const [isNameSet, setIsNameSet] = useState(!!userName);
   const [showIncompleteNotice, setShowIncompleteNotice] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublicVerification, setIsPublicVerification] = useState(true);
+  const [isTogglingPublic, setIsTogglingPublic] = useState(false);
   const certificateRef = useRef<HTMLDivElement>(null);
 
   const requiredModules = useMemo(() => modules.filter(m => !m.isOptional), []);
   const completedCount = useMemo(() => requiredModules.filter(m => completedIds.includes(m.id)).length, [requiredModules, completedIds]);
   const allCompleted = useMemo(() => completedCount >= requiredModules.length, [completedCount, requiredModules.length]);
+
+  // Load existing credential settings on mount
+  useEffect(() => {
+    if (!userId) return;
+    const fetchCredential = async () => {
+      try {
+        const credRef = doc(db, 'credentials', userId);
+        const credSnap = await getDoc(credRef);
+        if (credSnap.exists()) {
+          const data = credSnap.data();
+          if (typeof data.isPublic === 'boolean') {
+            setIsPublicVerification(data.isPublic);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch existing credential:', err);
+      }
+    };
+    fetchCredential();
+  }, [userId]);
+
+  // Auto-sync credential document when all modules completed and userName is set
+  useEffect(() => {
+    if (!userId || !userName || !allCompleted) return;
+
+    const syncCredential = async () => {
+      try {
+        const now = new Date();
+        const issueDate = now.toISOString().substring(0, 10);
+        const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
+
+        const credRef = doc(db, 'credentials', userId);
+        await setDoc(credRef, {
+          title: "Certificate of Financial Literacy Completion",
+          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
+          graduateName: userName,
+          issueDate,
+          expirationDate: expDate,
+          isPublic: isPublicVerification,
+          userId,
+          completedModules: completedIds,
+          updatedAt: now.toISOString()
+        }, { merge: true });
+      } catch (err) {
+        console.warn('Auto credential sync notice:', err);
+      }
+    };
+
+    syncCredential();
+  }, [userId, userName, allCompleted, completedIds, isPublicVerification]);
 
   const requestDigitalCredential = () => {
     if (!allCompleted) {
@@ -63,6 +115,36 @@ export const CertificateView: React.FC<Props> = ({
     month: 'long', day: 'numeric', year: 'numeric' 
   }), []);
 
+  const handleTogglePublic = async () => {
+    if (!userId || isTogglingPublic) return;
+    const nextStatus = !isPublicVerification;
+    setIsTogglingPublic(true);
+    try {
+      const now = new Date();
+      const issueDate = now.toISOString().substring(0, 10);
+      const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
+
+      const credRef = doc(db, 'credentials', userId);
+      await setDoc(credRef, {
+        title: "Certificate of Financial Literacy Completion",
+        serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
+        graduateName: userName || "BeginFin Student",
+        issueDate,
+        expirationDate: expDate,
+        isPublic: nextStatus,
+        userId,
+        completedModules: completedIds,
+        updatedAt: now.toISOString()
+      }, { merge: true });
+
+      setIsPublicVerification(nextStatus);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `credentials/${userId}`);
+    } finally {
+      setIsTogglingPublic(false);
+    }
+  };
+
   const handleSetName = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -77,6 +159,23 @@ export const CertificateView: React.FC<Props> = ({
         await setDoc(userRef, {
           displayName: finalName,
           lastUpdated: new Date().toISOString()
+        }, { merge: true });
+
+        const now = new Date();
+        const issueDate = now.toISOString().substring(0, 10);
+        const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
+
+        const credRef = doc(db, 'credentials', userId);
+        await setDoc(credRef, {
+          title: "Certificate of Financial Literacy Completion",
+          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
+          graduateName: finalName,
+          issueDate,
+          expirationDate: expDate,
+          isPublic: isPublicVerification,
+          userId,
+          completedModules: completedIds,
+          updatedAt: now.toISOString()
         }, { merge: true });
 
         setUserName(finalName);
@@ -348,18 +447,40 @@ export const CertificateView: React.FC<Props> = ({
 
       <div className="no-print flex flex-col items-center gap-3 mt-6">
         {allCompleted ? (
-          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-3 text-center max-w-md mx-auto shadow-sm">
-            <p className="text-xs md:text-sm font-semibold text-emerald-800 flex items-center justify-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3 text-center max-w-lg mx-auto shadow-sm space-y-2">
+            <p className="text-xs md:text-sm font-semibold text-emerald-900 flex items-center justify-center gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
               Your certificate is verified and complete! You can download your official PDF copy.
             </p>
+            {userId && (
+              <div className="pt-1 flex items-center justify-center gap-2 text-xs">
+                <button
+                  onClick={handleTogglePublic}
+                  disabled={isTogglingPublic}
+                  aria-label={isPublicVerification ? "Disable public verification" : "Enable public verification"}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all border text-slate-700 hover:bg-white bg-slate-50 border-slate-200 cursor-pointer disabled:opacity-60"
+                >
+                  {isPublicVerification ? (
+                    <>
+                      <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Public Verification Link: <strong className="text-emerald-700">Enabled</strong></span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Public Verification Link: <strong className="text-slate-600">Private Only</strong></span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         ) : null}
 
         <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-bold">
           <button 
             onClick={() => setIsNameSet(false)}
-            className="text-slate-400 hover:text-[#7F7FFA] hover:underline underline-offset-4 transition-all"
+            className="text-slate-500 hover:text-[#5656D4] hover:underline underline-offset-4 transition-all cursor-pointer"
           >
             Need to change the name? Edit Certificate Name
           </button>
@@ -368,7 +489,7 @@ export const CertificateView: React.FC<Props> = ({
               <span className="text-slate-300">•</span>
               <button 
                 onClick={requestDigitalCredential}
-                className="text-[#7F7FFA] hover:text-[#5656D4] hover:underline underline-offset-4 transition-all flex items-center gap-1.5"
+                className="text-[#5656D4] hover:text-[#4343B2] hover:underline underline-offset-4 transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <ShieldCheck className="w-3.5 h-3.5" /> Request Digital Credential
               </button>

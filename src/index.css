@@ -10,17 +10,18 @@
   --color-indigo-100: #ECECFC;
   --color-indigo-200: #DCDCFB;
   --color-indigo-300: #C3C3F8;
-  --color-indigo-400: #A1A1F6;
-  --color-indigo-500: #7F7FFA;
-  --color-indigo-600: #6868EB;
-  --color-indigo-700: #5656D4;
-  --color-indigo-800: #4343B2;
-  --color-indigo-900: #353590;
-  --color-indigo-950: #1F1F60;
+  --color-indigo-400: #7F7FFA;
+  --color-indigo-500: #6868EB;
+  --color-indigo-600: #5656D4;
+  --color-indigo-700: #4343B2;
+  --color-indigo-800: #353590;
+  --color-indigo-900: #262670;
+  --color-indigo-950: #17174A;
 
-  --color-brand: #7F7FFA;
-  --color-brand-hover: #6868EB;
-  --color-brand-dark: #5656D4;
+  --color-brand: #5656D4;
+  --color-brand-hover: #4343B2;
+  --color-brand-dark: #353590;
+  --color-brand-accent: #7F7FFA;
 
   --animate-nudge: nudge 2s ease-in-out infinite;
   --animate-marquee: marquee 45s linear infinite;
@@ -157,3 +158,15 @@
     border-width: 12px !important;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

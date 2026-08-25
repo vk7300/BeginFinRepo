@@ -367,7 +367,12 @@ export const BradleyChatbot: React.FC<BradleyChatbotProps> = ({ user }) => {
             </div>
 
             {/* Chat Body & Conversation Bubbles */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3.5 bg-gradient-to-b from-slate-50/40 via-white to-slate-50/30">
+            <div 
+              role="log" 
+              aria-live="polite" 
+              aria-atomic="false"
+              className="flex-1 overflow-y-auto px-4 py-4 space-y-3.5 bg-gradient-to-b from-slate-50/40 via-white to-slate-50/30"
+            >
               {messages.map((msg) => (
                 <div
                   key={msg.id}

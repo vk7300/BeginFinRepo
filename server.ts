@@ -6,8 +6,19 @@ import { rateLimit } from "express-rate-limit";
 import cors from "cors";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
 dotenv.config();
+
+// Initialize Firebase Admin SDK
+const adminApp = getApps().length === 0
+  ? initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0085912328"
+    })
+  : getApps()[0];
+
+const adminAuth = getAuth(adminApp);
 
 let aiClient: GoogleGenAI | null = null;
 function getGenAI(): GoogleGenAI | null {
@@ -37,24 +48,6 @@ function escapeHtml(str: string): string {
 
 function sanitizeHeader(str: string): string {
   return String(str || '').replace(/[\r\n]+/g, ' ').trim();
-}
-
-function parseBearerUid(authHeader?: string): string | null {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const token = authHeader.split('Bearer ')[1]?.trim();
-  if (!token) return null;
-  try {
-    const parts = token.split('.');
-    if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-      if (payload && (payload.user_id || payload.sub)) {
-        return payload.user_id || payload.sub;
-      }
-    }
-  } catch {
-    // Ignore parse error
-  }
-  return null;
 }
 
 async function startServer() {
@@ -216,17 +209,37 @@ BeginFin Curriculum Reference:
 
   app.post("/api/chat/bradley", async (req, res) => {
     try {
-      const { message, history, userId } = req.body;
+      const { message, history } = req.body;
       const authHeader = req.headers.authorization;
-      const verifiedUid = parseBearerUid(authHeader);
-      const effectiveUserId = verifiedUid || userId;
 
-      // 1. Strictly restrict access to authenticated users
-      if (!effectiveUserId || typeof effectiveUserId !== "string" || !effectiveUserId.trim() || effectiveUserId === "anonymous") {
+      // 1. Strictly verify Firebase ID token signature
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ 
-          error: "Bradley AI is only available to logged-in registered users. Please sign in to ask questions." 
+          error: "Authentication required. Please sign in to chat with Bradley AI." 
         });
       }
+
+      const idToken = authHeader.split('Bearer ')[1]?.trim();
+      if (!idToken) {
+        return res.status(401).json({ 
+          error: "Authentication token missing. Please sign in again." 
+        });
+      }
+
+      let verifiedUid: string;
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        if (!decodedToken || !decodedToken.uid) {
+          throw new Error("Invalid token payload");
+        }
+        verifiedUid = decodedToken.uid;
+      } catch (authErr: any) {
+        return res.status(401).json({ 
+          error: "Invalid or expired session. Please sign in again to use Bradley AI." 
+        });
+      }
+
+      const effectiveUserId = verifiedUid;
 
       if (!message || typeof message !== "string" || !message.trim()) {
         return res.status(400).json({ error: "Message is required." });
