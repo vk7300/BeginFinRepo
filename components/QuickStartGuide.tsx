@@ -1,0 +1,490 @@
+import React from 'react';
+import { ArrowLeft, Download, Printer, ChevronRight, BookOpen, Users, Shield, CheckCircle2, Info, Mail } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
+import { jsPDF } from 'jspdf';
+
+interface Props {
+  onBack: () => void;
+}
+
+export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
+  const sections = [
+    { id: 'intro', title: '1. Overview' },
+    { id: 'teacher', title: '2. Teacher Account Setup' },
+    { id: 'classroom', title: '3. Google Classroom Integration' },
+    { id: 'assignments', title: '4. Managing Assignments' },
+    { id: 'student', title: '5. Student Account Setup' },
+    { id: 'privacy', title: '6. Privacy & Data' },
+    { id: 'checklist', title: '7. Implementation Checklist' },
+    { id: 'support', title: '8. Support & Contact' },
+  ];
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let y = 25;
+
+    const addHeaderFooter = (pageNum: number, totalPages: number) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      
+      doc.text('BEGINFIN EDUCATOR RESOURCES', margin, 12);
+      doc.text('QUICK START GUIDE', pageWidth - margin - 35, 12);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.line(margin, 14, pageWidth - margin, 14);
+
+      doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+      doc.text(`Page ${pageNum} of ${totalPages}`, margin, pageHeight - 10);
+      doc.text('begin-fin.com', pageWidth - margin - 25, pageHeight - 10);
+    };
+
+    // Header block
+    doc.setFillColor(11, 15, 25);
+    doc.roundedRect(margin, y - 5, pageWidth - margin * 2, 26, 4, 4, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.text('BeginFin Educator Quick Start Guide', margin + 8, y + 8);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(199, 210, 254);
+    doc.text('Classroom Setup, Student Management & Implementation Checklist', margin + 8, y + 16);
+
+    y += 32;
+
+    const addSectionHeader = (num: string, title: string) => {
+      if (y + 25 > pageHeight - 20) {
+        doc.addPage();
+        y = 25;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(79, 70, 229);
+      doc.text(`${num}. ${title}`, margin, y);
+      y += 2;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 6;
+    };
+
+    const addParagraph = (text: string) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+      const lines = doc.splitTextToSize(text, pageWidth - margin * 2);
+      if (y + lines.length * 4 > pageHeight - 20) {
+        doc.addPage();
+        y = 25;
+      }
+      doc.text(lines, margin, y);
+      y += lines.length * 4 + 4;
+    };
+
+    // 1. Overview
+    addSectionHeader('1', 'OVERVIEW');
+    addParagraph('BeginFin provides interactive personal finance education tailored for classroom and self-paced instruction. The platform combines student learning modules with educator progress reporting tools.');
+    addParagraph('- Interactive Modules: Step-by-step instruction with concept validation quizzes.\n- Class Dashboard: Real-time completion tracking and performance summaries.\n- Browser-Based: Runs directly in standard web browsers with zero software installation.\n- Embedded Simulators: Includes Career & Budget Simulator (Austin, TX) and Credit Score Game.');
+
+    // 2. Teacher Account Setup
+    addSectionHeader('2', 'TEACHER ACCOUNT SETUP');
+    addParagraph('1. Register Account: Select Teacher account type during registration using your preferred email.\n2. Create Class: Define class sections corresponding to your teaching schedule.\n3. Share Class Code: Distribute the generated class code for students to join your roster.');
+
+    // 3. Managing Assignments
+    addSectionHeader('3', 'MANAGING ASSIGNMENTS');
+    addParagraph('Creating Challenges: Select required financial units, set target completion dates, and assign to individual class periods.\n\nReviewing Progress: Monitor completion rates, review quiz attempt summaries, and export grade summaries to CSV.');
+
+    // 4. Student Account Setup
+    addSectionHeader('4', 'STUDENT ACCOUNT SETUP');
+    addParagraph('Students register using email credentials or permitted SSO options and input the teacher\'s class code during sign-up to join the class roster.\n\nGuest Mode: Allows immediate exploration of learning units without account creation. Guest progress is not saved to a class gradebook.');
+
+    // 5. Privacy & Data Governance
+    addSectionHeader('5', 'PRIVACY & DATA GOVERNANCE');
+    addParagraph('Privacy Protocols: Minimal operational data is collected solely for student progress tracking. Student records are not sold or used for third-party advertising. We will share your name and email with Certifier.io, a trusted 3rd party digital credential provider, if the user requests.\n\nTerms of Service: Designed for educational instruction. Users maintain full control over account credentials and data deletion requests.');
+
+    // 6. Implementation Checklist
+    addSectionHeader('6', 'IMPLEMENTATION CHECKLIST');
+    addParagraph('Step 1: Create Teacher account\nStep 2: Set up class section and generate code\nStep 3: Distribute class code to students\nStep 4: Students sign up and enter class code\nStep 5: Create and assign learning challenge\nStep 6: Students complete assigned units\nStep 7: Review completion stats on teacher dashboard');
+
+    // 7. Support Contacts
+    addSectionHeader('7', 'SUPPORT & CONTACTS');
+    addParagraph('General Questions: contact@begin-fin.com\nTeacher Support: teachers@begin-fin.com\nMedia Relations: mediarelations@begin-fin.com\nAccount Assistance: support@begin-fin.com');
+
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addHeaderFooter(i, totalPages);
+    }
+
+    doc.save('BeginFin_Educator_Quick_Start_Guide.pdf');
+  };
+
+  const handlePrint = () => {
+    try {
+      window.print();
+    } catch (err) {
+      console.warn("window.print() prevented, falling back to PDF download", err);
+      generatePDF();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-24">
+      <Helmet>
+        <title>Quick Start Guide | BeginFin Educator Resources</title>
+      </Helmet>
+
+      {/* Sticky Header Bar */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 no-print">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={onBack}
+            className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer group"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Dashboard</span>
+          </motion.button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="p-2.5 rounded-full border border-slate-200/80 hover:bg-slate-100 text-slate-600 transition-all cursor-pointer"
+              title="Print Guide"
+            >
+              <Printer className="w-4 h-4" />
+            </button>
+            <button
+              onClick={generatePDF}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-indigo-600 text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-indigo-300" />
+              <span>Save as PDF</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="max-w-7xl mx-auto px-6 pt-12 flex flex-col lg:flex-row gap-12">
+        {/* Navigation Sidebar */}
+        <aside className="hidden lg:block w-64 shrink-0 no-print sticky top-28 h-fit">
+          <div className="bg-white rounded-[24px] border border-slate-200/80 p-5 shadow-sm space-y-2">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-3 px-3">
+              Guide Navigation
+            </div>
+            <nav className="space-y-1">
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all flex items-center justify-between group cursor-pointer"
+                >
+                  <span>{section.title}</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-500" />
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
+
+        {/* Guide Article Content */}
+        <article className="flex-1 space-y-12">
+          
+          {/* Cover Hero Bento Section */}
+          <section className="bg-[#0b0f19] text-white p-8 md:p-12 rounded-[32px] border border-white/10 relative overflow-hidden shadow-2xl">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/30 rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="relative z-10 max-w-2xl">
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-indigo-200 border border-white/10 inline-block mb-6">
+                Educator Guide
+              </span>
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-4 leading-tight">
+                Quick Start Guide
+              </h1>
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed font-normal">
+                An overview for teachers and program leaders to set up classrooms, assign modules, track progress, and facilitate personal finance education.
+              </p>
+            </div>
+          </section>
+
+          {/* 1. Overview */}
+          <section id="intro" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                01
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Overview</h2>
+            </div>
+            
+            <p className="text-slate-600 text-sm leading-relaxed font-normal">
+              BeginFin provides interactive personal finance education tailored for classroom and self-paced instruction. The platform combines student learning modules with educator progress reporting tools.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-4 pt-2">
+              {[
+                { icon: BookOpen, title: 'Interactive Modules', desc: 'Step-by-step instruction with concept validation quizzes.' },
+                { icon: Users, title: 'Class Dashboard', desc: 'Real-time completion tracking and performance summaries.' },
+                { icon: Shield, title: 'Browser-Based', desc: 'Runs directly in standard web browsers with zero software installation.' }
+              ].map((item, i) => (
+                <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
+                  <item.icon className="w-5 h-5 text-indigo-600" />
+                  <h3 className="font-bold text-slate-900 text-xs">{item.title}</h3>
+                  <p className="text-slate-500 text-xs leading-relaxed font-normal">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-6 bg-indigo-50/80 rounded-2xl border border-indigo-100/80 space-y-3">
+              <h3 className="font-bold text-indigo-950 text-xs uppercase tracking-wider flex items-center gap-2">
+                <Info className="w-4 h-4 text-indigo-600" /> Embedded Simulators
+              </h3>
+              <ul className="space-y-2 text-slate-700 text-xs font-normal">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <span><strong>Career & Budget Simulator:</strong> Allows students to examine gross income, taxes, local housing costs, and savings rates across sample professions in Austin, TX.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <span><strong>Credit Score Game:</strong> Evaluates decision-making scenarios regarding borrowing, credit utilization, and timely payments.</span>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          {/* 2. Teacher Account Setup */}
+          <section id="teacher" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                02
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Teacher Account Setup</h2>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { step: '1', title: 'Register Account', text: 'Select Teacher account type during registration using your preferred email.' },
+                { step: '2', title: 'Create Class', text: 'Define class sections corresponding to your teaching schedule.' },
+                { step: '3', title: 'Share Class Code', text: 'Distribute the generated class code for students to join your roster.' }
+              ].map((s) => (
+                <div key={s.step} className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-3">
+                  <span className="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                    {s.step}
+                  </span>
+                  <h3 className="font-bold text-slate-900 text-sm">{s.title}</h3>
+                  <p className="text-slate-500 text-xs leading-relaxed font-normal">{s.text}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* 3. Google Classroom Integration */}
+          <section id="classroom" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                03
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Google Classroom Integration</h2>
+            </div>
+
+            <p className="text-slate-600 text-sm leading-relaxed font-normal">
+              BeginFin connects directly with Google Classroom, allowing educators to streamline class section management, import student rosters, and publish NSPFE-aligned coursework with one click.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-slate-900 text-sm">1. OAuth Connection</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-normal">
+                  Click "Sign in with Google" on your Teacher Dashboard to grant permission to read courses and sync assignments.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-slate-900 text-sm">2. Course & Roster Import</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-normal">
+                  Select your active Google Classroom courses to import student rosters directly into your BeginFin class sections.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-slate-900 text-sm">3. Direct Coursework & Posts</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-normal">
+                  Assign BeginFin learning units with custom point values and due dates or broadcast announcements straight to student streams.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 4. Managing Assignments */}
+          <section id="assignments" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                04
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Managing Assignments</h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-3">
+                <h3 className="font-bold text-slate-900 text-sm">Creating Challenges</h3>
+                <ul className="space-y-2 text-slate-600 text-xs font-normal">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Select required financial units</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Set target completion dates</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Assign to individual class periods</li>
+                </ul>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-3">
+                <h3 className="font-bold text-slate-900 text-sm">Reviewing Progress</h3>
+                <ul className="space-y-2 text-slate-600 text-xs font-normal">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Monitor completion rates</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Review quiz attempt summaries</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Export grade summaries to CSV</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          {/* 5. Student Account Setup */}
+          <section id="student" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                05
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Student Account Setup</h2>
+            </div>
+
+            <div className="space-y-4 text-slate-600 text-sm font-normal leading-relaxed">
+              <p>
+                Students register using email credentials or permitted SSO options and input the teacher's class code during sign-up to join the class roster.
+              </p>
+              <p className="text-xs text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+                <strong>Guest Mode:</strong> Allows immediate exploration of learning units without account creation. Guest progress is not saved to a class gradebook.
+              </p>
+            </div>
+          </section>
+
+          {/* 6. Privacy & Terms */}
+          <section id="privacy" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                06
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Privacy & Data Governance</h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 text-xs text-slate-600">
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-slate-900">Privacy Protocols</h3>
+                <p className="text-slate-500 leading-relaxed font-normal">
+                  Minimal operational data is collected solely for student progress tracking. Student records are not sold or used for third-party advertising. We will share your name and email with Certifier.io, a trusted 3rd party digital credential provider, if the user requests.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-slate-900">Terms of Service</h3>
+                <p className="text-slate-500 leading-relaxed font-normal">
+                  Designed for educational instruction. Users maintain full control over account credentials and data deletion requests.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 7. Implementation Checklist */}
+          <section id="checklist" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                07
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Implementation Checklist</h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200/80 text-slate-400 uppercase tracking-wider font-semibold">
+                    <th className="py-3 px-4">Step</th>
+                    <th className="py-3 px-4">Action</th>
+                    <th className="py-3 px-4">Role</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {[
+                    { step: 1, task: 'Create Teacher account', role: 'Teacher' },
+                    { step: 2, task: 'Set up class section and generate code', role: 'Teacher' },
+                    { step: 3, task: 'Connect Google Classroom and import courses (Optional)', role: 'Teacher' },
+                    { step: 4, task: 'Distribute class code to students', role: 'Teacher' },
+                    { step: 5, task: 'Students sign up and enter class code', role: 'Student' },
+                    { step: 6, task: 'Create and assign learning challenge / Classroom coursework', role: 'Teacher' },
+                    { step: 7, task: 'Students complete assigned units', role: 'Student' },
+                    { step: 8, task: 'Review completion stats on teacher dashboard', role: 'Teacher' },
+                  ].map((row) => (
+                    <tr key={row.step} className="hover:bg-slate-50/50">
+                      <td className="py-3 px-4 font-bold text-slate-400">{row.step}</td>
+                      <td className="py-3 px-4 font-medium">{row.task}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          row.role === 'Teacher' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {row.role}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* 8. Support & Contact */}
+          <section id="support" className="bg-[#0b0f19] text-white rounded-[32px] border border-white/10 p-8 md:p-10 shadow-xl space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-indigo-300 font-bold text-sm">
+                08
+              </div>
+              <h2 className="text-2xl font-bold text-white tracking-tight">Support & Inquiry Contacts</h2>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                { label: 'General Questions', email: 'contact@begin-fin.com' },
+                { label: 'Teacher Support', email: 'teachers@begin-fin.com' },
+                { label: 'Media Relations', email: 'mediarelations@begin-fin.com' },
+                { label: 'Account Assistance', email: 'support@begin-fin.com' }
+              ].map((c, i) => (
+                <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-indigo-300 tracking-wider block">{c.label}</span>
+                  <a href={`mailto:${c.email}`} className="text-xs font-semibold text-slate-200 hover:text-white transition-colors flex items-center gap-2">
+                    <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>{c.email}</span>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+
+        </article>
+      </main>
+    </div>
+  );
+};

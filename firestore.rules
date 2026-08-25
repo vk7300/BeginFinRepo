@@ -1,0 +1,221 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches request.auth.uid)
+    // Fields:
+    //   - uid: string (required, immutable) - Unique user ID
+    //   - email: string (required) - User email
+    //   - displayName: string (optional) - User display name
+    //   - role: string (required) - 'student' or 'teacher'
+    //   - classId: string (optional) - ID of the class the student belongs to
+    //   - teacherId: string (optional) - UID of the teacher who owns the class
+    //   - completedModules: list (required) - List of completed module IDs
+    //   - lastUpdated: string (optional) - Last time progress was updated
+    //
+    // Collection: classes
+    // Document ID: {classId} (unique string)
+    // Fields:
+    //   - classId: string (required, immutable) - Unique class ID
+    //   - className: string (required) - Name of the class
+    //   - teacherId: string (required, immutable) - UID of the teacher
+    //   - joinCode: string (required) - Unique 6-character join code
+    //   - createdAt: string (required) - Creation timestamp
+    //
+    // Collection: credentials
+    // Document ID: {credentialId} (unique string)
+    // Fields:
+    //   - credentialId: string (required, immutable) - Unique credential ID
+    //   - userName: string (required) - Name on the certificate
+    //   - userId: string (required, immutable) - Owner's user ID
+    //   - issuedAt: string (required) - Issuance timestamp
+    //   - expiresAt: string (required) - Expiration timestamp
+    //   - isPublic: bool (required) - Opt-in for public verification
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.email == "kv303157@gmail.com" && request.auth.token.email_verified == true) ||
+        (request.auth.token.email == "kruzssmith@gmail.com" && request.auth.token.email_verified == true) ||
+        (request.auth.token.email == "vishnukakarla108@gmail.com" && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isTeacher() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' || isAdmin());
+    }
+
+    function isClassTeacher(classId) {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid || isAdmin());
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'completedModules', 'role']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             (data.email == null || (data.email is string && data.email.size() > 0)) &&
+             data.role in ['student', 'teacher', 'admin'] &&
+             data.completedModules is list &&
+             (!('classId' in data) || data.classId is string || data.classId == null) &&
+             (!('teacherId' in data) || data.teacherId is string || data.teacherId == null) &&
+             (!('creditScoreMaster' in data) || data.creditScoreMaster is bool) &&
+             (!('highCreditScore' in data) || data.highCreditScore is int || data.highCreditScore is float);
+    }
+
+    function isValidClass(data) {
+      return data.keys().hasAll(['classId', 'className', 'teacherId', 'joinCode', 'createdAt']) &&
+             data.classId is string && data.classId.size() > 0 &&
+             data.className is string && data.className.size() > 0 &&
+             data.teacherId is string && (data.teacherId == request.auth.uid || isAdmin()) &&
+             data.joinCode is string && data.joinCode.size() == 6 &&
+             data.createdAt is string;
+    }
+
+    function isValidCredential(data) {
+      return data.keys().hasAll(['serialNumber', 'graduateName', 'issueDate', 'expirationDate']) &&
+             data.serialNumber is string && data.serialNumber.size() > 0 &&
+             data.graduateName is string && data.graduateName.size() > 0 &&
+             data.issueDate is string && data.issueDate.size() == 10 &&
+             data.expirationDate is string && data.expirationDate.size() == 10 &&
+             (!('userId' in data) || (data.userId is string && (data.userId == request.auth.uid || isAdmin())));
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) ||
+             request.resource.data.uid == request.auth.uid || isAdmin();
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) ||
+             request.resource.data.uid == resource.data.uid || isAdmin();
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid);
+      allow create: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && uidUnchanged();
+      allow update: if (isOwner(userId) && uidNotModified() && isValidUser(request.resource.data) && 
+                       (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher'] || (request.resource.data.role == 'admin' && resource.data.get('role', '') == 'admin'))
+                      ) || 
+                   isAdmin() ||
+                   (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid && 
+                    isValidUser(request.resource.data) &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['classId', 'teacherId']) &&
+                    request.resource.data.classId == null && request.resource.data.teacherId == null);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /classes/{classId} {
+      // Anyone authenticated can read specific class info (needed for joining)
+      allow get: if isAuthenticated();
+      // Block arbitrary class scraping: listing only allowed if user is the teacher or a student in the class
+      allow list: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || (resource.data.studentIds is list && request.auth.uid in resource.data.studentIds));
+      // Only teachers can create classes
+      allow create: if isTeacher() && isValidClass(request.resource.data);
+      // Only the class teacher can update or delete the class
+      // OR students removing themselves from studentIds list during account deletion/leaving
+      allow update: if isClassTeacher(classId) || (
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentIds']) &&
+        request.resource.data.studentIds is list &&
+        (
+          (request.auth.uid in request.resource.data.studentIds && !(resource.data.get('studentIds', []) is list && request.auth.uid in resource.data.studentIds)) ||
+          (!(request.auth.uid in request.resource.data.studentIds) && resource.data.get('studentIds', []) is list && request.auth.uid in resource.data.studentIds)
+        )
+      );
+      allow delete: if isClassTeacher(classId);
+
+      match /alerts/{alertId} {
+        // Teachers can read and delete alerts for their own classes
+        allow read, delete: if isClassTeacher(classId);
+        // Students can read or delete their own alerts (needed for account deletion and listing)
+        allow get: if isAuthenticated() && resource.data.get('userId', '') == request.auth.uid;
+        allow list: if isAuthenticated() && resource.data.userId == request.auth.uid;
+        allow delete: if isAuthenticated() && resource.data.get('userId', '') == request.auth.uid;
+        // Students can create alerts if they belong to the class
+        allow create: if isAuthenticated() && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == classId
+        );
+      }
+    }
+
+    match /credentials/{credentialId} {
+      // Verification is public for exact gets (employers, schools), listing is blocked to non-owners to protect privacy
+      allow get: if true;
+      allow list: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Only the owner can create their credential record
+      allow create: if isAuthenticated() && (!('userId' in request.resource.data) || request.auth.uid == request.resource.data.userId) && isValidCredential(request.resource.data);
+      // Only the owner can update their credential
+      allow update: if isAuthenticated() && (!('userId' in resource.data) || isOwner(resource.data.userId)) && isValidCredential(request.resource.data);
+      // Only the owner can delete their credential
+      allow delete: if isAuthenticated() && (!('userId' in resource.data) || isOwner(resource.data.userId));
+    }
+
+    match /articles/{articleId} {
+      // Small helper for article validation
+      function isValidArticle(data) {
+        return data.keys().hasAll(['id', 'title', 'slug', 'content', 'authorName', 'status', 'updatedAt']) &&
+               data.id is string && data.title is string && data.slug is string &&
+               data.content is string && data.authorName is string &&
+               data.status in ['draft', 'published'] &&
+               data.updatedAt is string;
+      }
+
+      // Public can read published articles, Admin can read any
+      allow read: if (resource.data.status == 'published') || isAdmin();
+      // Only Admin can write articles
+      allow create, update: if isAdmin() && isValidArticle(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /questions/{questionId} {
+      // Small helper for question validation
+      function isValidQuestion(data) {
+        return data.keys().hasAll(['id', 'moduleId', 'language', 'question', 'options', 'correctIndex', 'isPublished', 'updatedAt']) &&
+               data.id is string && data.moduleId is string && data.language is string &&
+               data.question is string && data.options is list && data.options.size() > 0 &&
+               data.correctIndex is int && data.isPublished is bool &&
+               data.updatedAt is string;
+      }
+
+      // Public can read questions
+      allow read: if true;
+      // Only Admin can write/delete questions
+      allow create, update: if isAdmin() && isValidQuestion(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /certifierRequests/{requestId} {
+      allow create: if true;
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.get('userId', '') == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+  }
+}

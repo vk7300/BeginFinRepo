@@ -1,0 +1,136 @@
+
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile and progress data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID" },
+        "email": { "type": ["string", "null"], "description": "User email" },
+        "displayName": { "type": ["string", "null"], "description": "User display name" },
+        "role": { "type": "string", "enum": ["student", "teacher"], "description": "User role" },
+        "classId": { "type": "string", "description": "ID of the class the student belongs to" },
+        "teacherId": { "type": "string", "description": "UID of the teacher who owns the class" },
+        "completedModules": { "type": "array", "items": { "type": "string" }, "description": "List of completed module IDs" },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "Last time progress was updated" },
+        "creditScoreMaster": { "type": "boolean", "description": "Whether the user achieved the credit seal" },
+        "highCreditScore": { "type": "integer", "description": "Highest credit score achieved" }
+      },
+      "required": ["uid", "email", "completedModules", "role"]
+    },
+    "class": {
+      "title": "Class",
+      "description": "A class created by a teacher",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string", "description": "Unique class ID" },
+        "className": { "type": "string", "description": "Name of the class" },
+        "teacherId": { "type": "string", "description": "UID of the teacher who created the class" },
+        "joinCode": { "type": "string", "description": "Unique 6-character join code" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "challenge": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string", "description": "Challenge title" },
+            "deadline": { "type": "string", "format": "date-time", "description": "Challenge deadline" },
+            "isActive": { "type": "boolean", "description": "Whether the challenge is active" },
+            "moduleIds": { "type": "array", "items": { "type": "string" }, "description": "List of specific modules for this challenge" },
+            "createdAt": { "type": "string", "format": "date-time", "description": "Challenge creation timestamp" }
+          },
+          "description": "Active class challenge"
+        }
+      },
+      "required": ["classId", "className", "teacherId", "joinCode", "createdAt"]
+    },
+    "credential": {
+      "title": "Credential",
+      "description": "Verifiable course completion credential",
+      "type": "object",
+      "properties": {
+        "serialNumber": { "type": "string", "description": "The unique ID string (e.g., BF-JFGGEV)" },
+        "graduateName": { "type": "string", "description": "Exact name as it appears on the certificate" },
+        "issueDate": { "type": "string", "description": "Date of completion (Format: YYYY-MM-DD)" },
+        "expirationDate": { "type": "string", "description": "Date of completion + 5 years (Format: YYYY-MM-DD)" },
+        "userId": { "type": "string", "description": "Owner's user ID" }
+      },
+      "required": ["serialNumber", "graduateName", "issueDate", "expirationDate"]
+    },
+    "article": {
+      "title": "Article",
+      "description": "Blog post or news article",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique article ID" },
+        "title": { "type": "string", "description": "Article title" },
+        "slug": { "type": "string", "description": "URL-friendly version of the title" },
+        "content": { "type": "string", "description": "Main content in HTML/Rich Text format" },
+        "excerpt": { "type": "string", "description": "Short summary of the article" },
+        "authorName": { "type": "string", "description": "Name of the author" },
+        "authorDetails": { "type": "string", "description": "Short bio or details of the author" },
+        "imageUrl": { "type": "string", "description": "Header image URL" },
+        "publishedAt": { "type": ["string", "null"], "format": "date-time", "description": "Publishing timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" },
+        "status": { "type": "string", "enum": ["draft", "published"], "description": "Current status of the article" }
+      },
+      "required": ["id", "title", "slug", "content", "authorName", "status", "updatedAt"]
+    },
+    "alert": {
+      "title": "Alert",
+      "description": "Security or integrity alert reported for a class",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Id of the student triggering the alert" },
+        "userName": { "type": "string", "description": "Name of the student" },
+        "type": { "type": "string", "description": "Type of alert (e.g. fullscreen_exit)" },
+        "moduleTitle": { "type": "string", "description": "Title of the active course module" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the alert occurred" },
+        "message": { "type": "string", "description": "Explicit message describing the event" }
+      },
+      "required": ["userId", "userName", "type", "timestamp", "message"]
+    },
+    "question": {
+      "title": "Custom Question",
+      "description": "Admin-created custom quiz questions for course modules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique question ID" },
+        "moduleId": { "type": "string", "description": "Module ID this question belongs to" },
+        "language": { "type": "string", "description": "Language code of the question" },
+        "question": { "type": "string", "description": "Question text" },
+        "options": { "type": "array", "items": { "type": "string" }, "description": "List of answer choices" },
+        "correctIndex": { "type": "integer", "description": "Index of the correct answer in options list" },
+        "isPublished": { "type": "boolean", "description": "Whether this question is published and live" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["id", "moduleId", "language", "question", "options", "correctIndex", "isPublished", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/questions/{questionId}": {
+      "schema": "question",
+      "description": "Admin-managed custom quiz questions"
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User profile and progress collection"
+    },
+    "/classes/{classId}": {
+      "schema": "class",
+      "description": "Classes created by teachers"
+    },
+    "/credentials/{credentialId}": {
+      "schema": "credential",
+      "description": "Verifiable credentials collection"
+    },
+    "/classes/{classId}/alerts/{alertId}": {
+      "schema": "alert",
+      "description": "Integrity or academic alerts for a class"
+    },
+    "/articles/{articleId}": {
+      "schema": "article",
+      "description": "Public blog articles"
+    }
+  }
+}

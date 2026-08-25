@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-cursive: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-nudge: nudge 2s ease-in-out infinite;
+  --animate-marquee: marquee 45s linear infinite;
+  --animate-gradient-shift: gradient-shift 15s ease infinite;
+
+  @keyframes nudge {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+
+@layer base {
+  html {
+    @apply font-sans;
+  }
+
+  ::selection {
+    background-color: #94a4ff;
+    color: #0f172a;
+  }
+
+  ::-moz-selection {
+    background-color: #94a4ff;
+    color: #0f172a;
+  }
+
+  /* Accessibility Focus States for enhanced screen reader and keyboard accessibility */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid #94a4ff !important;
+    outline-offset: 3px !important;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+  }
+
+  /* Justified text for articles and spacing reinforcement */
+  .prose p {
+    @apply text-justify leading-relaxed;
+    text-align-last: left; /* Ensure the last line isn't justified for readability */
+  }
+
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    @apply mt-8 mb-4;
+  }
+
+  .article-content {
+    @apply antialiased;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 12pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .article-content p {
+    margin-bottom: 1.5em; /* Retain spaces between paragraphs */
+  }
+
+  /* Specific handling for article markers like ### */
+  .article-content p:last-child {
+    @apply mb-0;
+  }
+}
+
+/* Print Enhancements for Curriculum, Certificate, and Guides */
+@media print {
+  /* Hide non-printable interface elements */
+  .no-print,
+  nav,
+  header.no-print,
+  button:not(.allow-print),
+  .no-print-container {
+    display: none !important;
+  }
+
+  /* Preserve exact background colors, borders, and graphical details */
+  *, *:before, *:after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+  }
+
+  /* Default page settings */
+  @page {
+    size: auto;
+    margin: 12mm 15mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Prevent elements from breaking across pages awkwardly */
+  .break-inside-avoid,
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Certificate print styling */
+  .certificate-print-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: 100% !important;
+    max-width: 1000px !important;
+    margin: 0 auto !important;
+    border-width: 12px !important;
+  }
+}
