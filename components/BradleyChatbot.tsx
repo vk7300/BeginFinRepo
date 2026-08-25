@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, ArrowUp, RotateCcw, Sparkles, Shield, Check, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { auth } from '../firebase';
 
 interface Message {
   id: string;
@@ -143,13 +144,27 @@ export const BradleyChatbot: React.FC<BradleyChatbotProps> = ({ user }) => {
         .filter(m => m.id !== 'welcome')
         .map(m => ({ role: m.role, text: m.text }));
 
+      let authToken = '';
+      try {
+        if (auth.currentUser) {
+          authToken = await auth.currentUser.getIdToken();
+        }
+      } catch (err) {
+        console.warn('Failed to retrieve auth token:', err);
+      }
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
       const res = await fetch('/api/chat/bradley', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           message: query,
           history: historyForApi,
-          userId: user.uid || user.email || 'authenticated-user'
+          userId: user.uid || 'authenticated-user'
         })
       });
 

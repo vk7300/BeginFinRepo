@@ -47,12 +47,12 @@ export const ToolsView: React.FC<ToolsViewProps> = ({
           <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden flex flex-col items-center justify-center space-y-6">
             
             {/* Subtle Periwinkle Glow Backdrop */}
-            <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-[#725EBE]/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 bg-[#725EBE]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-[#7F7FFA]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 bg-[#7F7FFA]/10 rounded-full blur-3xl pointer-events-none" />
 
             {/* Pill Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200/70 text-slate-700 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-[#725EBE]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#7F7FFA]" />
               <span>Under Active Development</span>
             </div>
 

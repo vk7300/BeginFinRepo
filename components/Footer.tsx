@@ -67,9 +67,9 @@ export const Footer: React.FC<FooterProps> = ({
           <Link 
             to="/claudemd" 
             onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
-            className="text-[#d97757] hover:text-[#e58a6d] font-semibold transition-colors cursor-pointer flex items-center gap-1"
+            className="hover:text-white transition-colors cursor-pointer"
           >
-            Claude Skill (.md)
+            Claude Skill
           </Link>
           <Link 
             to="/termsofuse" 

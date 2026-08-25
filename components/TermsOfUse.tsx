@@ -10,7 +10,7 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
     window.scrollTo(0, 0);
   }, []);
 
-  const currentDate = "August 19, 2026";
+  const currentDate = "August 20, 2026";
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-6">
@@ -102,7 +102,7 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
 
             <section className="space-y-4">
               <h4 className="font-bold">7. USER ACCOUNTS & SECURITY</h4>
-              <p>Registration is available via Google Single Sign-On (SSO), email/password authentication, or SMS phone verification. You are responsible for safeguarding your login credentials. We implement industry-standard safeguards, including TLS encryption, Firebase Authentication controls, and Firestore security rules. For account deletion or data portability requests, users may utilize Account Settings or email support@begin-fin.com.</p>
+              <p>Registration and sign-in are available via Google One Tap, Google Single Sign-On (SSO), email/password authentication, or SMS phone verification. You are responsible for safeguarding your login credentials. We implement industry-standard safeguards, including TLS encryption, Firebase Authentication controls, Google Identity Services integrations, and Firestore security rules. For account deletion or data portability requests, users may utilize Account Settings or email support@begin-fin.com.</p>
             </section>
 
             <section className="space-y-4">

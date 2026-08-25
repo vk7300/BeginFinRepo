@@ -1,6 +1,6 @@
 {
   "name": "BeginFin",
   "description": "100% free, national standard-aligned personal finance platform with interactive simulators, AI tutoring, and verifiable certifications.",
-  "requestFramePermissions": ["identity-credentials-get"],
+  "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

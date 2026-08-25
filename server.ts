@@ -26,11 +26,54 @@ function getGenAI(): GoogleGenAI | null {
   return aiClient;
 }
 
+function escapeHtml(str: string): string {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function sanitizeHeader(str: string): string {
+  return String(str || '').replace(/[\r\n]+/g, ' ').trim();
+}
+
+function parseBearerUid(authHeader?: string): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const token = authHeader.split('Bearer ')[1]?.trim();
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+      if (payload && (payload.user_id || payload.sub)) {
+        return payload.user_id || payload.sub;
+      }
+    }
+  } catch {
+    // Ignore parse error
+  }
+  return null;
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.set('trust proxy', 1);
+
+  // Security Headers Middleware
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    if (process.env.NODE_ENV === 'production') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    next();
+  });
 
   // Redirect HTTP to HTTPS in production
   app.use((req, res, next) => {
@@ -40,7 +83,24 @@ async function startServer() {
     next();
   });
 
-  app.use(cors());
+  // Strict CORS configuration
+  const allowedOrigins = [
+    'https://begin-fin.com',
+    'https://www.begin-fin.com',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+  ];
+
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app') || origin.endsWith('.web.app') || origin.endsWith('.firebaseapp.com')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Blocked by CORS policy'));
+      }
+    },
+    credentials: true
+  }));
   app.use(express.json());
 
   // Rate limiting: 100 requests per 15 minutes per IP
@@ -157,9 +217,12 @@ BeginFin Curriculum Reference:
   app.post("/api/chat/bradley", async (req, res) => {
     try {
       const { message, history, userId } = req.body;
+      const authHeader = req.headers.authorization;
+      const verifiedUid = parseBearerUid(authHeader);
+      const effectiveUserId = verifiedUid || userId;
 
       // 1. Strictly restrict access to authenticated users
-      if (!userId || typeof userId !== "string" || !userId.trim()) {
+      if (!effectiveUserId || typeof effectiveUserId !== "string" || !effectiveUserId.trim() || effectiveUserId === "anonymous") {
         return res.status(401).json({ 
           error: "Bradley AI is only available to logged-in registered users. Please sign in to ask questions." 
         });
@@ -171,7 +234,7 @@ BeginFin Curriculum Reference:
 
       // 2. Enforce 5 messages per calendar day limit per registered user
       const todayStr = new Date().toISOString().split('T')[0];
-      const userUsageKey = `${userId}_${todayStr}`;
+      const userUsageKey = `${effectiveUserId}_${todayStr}`;
       const currentUsage = dailyUserUsage.get(userUsageKey) || { date: todayStr, count: 0 };
 
       if (currentUsage.count >= MAX_DAILY_MESSAGES) {
@@ -246,7 +309,7 @@ BeginFin Curriculum Reference:
         remainingToday: Math.max(0, MAX_DAILY_MESSAGES - newCount)
       });
     } catch (error: any) {
-      console.error("Error in Bradley AI chat:", error);
+      console.error("Error in Bradley AI chat:", error?.message || 'internal error');
       return res.status(500).json({ 
         error: "Failed to communicate with Bradley. Please try again in a few moments." 
       });
@@ -279,15 +342,18 @@ BeginFin Curriculum Reference:
         return res.status(400).json({ error: "Full name, email, and explicit consent are required." });
       }
 
-      console.log("==========================================");
-      console.log("NEW CERTIFIER.IO CREDENTIAL REQUEST:");
-      console.log(`Graduate Name: ${name}`);
-      console.log(`Graduate Email: ${email}`);
-      console.log(`Serial Number: ${serialNumber || 'N/A'}`);
-      console.log(`User ID: ${userId || 'N/A'}`);
-      console.log(`Consent Given: ${consent}`);
-      console.log(`Timestamp: ${new Date().toISOString()}`);
-      console.log("==========================================");
+      // Safe sanitized logging without writing student PII to stdout
+      console.log(`[Certifier] Digital credential request processed at ${new Date().toISOString()}`);
+
+      const cleanName = sanitizeHeader(name).substring(0, 100);
+      const cleanEmail = sanitizeHeader(email).substring(0, 100);
+      const cleanSerial = sanitizeHeader(serialNumber || 'N/A').substring(0, 50);
+      const cleanUserId = sanitizeHeader(userId || 'N/A').substring(0, 60);
+
+      const safeNameHtml = escapeHtml(cleanName);
+      const safeEmailHtml = escapeHtml(cleanEmail);
+      const safeSerialHtml = escapeHtml(cleanSerial);
+      const safeUserIdHtml = escapeHtml(cleanUserId);
 
       // Attempt to send email to administrator if SMTP environment variables are set
       if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
@@ -305,13 +371,13 @@ BeginFin Curriculum Reference:
         await transporter.sendMail({
           from: process.env.SMTP_FROM || `"BeginFin Platform" <${process.env.SMTP_USER}>`,
           to: "vishnukakarla108@gmail.com",
-          subject: `[Certifier.io Request] Digital Credential for ${name}`,
+          subject: `[Certifier.io Request] Digital Credential for ${cleanName}`,
           text: `A new digital credential request for Certifier.io has been submitted:
 
-Name: ${name}
-Email: ${email}
-Certificate Serial: ${serialNumber || 'N/A'}
-User ID: ${userId || 'N/A'}
+Name: ${cleanName}
+Email: ${cleanEmail}
+Certificate Serial: ${cleanSerial}
+User ID: ${cleanUserId}
 Consent to share with Certifier.io: YES
 Requested At: ${new Date().toLocaleString()}
 
@@ -321,10 +387,10 @@ Please process this request in Certifier.io.`,
               <h2 style="color: #4f46e5;">New Certifier.io Digital Credential Request</h2>
               <p>A user has requested a digital credential from Certifier.io and provided explicit consent:</p>
               <table style="border-collapse: collapse; width: 100%; max-width: 500px; margin-top: 15px;">
-                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Name:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${name}</td></tr>
-                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Email:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><a href="mailto:${email}">${email}</a></td></tr>
-                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Serial #:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${serialNumber || 'N/A'}</td></tr>
-                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">User ID:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${userId || 'N/A'}</td></tr>
+                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Name:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${safeNameHtml}</td></tr>
+                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Email:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><a href="mailto:${safeEmailHtml}">${safeEmailHtml}</a></td></tr>
+                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Serial #:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${safeSerialHtml}</td></tr>
+                <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">User ID:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${safeUserIdHtml}</td></tr>
                 <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Consent Granted:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0; color: #16a34a; font-weight: bold;">Yes</td></tr>
               </table>
               <p style="margin-top: 20px; font-size: 13px; color: #64748b;">This request has also been stored in your BeginFin Firestore database under the <code>certifierRequests</code> collection.</p>
@@ -338,7 +404,7 @@ Please process this request in Certifier.io.`,
         message: "Your request for a Certifier.io credential has been submitted successfully." 
       });
     } catch (error: any) {
-      console.error("Error processing certifier credential request:", error);
+      console.error("Error processing certifier credential request:", error?.message || 'internal error');
       return res.status(500).json({ error: "Failed to submit request. Please try again." });
     }
   });

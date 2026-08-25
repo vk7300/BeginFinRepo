@@ -385,7 +385,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
     <div className="space-y-6 font-sans">
       {/* Top Bento Header */}
       <div className="bg-gradient-to-br from-slate-950 via-[#0B0D1B] to-[#141838] text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#725EBE]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#7F7FFA]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-indigo-300 text-xs font-bold uppercase tracking-wider">
@@ -419,14 +419,14 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
           <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#725EBE] flex items-center justify-center font-bold">1</div>
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">1</div>
                 <h3 className="font-extrabold text-slate-900 text-base">Select Career Profile</h3>
               </div>
               <button
                 onClick={() => setIsCustomCareer(!isCustomCareer)}
                 className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${
                   isCustomCareer 
-                    ? 'bg-[#725EBE] text-white border-[#725EBE]' 
+                    ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' 
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -444,13 +444,13 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                       onClick={() => handleSelectCareer(job)}
                       className={`text-left p-3 rounded-2xl border transition-all flex flex-col justify-between gap-1.5 ${
                         isSelected 
-                          ? 'border-[#725EBE] bg-indigo-50/50 shadow-xs ring-1 ring-[#725EBE]' 
+                          ? 'border-[#7F7FFA] bg-indigo-50/50 shadow-xs ring-1 ring-[#7F7FFA]' 
                           : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50/70'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-1">
                         <span className="text-xs font-bold text-slate-900 leading-tight">{job.name}</span>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#725EBE] shrink-0 mt-0.5" />}
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#7F7FFA] shrink-0 mt-0.5" />}
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
                         <span>{job.isSalaried ? 'Salaried' : 'Hourly'}</span>
@@ -479,7 +479,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                   <button
                     onClick={() => setCustomIsSalaried(false)}
                     className={`py-2 rounded-xl text-xs font-bold border transition-all ${
-                      !customIsSalaried ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-white text-slate-700 border-slate-200'
+                      !customIsSalaried ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-white text-slate-700 border-slate-200'
                     }`}
                   >
                     Hourly Wage
@@ -487,7 +487,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                   <button
                     onClick={() => setCustomIsSalaried(true)}
                     className={`py-2 rounded-xl text-xs font-bold border transition-all ${
-                      customIsSalaried ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-white text-slate-700 border-slate-200'
+                      customIsSalaried ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-white text-slate-700 border-slate-200'
                     }`}
                   >
                     Annual Salary
@@ -507,7 +507,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                       step={0.5}
                       value={customHourly}
                       onChange={(e) => setCustomHourly(Number(e.target.value))}
-                      className="w-full accent-[#725EBE]"
+                      className="w-full accent-[#7F7FFA]"
                     />
                   </div>
                 ) : (
@@ -523,7 +523,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                       step={1000}
                       value={customAnnualSalary}
                       onChange={(e) => setCustomAnnualSalary(Number(e.target.value))}
-                      className="w-full accent-[#725EBE]"
+                      className="w-full accent-[#7F7FFA]"
                     />
                   </div>
                 )}
@@ -542,7 +542,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
           {/* Card 2: Hours & Tax Settings */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-5">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#725EBE] flex items-center justify-center font-bold">2</div>
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">2</div>
               <h3 className="font-extrabold text-slate-900 text-base">Working Hours & Tax Regime</h3>
             </div>
 
@@ -552,7 +552,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-indigo-600" /> Weekly Hours
                 </span>
-                <span className="px-2 py-0.5 bg-indigo-50 text-[#725EBE] rounded-md font-mono text-sm">
+                <span className="px-2 py-0.5 bg-indigo-50 text-[#7F7FFA] rounded-md font-mono text-sm">
                   {hoursWorked} hrs/wk
                 </span>
               </div>
@@ -562,7 +562,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 max={75}
                 value={hoursWorked}
                 onChange={(e) => setHoursWorked(Number(e.target.value))}
-                className="w-full accent-[#725EBE]"
+                className="w-full accent-[#7F7FFA]"
               />
               <div className="flex justify-between text-[10px] text-slate-400 font-bold">
                 <span>Part-Time (20h)</span>
@@ -584,7 +584,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                   onClick={() => setStateTaxRegime('none')}
                   className={`p-2 rounded-xl text-xs font-bold border transition-all text-center ${
                     stateTaxRegime === 'none' 
-                      ? 'bg-[#725EBE] text-white border-[#725EBE] shadow-xs' 
+                      ? 'bg-[#7F7FFA] text-white border-[#7F7FFA] shadow-xs' 
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -594,7 +594,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                   onClick={() => setStateTaxRegime('moderate')}
                   className={`p-2 rounded-xl text-xs font-bold border transition-all text-center ${
                     stateTaxRegime === 'moderate' 
-                      ? 'bg-[#725EBE] text-white border-[#725EBE] shadow-xs' 
+                      ? 'bg-[#7F7FFA] text-white border-[#7F7FFA] shadow-xs' 
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -604,7 +604,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                   onClick={() => setStateTaxRegime('high')}
                   className={`p-2 rounded-xl text-xs font-bold border transition-all text-center ${
                     stateTaxRegime === 'high' 
-                      ? 'bg-[#725EBE] text-white border-[#725EBE] shadow-xs' 
+                      ? 'bg-[#7F7FFA] text-white border-[#7F7FFA] shadow-xs' 
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -628,7 +628,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 step={1}
                 value={retirement401kPct}
                 onChange={(e) => setRetirement401kPct(Number(e.target.value))}
-                className="w-full accent-[#725EBE]"
+                className="w-full accent-[#7F7FFA]"
               />
               <p className="text-[11px] text-slate-500">
                 Contributes <strong className="text-slate-800">${Math.round(earnings.monthly401k).toLocaleString()}/mo</strong> directly to retirement before taxes.
@@ -639,7 +639,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
           {/* Card 3: Cost of Living Lifestyle Tiers */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#725EBE] flex items-center justify-center font-bold">3</div>
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">3</div>
               <h3 className="font-extrabold text-slate-900 text-base">Cost of Living Choices</h3>
             </div>
 
@@ -652,7 +652,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setHousingTier('roommate')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-left ${
-                    housingTier === 'roommate' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    housingTier === 'roommate' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   Roommate ($750)
@@ -660,7 +660,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setHousingTier('studio')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-left ${
-                    housingTier === 'studio' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    housingTier === 'studio' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   Studio Apt ($1,250)
@@ -668,7 +668,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setHousingTier('onebed')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-left ${
-                    housingTier === 'onebed' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    housingTier === 'onebed' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   1-Bedroom ($1,600)
@@ -676,7 +676,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setHousingTier('twobed')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-left ${
-                    housingTier === 'twobed' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    housingTier === 'twobed' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   2-Bed / Home ($2,300)
@@ -693,7 +693,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setTransportTier('transit')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-center ${
-                    transportTier === 'transit' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    transportTier === 'transit' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   Transit ($95)
@@ -701,7 +701,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setTransportTier('used')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-center ${
-                    transportTier === 'used' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    transportTier === 'used' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   Used Car ($380)
@@ -709,7 +709,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setTransportTier('financed')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-center ${
-                    transportTier === 'financed' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    transportTier === 'financed' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   New Lease ($680)
@@ -726,7 +726,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setFoodTier('frugal')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-center ${
-                    foodTier === 'frugal' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    foodTier === 'frugal' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   Meal Prep ($320)
@@ -734,7 +734,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setFoodTier('balanced')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-center ${
-                    foodTier === 'balanced' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    foodTier === 'balanced' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   Balanced ($480)
@@ -742,7 +742,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                 <button
                   onClick={() => setFoodTier('premium')}
                   className={`p-2 rounded-xl text-xs font-semibold border transition-all text-center ${
-                    foodTier === 'premium' ? 'bg-[#725EBE] text-white border-[#725EBE]' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    foodTier === 'premium' ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   Dining Out ($780)
@@ -804,7 +804,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
 
             {/* Net Take-Home */}
             <div className="bg-gradient-to-br from-indigo-50/80 to-indigo-100/40 p-5 rounded-3xl border border-indigo-200/80 shadow-xs flex flex-col justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#725EBE]">Net Take-Home Pay</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#7F7FFA]">Net Take-Home Pay</span>
               <div className="my-2">
                 <span className="text-2xl font-black text-indigo-950 font-mono">
                   ${Math.round(earnings.netMonthlyTakeHome).toLocaleString()}
@@ -848,7 +848,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
           {/* Detailed Deductions & Expense Breakdown Card */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-5">
             <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-              <PieChartIcon className="w-4 h-4 text-[#725EBE]" /> Monthly Cash Flow Breakdown
+              <PieChartIcon className="w-4 h-4 text-[#7F7FFA]" /> Monthly Cash Flow Breakdown
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -917,7 +917,7 @@ export const AustinJobSimulator: React.FC<{ language?: Language; standalone?: bo
                   <span className="text-xs font-extrabold text-slate-900">50/30/20 Budget Compliance</span>
                   <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Rule of Thumb</span>
                 </div>
-                <span className="text-xs font-bold text-[#725EBE]">
+                <span className="text-xs font-bold text-[#7F7FFA]">
                   {financialHealth.needsPct <= 55 && financialHealth.savingsPct >= 15 ? 'Balanced Allocation' : 'Budget Adjustment Needed'}
                 </span>
               </div>

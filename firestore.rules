@@ -57,10 +57,9 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        (request.auth.token.email == "kv303157@gmail.com" && request.auth.token.email_verified == true) ||
-        (request.auth.token.email == "kruzssmith@gmail.com" && request.auth.token.email_verified == true) ||
-        (request.auth.token.email == "vishnukakarla108@gmail.com" && request.auth.token.email_verified == true) ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+        request.auth.token.get('admin', false) == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
       );
     }
 
@@ -101,7 +100,15 @@ service cloud.firestore {
              data.graduateName is string && data.graduateName.size() > 0 &&
              data.issueDate is string && data.issueDate.size() == 10 &&
              data.expirationDate is string && data.expirationDate.size() == 10 &&
+             (!('isPublic' in data) || data.isPublic is bool) &&
              (!('userId' in data) || (data.userId is string && (data.userId == request.auth.uid || isAdmin())));
+    }
+
+    function isValidCertifierRequest(data) {
+      return data.keys().hasAll(['name', 'email', 'consent']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 120 &&
+             data.consent == true;
     }
 
     function uidUnchanged() {
@@ -167,9 +174,10 @@ service cloud.firestore {
     }
 
     match /credentials/{credentialId} {
-      // Verification is public for exact gets (employers, schools), listing is blocked to non-owners to protect privacy
-      allow get: if true;
-      allow list: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Direct verification requires opt-in isPublic == true OR authenticated owner/admin
+      allow get: if (resource.data.get('isPublic', false) == true) || 
+                   (isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin()));
+      allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       // Only the owner can create their credential record
       allow create: if isAuthenticated() && (!('userId' in request.resource.data) || request.auth.uid == request.resource.data.userId) && isValidCredential(request.resource.data);
       // Only the owner can update their credential
@@ -213,7 +221,8 @@ service cloud.firestore {
     }
 
     match /certifierRequests/{requestId} {
-      allow create: if true;
+      allow create: if isValidCertifierRequest(request.resource.data) && 
+                     (!('userId' in request.resource.data) || (isAuthenticated() && request.resource.data.userId == request.auth.uid));
       allow read: if isAdmin() || (isAuthenticated() && resource.data.get('userId', '') == request.auth.uid);
       allow update, delete: if isAdmin();
     }

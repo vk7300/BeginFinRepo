@@ -306,7 +306,7 @@ export const CreditScoreGame: React.FC<Props> = ({
     <div className="space-y-6 font-sans">
       {/* Top Bento Header */}
       <div className="bg-gradient-to-br from-slate-950 via-[#0C0E1E] to-[#161B3B] text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#725EBE]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#7F7FFA]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-indigo-300 text-xs font-bold uppercase tracking-wider">
@@ -422,7 +422,7 @@ export const CreditScoreGame: React.FC<Props> = ({
                       onClick={() => setBaselineScore(score)}
                       className={`py-1.5 rounded-xl text-xs font-bold border transition-all ${
                         baselineScore === score 
-                          ? 'bg-[#725EBE] text-white border-[#725EBE]' 
+                          ? 'bg-[#7F7FFA] text-white border-[#7F7FFA]' 
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -436,7 +436,7 @@ export const CreditScoreGame: React.FC<Props> = ({
             {/* 5 Core Pillars of FICO Card */}
             <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-4">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-[#725EBE]" />
+                <ShieldCheck className="w-5 h-5 text-[#7F7FFA]" />
                 <h3 className="font-extrabold text-slate-900 text-base">The 5 FICO Scoring Pillars</h3>
               </div>
 
@@ -492,7 +492,7 @@ export const CreditScoreGame: React.FC<Props> = ({
                   <h3 className="font-extrabold text-slate-900 text-lg">Test Real-Life Scenarios</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Toggle actions to observe immediate credit score changes.</p>
                 </div>
-                <span className="text-xs font-bold text-[#725EBE] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                <span className="text-xs font-bold text-[#7F7FFA] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
                   {activeScenarioIds.length} Selected
                 </span>
               </div>
@@ -561,7 +561,7 @@ export const CreditScoreGame: React.FC<Props> = ({
           {/* Left Controls: Balance & Limit Sliders */}
           <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-xs space-y-6">
             <h3 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-[#725EBE]" /> Credit Card Parameters
+              <Sliders className="w-5 h-5 text-[#7F7FFA]" /> Credit Card Parameters
             </h3>
 
             {/* Credit Limit */}
@@ -577,7 +577,7 @@ export const CreditScoreGame: React.FC<Props> = ({
                 step={250}
                 value={creditLimit}
                 onChange={(e) => setCreditLimit(Number(e.target.value))}
-                className="w-full accent-[#725EBE]"
+                className="w-full accent-[#7F7FFA]"
               />
             </div>
 
@@ -594,7 +594,7 @@ export const CreditScoreGame: React.FC<Props> = ({
                 step={50}
                 value={currentBalance}
                 onChange={(e) => setCurrentBalance(Number(e.target.value))}
-                className="w-full accent-[#725EBE]"
+                className="w-full accent-[#7F7FFA]"
               />
             </div>
 
@@ -719,11 +719,11 @@ export const CreditScoreGame: React.FC<Props> = ({
             <div className="space-y-6">
               {/* Header progress */}
               <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-                <span className="px-3 py-1 bg-indigo-50 text-[#725EBE] rounded-full text-xs font-bold uppercase tracking-wider border border-indigo-100">
+                <span className="px-3 py-1 bg-indigo-50 text-[#7F7FFA] rounded-full text-xs font-bold uppercase tracking-wider border border-indigo-100">
                   Scenario {quizIdx + 1} of {DECISION_CHALLENGES.length}
                 </span>
                 <span className="text-xs font-bold text-slate-500 font-mono">
-                  Score: <strong className="text-[#725EBE]">{quizScore} pts</strong>
+                  Score: <strong className="text-[#7F7FFA]">{quizScore} pts</strong>
                 </span>
               </div>
 
@@ -806,7 +806,7 @@ export const CreditScoreGame: React.FC<Props> = ({
                 <div className="flex justify-end pt-2">
                   <button
                     onClick={handleNextQuiz}
-                    className="px-6 py-3 bg-[#725EBE] hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-xs flex items-center gap-2 shadow-md"
+                    className="px-6 py-3 bg-[#7F7FFA] hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-xs flex items-center gap-2 shadow-md"
                   >
                     {quizIdx < DECISION_CHALLENGES.length - 1 ? 'Next Scenario' : 'Complete Challenge'} <ArrowRight className="w-4 h-4" />
                   </button>
@@ -831,7 +831,7 @@ export const CreditScoreGame: React.FC<Props> = ({
 
               <button
                 onClick={handleResetQuiz}
-                className="px-6 py-3 bg-[#725EBE] text-white font-bold rounded-xl hover:bg-indigo-700 transition-all text-xs inline-flex items-center gap-2 shadow-md"
+                className="px-6 py-3 bg-[#7F7FFA] text-white font-bold rounded-xl hover:bg-indigo-700 transition-all text-xs inline-flex items-center gap-2 shadow-md"
               >
                 <RotateCcw className="w-4 h-4" /> Retake Challenge
               </button>

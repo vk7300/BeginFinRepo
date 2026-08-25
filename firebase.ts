@@ -35,7 +35,7 @@ export const db = dbInstance;
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export { signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail };
+export { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail };
 export type { User, ConfirmationResult };
 
 export enum OperationType {
@@ -67,36 +67,9 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  const errMessage = error instanceof Error ? error.message : String(error);
+  // Log operational diagnostics without exposing student/user PII (emails, names)
+  console.error(`[Firestore Operation Failed] Type: ${operationType}, Path: ${path || 'unknown'}, Error: ${errMessage}`);
+  throw new Error(`Firestore operation failed: ${errMessage}`);
 }
 
-// Test connection to Firestore
-async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. ");
-    }
-  }
-}
-testConnection();

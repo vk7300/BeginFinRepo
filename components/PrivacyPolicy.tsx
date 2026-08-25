@@ -10,7 +10,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
     window.scrollTo(0, 0);
   }, []);
 
-  const currentDate = "August 19, 2026";
+  const currentDate = "August 20, 2026";
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-6">
@@ -86,8 +86,8 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
                       <td className="p-3.5">Account identification, certificate generation, and educator dashboard roster display</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-3.5 font-semibold text-slate-900">Email Address (Google SSO or Email Auth)</td>
-                      <td className="p-3.5">Account authentication, password reset, and secure session management</td>
+                      <td className="p-3.5 font-semibold text-slate-900">Email & Account Profile (Google One Tap / SSO or Email Auth)</td>
+                      <td className="p-3.5">Account authentication, credential verification, and secure session management via Firebase Authentication and Google Identity Services</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-3.5 font-semibold text-slate-900">Phone Number (Optional SMS Auth)</td>
@@ -130,7 +130,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
               <h4 className="font-bold">6. THIRD-PARTY SERVICES & INTEGRATIONS</h4>
               <p>Data sharing is strictly limited to services required to deliver core application functionality. We do not sell or monetize personal data:</p>
               <ul className="list-disc ml-6 space-y-2 mb-4">
-                <li><strong>Cloud Infrastructure & Database:</strong> Google Cloud Platform and Firebase (Firestore database and Firebase Authentication) provide secure hosting, real-time database synchronization, and encrypted user authentication.</li>
+                <li><strong>Cloud Infrastructure & Authentication:</strong> Google Cloud Platform, Firebase (Firestore database and Firebase Authentication), and Google Identity Services (Google One Tap) provide secure hosting, real-time database synchronization, and encrypted user authentication.</li>
                 <li><strong>Bradley AI Educational Assistant (Powered by Google Gemini®):</strong> When authenticated users ask educational questions to Bradley, queries are sent to Google's Gemini API for response generation. Chat sessions are subject to Google's Privacy Policy at <a href="https://policies.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-semibold">https://policies.google.com/</a>. Interactions are rate-limited to 5 messages per user per day. BeginFin does not persist, inspect, or sell private chat logs on its application servers.</li>
                 <li><strong>Google Classroom API:</strong> For teachers connecting their classes, BeginFin uses Google Classroom API scopes (<code>classroom.courses.readonly</code>, <code>classroom.rosters.readonly</code>, <code>classroom.coursework.students</code>, <code>classroom.announcements</code>) exclusively to import student rosters, create assignments, and publish course announcements. OAuth tokens are used solely for user-initiated operations.</li>
                 <li><strong>Optional Verifiable Credentials (Certifier.io):</strong> If a user requests a third-party verifiable digital credential, we share their name and email with Certifier.io solely to generate the credential, governed by Certifier.io's privacy policy at <a href="https://certifier.io/legal-and-security" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-semibold">https://certifier.io/legal-and-security</a>.</li>

@@ -223,7 +223,7 @@ export const Dashboard: React.FC<Props> = ({
             >
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#725EBE]">
+                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#7F7FFA]">
                     <Users className="w-5 h-5" />
                   </div>
                   <div>
@@ -251,7 +251,7 @@ export const Dashboard: React.FC<Props> = ({
                       setShowJoinInput(false);
                       onLogin();
                     }}
-                    className="w-full py-3 bg-[#725EBE] hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer"
+                    className="w-full py-3 bg-[#7F7FFA] hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer"
                   >
                     Sign In to Continue
                   </button>
@@ -281,7 +281,7 @@ export const Dashboard: React.FC<Props> = ({
                       }}
                       maxLength={6}
                       autoFocus
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 focus:border-[#725EBE] focus:bg-white rounded-2xl text-2xl font-black font-mono uppercase text-center tracking-[0.3em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-normal placeholder:text-sm outline-none transition-all"
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 focus:border-[#7F7FFA] focus:bg-white rounded-2xl text-2xl font-black font-mono uppercase text-center tracking-[0.3em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-normal placeholder:text-sm outline-none transition-all"
                     />
                   </div>
 
@@ -319,7 +319,7 @@ export const Dashboard: React.FC<Props> = ({
                   <button 
                     onClick={handleJoinClass}
                     disabled={isJoining || joinCode.trim().length !== 6 || joinFeedback.status === 'joined'}
-                    className="w-full py-3.5 bg-[#725EBE] hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
+                    className="w-full py-3.5 bg-[#7F7FFA] hover:bg-indigo-700 text-white font-bold rounded-xl transition-all text-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
                   >
                     {isJoining ? (
                       <>
@@ -346,12 +346,12 @@ export const Dashboard: React.FC<Props> = ({
       {isAskingName && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl animate-in zoom-in duration-200">
-            <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#725EBE]">
+            <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#7F7FFA]">
               <UserIcon className="w-7 h-7" />
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 text-center mb-1.5 tracking-tight">One Last Step</h3>
             <p className="text-slate-500 text-center font-medium text-xs sm:text-sm mb-6">
-              You're joining <span className="text-[#725EBE] font-bold">{isAskingName.className}</span>. Please enter your full name so your teacher can identify you.
+              You're joining <span className="text-[#7F7FFA] font-bold">{isAskingName.className}</span>. Please enter your full name so your teacher can identify you.
             </p>
             
             <div className="space-y-3.5">
@@ -368,7 +368,7 @@ export const Dashboard: React.FC<Props> = ({
               <button 
                 onClick={handleConfirmName}
                 disabled={isJoining || !tempName.trim()}
-                className="w-full py-3.5 bg-[#725EBE] text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-md flex items-center justify-center gap-2 text-sm"
+                className="w-full py-3.5 bg-[#7F7FFA] text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-md flex items-center justify-center gap-2 text-sm"
               >
                 {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm & Join'}
               </button>
@@ -409,17 +409,17 @@ export const Dashboard: React.FC<Props> = ({
             <div className="flex items-center justify-between gap-3 mb-1.5">
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">{t.courseCurriculum}</h2>
-                <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-[#725EBE] px-2.5 py-0.5 rounded-full border border-indigo-100">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-[#7F7FFA] px-2.5 py-0.5 rounded-full border border-indigo-100">
                   {requiredCompletedCount}/{requiredModules.length} Completed
                 </span>
               </div>
-              <span className="text-base font-black text-[#725EBE] font-mono">{Math.round(progress)}%</span>
+              <span className="text-base font-black text-[#7F7FFA] font-mono">{Math.round(progress)}%</span>
             </div>
             
             {/* Slim Animated Progress Bar */}
             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden p-0.5">
               <div 
-                className="h-full bg-[#725EBE] transition-all duration-700 ease-out rounded-full shadow-xs"
+                className="h-full bg-[#7F7FFA] transition-all duration-700 ease-out rounded-full shadow-xs"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -429,7 +429,7 @@ export const Dashboard: React.FC<Props> = ({
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
             <button 
               onClick={onViewCurriculum}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-slate-700 font-bold hover:text-[#725EBE] hover:bg-slate-100 transition-colors text-xs px-3.5 py-2 bg-slate-50 border border-slate-200/60 rounded-xl"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-slate-700 font-bold hover:text-[#7F7FFA] hover:bg-slate-100 transition-colors text-xs px-3.5 py-2 bg-slate-50 border border-slate-200/60 rounded-xl"
             >
               <Layout className="w-3.5 h-3.5 text-slate-500" /> Curriculum
             </button>
@@ -437,7 +437,7 @@ export const Dashboard: React.FC<Props> = ({
             {onViewTools && (
               <button 
                 onClick={onViewTools}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-slate-700 font-bold hover:text-[#725EBE] hover:bg-slate-100 transition-colors text-xs px-3.5 py-2 bg-slate-50 border border-slate-200/60 rounded-xl cursor-pointer"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-slate-700 font-bold hover:text-[#7F7FFA] hover:bg-slate-100 transition-colors text-xs px-3.5 py-2 bg-slate-50 border border-slate-200/60 rounded-xl cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-slate-500" /> Tools & Simulators
               </button>
@@ -450,7 +450,7 @@ export const Dashboard: React.FC<Props> = ({
                 setJoinFeedback({ status: 'idle', message: '' });
                 setJoinCode('');
               }}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold transition-colors text-xs px-3.5 py-2 rounded-xl border text-[#725EBE] bg-indigo-50/70 border-indigo-100 hover:bg-indigo-100 cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold transition-colors text-xs px-3.5 py-2 rounded-xl border text-[#7F7FFA] bg-indigo-50/70 border-indigo-100 hover:bg-indigo-100 cursor-pointer"
             >
               <Users className="w-3.5 h-3.5" /> Join Class
             </button>
@@ -461,7 +461,7 @@ export const Dashboard: React.FC<Props> = ({
               className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold transition-colors text-xs px-3.5 py-2 rounded-xl border ${
                 allCompleted 
                   ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-sm' 
-                  : 'text-[#725EBE] bg-indigo-50/70 border-indigo-100 hover:bg-indigo-100'
+                  : 'text-[#7F7FFA] bg-indigo-50/70 border-indigo-100 hover:bg-indigo-100'
               }`}
             >
               {allCompleted ? <Trophy className="w-3.5 h-3.5 text-amber-300" /> : <FileBadge className="w-3.5 h-3.5" />}
@@ -530,10 +530,10 @@ export const Dashboard: React.FC<Props> = ({
                   isCompleted 
                     ? 'bg-emerald-600 text-white' 
                     : authRequired 
-                      ? 'bg-indigo-100 text-[#725EBE]' 
+                      ? 'bg-indigo-100 text-[#7F7FFA]' 
                       : isChallengeModule 
                         ? 'bg-amber-500 text-white' 
-                        : 'bg-slate-100 text-slate-700 group-hover:bg-indigo-50 group-hover:text-[#725EBE]'
+                        : 'bg-slate-100 text-slate-700 group-hover:bg-indigo-50 group-hover:text-[#7F7FFA]'
                 }`}>
                   {isCompleted ? (
                     <CheckCircle2 className="w-5 h-5" />
@@ -561,7 +561,7 @@ export const Dashboard: React.FC<Props> = ({
                       </span>
                     )}
                     {authRequired && (
-                      <span className="text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-[#725EBE] px-1.5 py-0.5 rounded border border-indigo-200">
+                      <span className="text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-[#7F7FFA] px-1.5 py-0.5 rounded border border-indigo-200">
                         Sign In Required
                       </span>
                     )}
@@ -577,7 +577,7 @@ export const Dashboard: React.FC<Props> = ({
                   ) : isLocked && !authRequired ? (
                     <Lock className="w-4 h-4 text-slate-300" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#725EBE] group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#7F7FFA] group-hover:translate-x-0.5 transition-all" />
                   )}
                 </div>
               </button>

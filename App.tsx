@@ -30,6 +30,7 @@ import { ClaudeMdView } from './components/ClaudeMdView';
 import { ToolsView } from './components/ToolsView';
 import { Footer } from './components/Footer';
 import { BradleyChatbot } from './components/BradleyChatbot';
+import { GoogleOneTap } from './components/GoogleOneTap';
 
 const orderedModules = [
   modules.find(m => m.id === 'm1'),
@@ -335,10 +336,10 @@ const LoginModalContent: React.FC<{
       <button 
         type="button"
         onClick={onGoogleLogin}
-        className="w-full py-4 bg-white border border-slate-200 rounded-[1.5rem] font-bold text-slate-700 hover:border-indigo-600 hover:bg-slate-50 hover:shadow-md transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.98] text-base mb-6"
+        className="w-full py-4 bg-white border border-slate-200 rounded-[1.5rem] font-bold text-slate-800 hover:border-[#7F7FFA] hover:bg-slate-50 hover:shadow-md transition-all flex items-center justify-center gap-3 shadow-xs active:scale-[0.98] text-base mb-6 group cursor-pointer"
       >
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
-        Sign in with Google
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 transition-transform group-hover:scale-110" alt="Google" referrerPolicy="no-referrer" />
+        <span>Continue with Google</span>
       </button>
 
       <div className="relative py-1 mb-6">
@@ -1145,6 +1146,16 @@ const App: React.FC = () => {
           />
         </Modal>
 
+        {/* Magic Google One Tap Login */}
+        <GoogleOneTap
+          user={user}
+          onSuccess={(signedInUser) => {
+            if (currentView === 'welcome') {
+              handleStart(true);
+            }
+          }}
+        />
+
         <Modal 
           isOpen={showLoginModal} 
           onClose={() => setShowLoginModal(false)} 
@@ -1934,7 +1945,7 @@ const App: React.FC = () => {
                           }} 
                           className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
-                          <Sparkles className="w-4 h-4 shrink-0 text-[#725EBE]" /> Tools & Simulators
+                          <Sparkles className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Tools & Simulators
                         </button>
                         <button 
                           onClick={() => {

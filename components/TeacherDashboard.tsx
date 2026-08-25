@@ -758,7 +758,7 @@ export const TeacherDashboard: React.FC<{
             </button>
             <button 
               onClick={() => setIsCreatingClass(true)} 
-              className="px-6 py-2.5 bg-[#725EBE] text-white font-bold rounded-full hover:bg-[#5b4a99] transition-colors flex items-center gap-2 shadow-sm"
+              className="px-6 py-2.5 bg-[#7F7FFA] text-white font-bold rounded-full hover:bg-[#5656D4] transition-colors flex items-center gap-2 shadow-sm"
             >
               <Plus className="w-4 h-4" /> Create Class
             </button>
@@ -771,8 +771,8 @@ export const TeacherDashboard: React.FC<{
           <div className="lg:col-span-2 space-y-6">
             {classes.length === 0 && !isCreatingClass ? (
               <div className="bg-white rounded-[32px] p-12 text-center text-slate-900 h-full flex flex-col items-center justify-center">
-                <div className="w-20 h-20 bg-[#725EBE]/10 rounded-3xl flex items-center justify-center mb-6">
-                  <Users className="w-10 h-10 text-[#725EBE]" />
+                <div className="w-20 h-20 bg-[#7F7FFA]/10 rounded-3xl flex items-center justify-center mb-6">
+                  <Users className="w-10 h-10 text-[#7F7FFA]" />
                 </div>
                 <h3 className="text-2xl font-black mb-2">No classes yet</h3>
                 <p className="text-slate-500 font-medium mb-8 max-w-sm">Create your first class to start tracking student progress.</p>
@@ -782,7 +782,7 @@ export const TeacherDashboard: React.FC<{
                     placeholder="Enter Class Name (e.g. Economics 101)"
                     value={newClassName}
                     onChange={(e) => setNewClassName(e.target.value)}
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:border-[#725EBE] focus:bg-white transition-all outline-none text-slate-900"
+                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-slate-900"
                   />
                   <button 
                     onClick={handleCreateClass}
@@ -996,7 +996,7 @@ export const TeacherDashboard: React.FC<{
                                        onClick={() => handleOpenRosterSync(cls)}
                                        className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-full hover:bg-slate-100 transition-all shadow-sm flex items-center gap-1.5 border border-slate-200"
                                      >
-                                       <Users className="w-3.5 h-3.5 text-[#725EBE]" /> Sync Roster
+                                       <Users className="w-3.5 h-3.5 text-[#7F7FFA]" /> Sync Roster
                                      </button>
                                      <button
                                        onClick={() => handleSyncGradesToClassroom(cls)}
@@ -1052,7 +1052,7 @@ export const TeacherDashboard: React.FC<{
                                              <div className="flex items-center gap-3">
                                                <div className="w-full bg-slate-100 rounded-full h-2 max-w-[100px]">
                                                  <div 
-                                                   className="bg-[#725EBE] h-2 rounded-full" 
+                                                   className="bg-[#7F7FFA] h-2 rounded-full" 
                                                    style={{ width: `${Math.min(progressPercent, 100)}%` }}
                                                  ></div>
                                                </div>
@@ -1072,7 +1072,7 @@ export const TeacherDashboard: React.FC<{
                                               {canDownloadCert ? (
                                                 <button
                                                   onClick={() => handleDownloadCertificate(student)}
-                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#725EBE] text-white rounded-md hover:bg-[#5b4a99] transition-colors"
+                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#7F7FFA] text-white rounded-md hover:bg-[#5656D4] transition-colors"
                                                   title="Download Certificate"
                                                 >
                                                   <Award className="w-3.5 h-3.5" /> Certificate

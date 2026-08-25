@@ -117,16 +117,16 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
 
   useEffect(() => {
       if (step === 'quiz' && isFullScreenLockEnabled && userRole === 'student') {
-          // Request full screen
+          // Request full screen safely on user interaction
           if (document.documentElement.requestFullscreen) {
-              document.documentElement.requestFullscreen();
+              document.documentElement.requestFullscreen().catch(() => {});
           }
       }
       
       // Handle exit full screen
       const handleFullscreenChange = async () => {
           if (step === 'quiz' && isFullScreenLockEnabled && userRole === 'student' && !document.fullscreenElement && !finishedQuiz) {
-              // Report tampering
+              // Report event to teacher
               if (classId && user) {
                   try {
                       await addDoc(collection(db, 'classes', classId, 'alerts'), {
@@ -138,13 +138,8 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                           message: 'Exited full screen mode during quiz.'
                       });
                   } catch (err) {
-                      console.error('Error reporting tampering:', err);
+                      console.error('Error reporting alert:', err);
                   }
-              }
-
-              // Re-request full screen
-              if (document.documentElement.requestFullscreen) {
-                  document.documentElement.requestFullscreen();
               }
           }
       };
@@ -153,8 +148,8 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
       return () => {
           document.removeEventListener('fullscreenchange', handleFullscreenChange);
           // Exit full screen when leaving quiz or module
-          if (document.fullscreenElement) {
-              document.exitFullscreen();
+          if (document.fullscreenElement && document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
           }
       };
   }, [step, isFullScreenLockEnabled, userRole, finishedQuiz, classId, user, moduleData.title]);
@@ -392,8 +387,8 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                       badgeStyle = 'border-slate-200 opacity-40';
                     }
                   } else if (isSelected) {
-                    btnStyle = 'border-[#725EBE] bg-indigo-50/60 text-indigo-950 shadow-xs';
-                    badgeStyle = 'border-[#725EBE] bg-[#725EBE]';
+                    btnStyle = 'border-[#7F7FFA] bg-indigo-50/60 text-indigo-950 shadow-xs';
+                    badgeStyle = 'border-[#7F7FFA] bg-[#7F7FFA]';
                     dotStyle = 'bg-white scale-100 opacity-100';
                   }
 
@@ -424,7 +419,10 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
 
               {/* Compact Inline Feedback Banner */}
               {showFeedback && (
-                <div className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 animate-in slide-in-from-top-1 duration-200 relative overflow-hidden ${
+                <div 
+                  role="status"
+                  aria-live="polite"
+                  className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 animate-in slide-in-from-top-1 duration-200 relative overflow-hidden ${
                   userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.isCorrect 
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-900' 
                   : 'bg-rose-50 border-rose-200 text-rose-900'
@@ -455,7 +453,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                   </div>
                   <div className="hidden sm:flex items-center gap-1 shrink-0 text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200/50">
                     <span>Advancing in 3s</span>
-                    <ChevronRight className="w-3 h-3 text-[#725EBE]" />
+                    <ChevronRight className="w-3 h-3 text-[#7F7FFA]" />
                   </div>
                 </div>
               )}
@@ -479,7 +477,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                   className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs active:scale-[0.98] ${
                     !userAnswers.find(a => a.questionIdx === currentQuestionIdx)
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                    : 'bg-[#725EBE] text-white hover:bg-indigo-700 shadow-indigo-500/20'
+                    : 'bg-[#7F7FFA] text-white hover:bg-indigo-700 shadow-indigo-500/20'
                   }`}
                 >
                   {currentQuestionIdx < activeQuiz.length - 1 ? (
@@ -503,7 +501,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Review Mistakes</h3>
                     <button 
                       onClick={() => setShowReview(false)}
-                      className="text-[#725EBE] font-bold text-xs sm:text-sm hover:underline"
+                      className="text-[#7F7FFA] font-bold text-xs sm:text-sm hover:underline"
                     >
                       Back to Results
                     </button>
@@ -544,7 +542,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                       </div>
                       <button 
                         onClick={() => onComplete()}
-                        className="w-full max-w-sm mx-auto bg-[#725EBE] text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
+                        className="w-full max-w-sm mx-auto bg-[#7F7FFA] text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
                       >
                         {t.completeUnit} <ArrowRight className="w-4 h-4" />
                       </button>
@@ -566,7 +564,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                       <div className="grid grid-cols-2 gap-2.5 pt-1">
                         <button 
                           onClick={handleRetry}
-                          className="bg-[#725EBE] text-white font-bold py-2.5 px-3 rounded-xl hover:bg-indigo-700 transition-all shadow-xs flex items-center justify-center gap-1.5 text-xs"
+                          className="bg-[#7F7FFA] text-white font-bold py-2.5 px-3 rounded-xl hover:bg-indigo-700 transition-all shadow-xs flex items-center justify-center gap-1.5 text-xs"
                         >
                           <RotateCcw className="w-3.5 h-3.5" /> {t.retryQuiz}
                         </button>
@@ -598,7 +596,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
           <div className="lg:col-span-4">
             <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-4 sticky top-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#725EBE]">Lesson Progress</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7F7FFA]">Lesson Progress</span>
                 <h3 className="text-lg font-bold text-slate-900 tracking-tight mt-0.5">
                   Section {currentSectionIdx + 1} of {contentSections.length}
                 </h3>
@@ -606,7 +604,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
               
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-center text-[#725EBE] shrink-0">
+                  <div className="w-9 h-9 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-center text-[#7F7FFA] shrink-0">
                     <BookOpen className="w-4 h-4" />
                   </div>
                   <div className="flex-1">
@@ -615,7 +613,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                     </p>
                     <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
                       <div 
-                        className="bg-[#725EBE] h-full rounded-full transition-all duration-500"
+                        className="bg-[#7F7FFA] h-full rounded-full transition-all duration-500"
                         style={{ width: `${((currentSectionIdx + 1) / contentSections.length) * 100}%` }}
                       />
                     </div>
@@ -636,13 +634,21 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                 )}
                 
                 <div className="space-y-4">
-                  {contentSections[currentSectionIdx].paragraphs.map((para, i) => (
-                    <p key={i} className="leading-relaxed" dangerouslySetInnerHTML={{ 
-                      __html: para
-                        .replace(/•/g, '<span class="text-indigo-600 font-bold mr-2">•</span>')
-                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900 font-semibold">$1</strong>')
-                    }} />
-                  ))}
+                  {contentSections[currentSectionIdx].paragraphs.map((para, i) => {
+                    const parts = para.split(/(\*\*.*?\*\*|•)/g);
+                    return (
+                      <p key={i} className="leading-relaxed">
+                        {parts.map((part, pIdx) => {
+                          if (part === '•') {
+                            return <span key={pIdx} className="text-indigo-600 font-bold mr-2">•</span>;
+                          } else if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={pIdx} className="text-slate-900 font-semibold">{part.slice(2, -2)}</strong>;
+                          }
+                          return part;
+                        })}
+                      </p>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -658,7 +664,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
               )}
               <button 
                 onClick={handleNextSection}
-                className="flex-[2] bg-[#725EBE] text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98] text-sm group"
+                className="flex-[2] bg-[#7F7FFA] text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98] text-sm group"
               >
                 {currentSectionIdx < contentSections.length - 1 ? (
                   <>
