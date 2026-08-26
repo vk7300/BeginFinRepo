@@ -33,7 +33,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
             />
             {/* Center icon */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <img src="https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png" alt="BeginFin Logo" className="w-10 h-10 object-contain rounded-md" referrerPolicy="no-referrer" />
+              <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-10 h-10 object-contain rounded-xl shadow-md" referrerPolicy="no-referrer" />
             </div>
           </div>
           

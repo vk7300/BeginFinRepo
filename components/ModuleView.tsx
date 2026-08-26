@@ -633,16 +633,35 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                   </h3>
                 )}
                 
-                <div className="space-y-4">
-                  {contentSections[currentSectionIdx].paragraphs.map((para, i) => {
-                    const parts = para.split(/(\*\*.*?\*\*|•)/g);
+                <div className="space-y-3.5">
+                  {contentSections[currentSectionIdx].paragraphs.map((rawPara, i) => {
+                    // Sanitize any accidental HTML tags
+                    const para = rawPara.replace(/<[^>]*>/g, '').trim();
+                    const isBullet = para.startsWith('•') || para.startsWith('-');
+                    const cleanText = isBullet ? para.replace(/^[•\-]\s*/, '') : para;
+                    const parts = cleanText.split(/(\*\*.*?\*\*)/g);
+
+                    if (isBullet) {
+                      return (
+                        <div key={i} className="flex items-start gap-2.5 pl-1.5 py-0.5 leading-relaxed">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#7F7FFA] mt-2.5 shrink-0" />
+                          <div className="text-slate-700 text-sm sm:text-base flex-1">
+                            {parts.map((part, pIdx) => {
+                              if (part.startsWith('**') && part.endsWith('**')) {
+                                return <strong key={pIdx} className="text-slate-900 font-bold">{part.slice(2, -2)}</strong>;
+                              }
+                              return part;
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+
                     return (
-                      <p key={i} className="leading-relaxed">
+                      <p key={i} className="leading-relaxed text-slate-700 text-sm sm:text-base">
                         {parts.map((part, pIdx) => {
-                          if (part === '•') {
-                            return <span key={pIdx} className="text-indigo-600 font-bold mr-2">•</span>;
-                          } else if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={pIdx} className="text-slate-900 font-semibold">{part.slice(2, -2)}</strong>;
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={pIdx} className="text-slate-900 font-bold">{part.slice(2, -2)}</strong>;
                           }
                           return part;
                         })}

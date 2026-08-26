@@ -238,9 +238,9 @@ export const ClaudeMdView: React.FC<ClaudeMdViewProps> = ({ onBack }) => {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5">
                 <img 
-                  src="https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png" 
+                  src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" 
                   alt="BeginFin" 
-                  className="w-6 h-6 object-contain rounded-md" 
+                  className="w-6 h-6 object-contain rounded-md shadow-xs" 
                   referrerPolicy="no-referrer"
                 />
                 <span className="font-bold text-slate-900 text-sm tracking-tight">BeginFin</span>

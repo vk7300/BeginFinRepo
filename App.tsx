@@ -1339,7 +1339,7 @@ const App: React.FC = () => {
                 <header className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-slate-200 px-6 flex items-center justify-between no-print bg-white/70 backdrop-blur-md">
                   <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
                     <div className="flex items-center gap-2">
-                       <img src="https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md" referrerPolicy="no-referrer" />
+                       <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
                        <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
                     </div>
                   </div>
@@ -1385,7 +1385,7 @@ const App: React.FC = () => {
                 <header className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-slate-200 px-6 flex items-center justify-between no-print bg-white/70 backdrop-blur-md">
                   <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
                     <div className="flex items-center gap-2">
-                       <img src="https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md" referrerPolicy="no-referrer" />
+                       <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
                        <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
                     </div>
                   </div>
@@ -1636,7 +1636,7 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
                     <div className="flex items-center gap-2">
-                       <img src="https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md" referrerPolicy="no-referrer" />
+                       <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
                        <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
                     </div>
                   </div>

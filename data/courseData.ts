@@ -21,7 +21,7 @@ export interface Module {
   translations: { en: ModuleData };
 }
 
-const blueText = (text: string) => `<span class="text-indigo-600 font-bold">${text}</span>`;
+const blueText = (text: string) => `**${text}**`;
 
 export const modules: Module[] = [
   {

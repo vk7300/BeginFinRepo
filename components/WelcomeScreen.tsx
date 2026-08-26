@@ -231,7 +231,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         } border rounded-full flex items-center justify-between`}>
         <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <img 
-            src="https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png" 
+            src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" 
             alt="BeginFin Logo" 
             className="w-7 h-7 sm:w-8 sm:h-8 object-contain rounded-xl shadow-sm" 
             referrerPolicy="no-referrer" 

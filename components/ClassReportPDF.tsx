@@ -119,7 +119,7 @@ export const ClassReportPDF: React.FC<Props> = ({ className, students, modules }
       <div className="mt-24 pt-12 border-t border-slate-100 flex justify-between items-center relative z-10">
         <p className="text-slate-400 text-sm font-bold tracking-wide">© 2026 BeginFin - An Open-Source Educational Project</p>
         <div className="flex items-center gap-2">
-           <img src="/logo.png" alt="BeginFin Logo" className="w-5 h-5 object-contain rounded" referrerPolicy="no-referrer" />
+           <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-5 h-5 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
            <span className="font-black text-slate-900 tracking-tighter text-lg">BeginFin</span>
         </div>
       </div>
