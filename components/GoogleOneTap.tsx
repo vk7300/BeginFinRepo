@@ -20,7 +20,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
   const isPromptedRef = useRef(false);
   const clientId =
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    firebaseConfigJson.oAuthClientId ||
+    (firebaseConfigJson as any).oAuthClientId ||
     '910198173440-3veu2i1nuj4fkjp2ki6gam0gdj5kc9tl.apps.googleusercontent.com';
 
   // Keep global success callback reference updated without triggering re-initialization

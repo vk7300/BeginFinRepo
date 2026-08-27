@@ -3,7 +3,7 @@ import { CheckCircle2, ChevronRight, Trophy, Lock, FileBadge, Share2, Users, Arr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Module } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
-import { db, doc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, doc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, handleFirestoreError, OperationType, getDoc } from '../firebase';
 
 import { User } from '../firebase';
 
@@ -97,11 +97,10 @@ export const Dashboard: React.FC<Props> = ({
     setJoinFeedback({ status: 'idle', message: '' });
     if (triggerLoading) triggerLoading("Joining class...", 2500);
     try {
-      const classesRef = collection(db, 'classes');
-      const q = query(classesRef, where('joinCode', '==', joinCode.toUpperCase()));
-      const querySnapshot = await getDocs(q);
+      const classRef = doc(db, 'classes', joinCode.toUpperCase());
+      const classDoc = await getDoc(classRef);
       
-      if (querySnapshot.empty) {
+      if (!classDoc.exists()) {
         setJoinFeedback({ 
           status: 'not_found', 
           message: `Couldn't Find Class: No active class found with code "${joinCode.toUpperCase()}". Check the code with your teacher.` 
@@ -110,7 +109,6 @@ export const Dashboard: React.FC<Props> = ({
         return;
       }
       
-      const classDoc = querySnapshot.docs[0];
       const classData = classDoc.data();
       
       if (user) {
@@ -125,7 +123,8 @@ export const Dashboard: React.FC<Props> = ({
         } else {
           await setDoc(doc(db, 'users', user.uid), {
             classId: classDoc.id,
-            teacherId: classData.teacherId
+            teacherId: classData.teacherId,
+            joinCode: joinCode.toUpperCase()
           }, { merge: true });
           setJoinFeedback({ 
             status: 'joined', 
@@ -175,7 +174,8 @@ export const Dashboard: React.FC<Props> = ({
       await setDoc(doc(db, 'users', user.uid), {
         displayName: finalName,
         classId: isAskingName.classId,
-        teacherId: isAskingName.teacherId
+        teacherId: isAskingName.teacherId,
+        joinCode: joinCode.toUpperCase()
       }, { merge: true });
       setJoinFeedback({ 
         status: 'joined', 

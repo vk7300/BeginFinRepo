@@ -57,9 +57,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.get('admin', false) == true ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
+        request.auth.token.email in ['kv303157@gmail.com', 'kruzksmith@gmail.com', 'vishnukakarla108@gmail.com']
       );
     }
 
@@ -81,6 +79,9 @@ service cloud.firestore {
              data.completedModules is list &&
              (!('classId' in data) || data.classId is string || data.classId == null) &&
              (!('teacherId' in data) || data.teacherId is string || data.teacherId == null) &&
+             (!('joinCode' in data) || data.joinCode is string || data.joinCode == null) &&
+             (!('agreedToTerms' in data) || data.agreedToTerms is bool) &&
+             (!('agreedToTermsAt' in data) || data.agreedToTermsAt is string) &&
              (!('creditScoreMaster' in data) || data.creditScoreMaster is bool) &&
              (!('highCreditScore' in data) || data.highCreditScore is int || data.highCreditScore is float);
     }
@@ -129,7 +130,15 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid);
       allow create: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && uidUnchanged();
       allow update: if (isOwner(userId) && uidNotModified() && isValidUser(request.resource.data) && 
-                       (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher'] || (request.resource.data.role == 'admin' && resource.data.get('role', '') == 'admin'))
+                       (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher']) &&
+                       (
+                         !('classId' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                         request.resource.data.classId == null ||
+                         (
+                           'joinCode' in request.resource.data &&
+                           get(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.joinCode == request.resource.data.joinCode
+                         )
+                       )
                       ) || 
                    isAdmin() ||
                    (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid && 
@@ -174,9 +183,8 @@ service cloud.firestore {
     }
 
     match /credentials/{credentialId} {
-      // Direct verification requires opt-in isPublic == true OR authenticated owner/admin
-      allow get: if (resource.data.get('isPublic', false) == true) || 
-                   (isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin()));
+      // Direct verification requires authenticated owner/admin
+      allow get: if isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin());
       allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       // Only the owner can create their credential record
       allow create: if isAuthenticated() && (!('userId' in request.resource.data) || request.auth.uid == request.resource.data.userId) && isValidCredential(request.resource.data);

@@ -179,6 +179,7 @@ const LoginModalContent: React.FC<{
   const [authMethod, setAuthMethod] = useState<'input' | 'verify'>('input');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [resetSent, setResetSent] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const mapAuthError = (error: any) => {
     const code = error.code || error.message || '';
@@ -265,6 +266,10 @@ const LoginModalContent: React.FC<{
 
   const handleAuthSubmit = async (isSignUpChoice: boolean, e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!agreedToTerms) {
+      setError("You must agree to the Terms of Service and be at least 14 years old to continue.");
+      return;
+    }
     setError('');
     setIsLoading(true);
 
@@ -335,7 +340,13 @@ const LoginModalContent: React.FC<{
       {/* Google SSO on Top */}
       <button 
         type="button"
-        onClick={onGoogleLogin}
+        onClick={() => {
+          if (!agreedToTerms) {
+            setError("You must agree to the Terms of Service and be at least 14 years old to continue.");
+            return;
+          }
+          onGoogleLogin();
+        }}
         className="w-full py-4 bg-white border border-slate-200 rounded-[1.5rem] font-bold text-slate-800 hover:border-[#7F7FFA] hover:bg-slate-50 hover:shadow-md transition-all flex items-center justify-center gap-3 shadow-xs active:scale-[0.98] text-base mb-6 group cursor-pointer"
       >
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 transition-transform group-hover:scale-110" alt="Google" referrerPolicy="no-referrer" />
@@ -349,6 +360,19 @@ const LoginModalContent: React.FC<{
             Or continue with Email
           </span>
         </div>
+      </div>
+
+      <div className="mb-6 flex items-start gap-3 px-2">
+        <input 
+          type="checkbox" 
+          id="terms-agree" 
+          checked={agreedToTerms}
+          onChange={(e) => setAgreedToTerms(e.target.checked)}
+          className="mt-1 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+        />
+        <label htmlFor="terms-agree" className="text-xs text-slate-600 leading-tight">
+          I agree to the <a href="/termsofuse" target="_blank" className="font-bold text-indigo-600 hover:underline">Terms of Service</a>, <a href="/privacypolicy" target="_blank" className="font-bold text-indigo-600 hover:underline">Privacy Policy</a>, and confirm I am at least 14 years of age.
+        </label>
       </div>
 
       {resetSent && (
@@ -775,6 +799,8 @@ const App: React.FC = () => {
           email: user.email,
           completedModules: initialModules,
           role: 'student', // Default to student
+          agreedToTerms: true,
+          agreedToTermsAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString()
         }, { merge: true }).then(() => {
           try { localStorage.removeItem('beginfin-progress') } catch(e) {};
