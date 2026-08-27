@@ -30,7 +30,7 @@ import { ClaudeMdView } from './components/ClaudeMdView';
 import { ToolsView } from './components/ToolsView';
 import { Footer } from './components/Footer';
 import { BradleyChatbot } from './components/BradleyChatbot';
-import { GoogleOneTap } from './components/GoogleOneTap';
+
 
 const orderedModules = [
   modules.find(m => m.id === 'm1'),
@@ -1172,15 +1172,7 @@ const App: React.FC = () => {
           />
         </Modal>
 
-        {/* Magic Google One Tap Login */}
-        <GoogleOneTap
-          user={user}
-          onSuccess={(signedInUser) => {
-            if (currentView === 'welcome') {
-              handleStart(true);
-            }
-          }}
-        />
+
 
         <Modal 
           isOpen={showLoginModal} 

@@ -56,8 +56,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.email in ['kv303157@gmail.com', 'kruzksmith@gmail.com', 'vishnukakarla108@gmail.com']
+      return isAuthenticated() && request.auth.token.email_verified == true && (
+        request.auth.token.email in ['kv303157@gmail.com', 'kruzssmith@gmail.com', 'vishnukakarla108@gmail.com']
       );
     }
 
@@ -149,24 +149,13 @@ service cloud.firestore {
     }
 
     match /classes/{classId} {
-      // Anyone authenticated can read specific class info (needed for joining)
-      allow get: if isAuthenticated();
-      // Block arbitrary class scraping: listing only allowed if user is the teacher or a student in the class
+      // Block arbitrary class scraping: get/listing only allowed if user is the teacher or a student in the class
+      allow get: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || (resource.data.studentIds is list && request.auth.uid in resource.data.studentIds));
       allow list: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || (resource.data.studentIds is list && request.auth.uid in resource.data.studentIds));
       // Only teachers can create classes
       allow create: if isTeacher() && isValidClass(request.resource.data);
       // Only the class teacher can update or delete the class
-      // OR students removing themselves from studentIds list during account deletion/leaving
-      allow update: if isClassTeacher(classId) || (
-        isAuthenticated() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentIds']) &&
-        request.resource.data.studentIds is list &&
-        (
-          (request.auth.uid in request.resource.data.studentIds && !(resource.data.get('studentIds', []) is list && request.auth.uid in resource.data.studentIds)) ||
-          (!(request.auth.uid in request.resource.data.studentIds) && resource.data.get('studentIds', []) is list && request.auth.uid in resource.data.studentIds)
-        )
-      );
-      allow delete: if isClassTeacher(classId);
+      allow update, delete: if isClassTeacher(classId);
 
       match /alerts/{alertId} {
         // Teachers can read and delete alerts for their own classes
@@ -221,16 +210,16 @@ service cloud.firestore {
                data.updatedAt is string;
       }
 
-      // Public can read questions
-      allow read: if true;
+      // Authenticated users can read questions
+      allow read: if isAuthenticated();
       // Only Admin can write/delete questions
       allow create, update: if isAdmin() && isValidQuestion(request.resource.data);
       allow delete: if isAdmin();
     }
 
     match /certifierRequests/{requestId} {
-      allow create: if isValidCertifierRequest(request.resource.data) && 
-                     (!('userId' in request.resource.data) || (isAuthenticated() && request.resource.data.userId == request.auth.uid));
+      allow create: if isAuthenticated() && isValidCertifierRequest(request.resource.data) && 
+                     (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid);
       allow read: if isAdmin() || (isAuthenticated() && resource.data.get('userId', '') == request.auth.uid);
       allow update, delete: if isAdmin();
     }

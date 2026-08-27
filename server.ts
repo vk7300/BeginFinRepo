@@ -81,12 +81,14 @@ async function startServer() {
     'https://begin-fin.com',
     'https://www.begin-fin.com',
     'http://localhost:3000',
-    'http://127.0.0.1:3000'
+    'http://127.0.0.1:3000',
+    'https://ais-dev-3pukbrm6cjmwehc3hl7xhd-20819416614.us-west2.run.app',
+    'https://ais-pre-3pukbrm6cjmwehc3hl7xhd-20819416614.us-west2.run.app'
   ];
 
   app.use(cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app') || origin.endsWith('.web.app') || origin.endsWith('.firebaseapp.com')) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy'));
@@ -349,19 +351,34 @@ BeginFin Curriculum Reference:
 
   app.post("/api/request-certifier-credential", certifierLimiter, async (req, res) => {
     try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Missing or invalid authorization token" });
+      }
+      const token = authHeader.split("Bearer ")[1];
+      let decodedToken;
+      try {
+        decodedToken = await adminAuth.verifyIdToken(token);
+      } catch (err) {
+        return res.status(401).json({ error: "Unauthorized request" });
+      }
+
       const { name, email, serialNumber, consent, userId } = req.body;
 
-      if (!name || !email || consent !== true) {
-        return res.status(400).json({ error: "Full name, email, and explicit consent are required." });
+      if (!name || consent !== true) {
+        return res.status(400).json({ error: "Full name and explicit consent are required." });
       }
+      
+      const verifiedEmail = decodedToken.email || email;
+      const verifiedUserId = decodedToken.uid || userId;
 
       // Safe sanitized logging without writing student PII to stdout
       console.log(`[Certifier] Digital credential request processed at ${new Date().toISOString()}`);
 
       const cleanName = sanitizeHeader(name).substring(0, 100);
-      const cleanEmail = sanitizeHeader(email).substring(0, 100);
+      const cleanEmail = sanitizeHeader(verifiedEmail).substring(0, 100);
       const cleanSerial = sanitizeHeader(serialNumber || 'N/A').substring(0, 50);
-      const cleanUserId = sanitizeHeader(userId || 'N/A').substring(0, 60);
+      const cleanUserId = sanitizeHeader(verifiedUserId || 'N/A').substring(0, 60);
 
       const safeNameHtml = escapeHtml(cleanName);
       const safeEmailHtml = escapeHtml(cleanEmail);

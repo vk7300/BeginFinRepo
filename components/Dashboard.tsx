@@ -126,6 +126,17 @@ export const Dashboard: React.FC<Props> = ({
             teacherId: classData.teacherId,
             joinCode: joinCode.toUpperCase()
           }, { merge: true });
+          
+          // Add student to the class document's studentIds array directly
+          try {
+            const { arrayUnion } = await import('../firebase');
+            await updateDoc(classRef, {
+              studentIds: arrayUnion(user.uid)
+            });
+          } catch (e) {
+            console.warn("Could not automatically update class studentIds:", e);
+          }
+          
           setJoinFeedback({ 
             status: 'joined', 
             message: `Joined ${classData.className || 'Class'}!`, 
@@ -177,6 +188,18 @@ export const Dashboard: React.FC<Props> = ({
         teacherId: isAskingName.teacherId,
         joinCode: joinCode.toUpperCase()
       }, { merge: true });
+      
+      // Add student to the class document's studentIds array directly
+      try {
+        const { arrayUnion } = await import('../firebase');
+        const classRef = doc(db, 'classes', isAskingName.classId);
+        await updateDoc(classRef, {
+          studentIds: arrayUnion(user.uid)
+        });
+      } catch (e) {
+        console.warn("Could not automatically update class studentIds:", e);
+      }
+      
       setJoinFeedback({ 
         status: 'joined', 
         message: `Joined ${isAskingName.className || 'Class'}!`, 
