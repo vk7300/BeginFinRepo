@@ -167,24 +167,32 @@ async function startServer() {
     try {
       const { moduleId } = req.body;
       const uid = (req as any).user.uid;
-      
+
       if (!moduleId || typeof moduleId !== 'string') {
+        return res.status(400).json({ error: "Valid moduleId is required" });
+      }
+
+      const targetModule = modules.find(m => m.id === moduleId);
+      if (!targetModule) {
         return res.status(400).json({ error: "Invalid module ID." });
       }
-      
+
       const userDoc = await adminDb.collection("users").doc(uid).get();
       const userData = userDoc.data();
       if (userData?.completedModules?.includes(moduleId)) {
         return res.json({ success: true, message: "Already completed." });
       }
 
-      // Ensure the module does not have a quiz before allowing direct completion
       const questionsSnap = await adminDb.collection('questions')
         .where('moduleId', '==', moduleId)
         .where('isPublished', '==', true)
+        .limit(1)
         .get();
-        
-      if (!questionsSnap.empty) {
+
+      const hasCustomQuiz = !questionsSnap.empty;
+      const hasStandardQuiz = targetModule.quiz && targetModule.quiz.length > 0;
+
+      if (hasCustomQuiz || hasStandardQuiz) {
         return res.status(403).json({ error: "This module requires passing a quiz. Use /api/grade-quiz instead." });
       }
 
@@ -202,8 +210,13 @@ async function startServer() {
   // API endpoint to grade a quiz
   app.post("/api/grade-quiz", requireAuth, async (req, res) => {
     try {
-      const { moduleId, answers } = req.body; // answers is { questionId: selectedIndex }
+      const { moduleId, answers, isAlternative } = req.body; 
       const uid = (req as any).user.uid;
+      
+      const targetModule = modules.find(m => m.id === moduleId);
+      if (!targetModule) {
+        return res.status(400).json({ error: "Invalid module ID." });
+      }
       
       const snapshot = await adminDb.collection('questions')
         .where('moduleId', '==', moduleId)
@@ -213,23 +226,32 @@ async function startServer() {
       let correctCount = 0;
       let totalCount = snapshot.docs.length;
       
-      const results: Record<string, { correct: boolean, correctIndex?: number }> = {};
+      const results: Record<string, { correct: boolean }> = {};
       
-      snapshot.docs.forEach(doc => {
-        const qData = doc.data();
-        const selectedIndex = answers[doc.id];
-        const isCorrect = selectedIndex === qData.correctIndex;
-        
-        results[doc.id] = { correct: isCorrect };
-        
-        if (isCorrect) correctCount++;
-      });
+      if (isAlternative && totalCount > 0) {
+        snapshot.docs.forEach(doc => {
+          const qData = doc.data();
+          const selectedIndex = answers[doc.id];
+          const isCorrect = selectedIndex === qData.correctIndex;
+          results[doc.id] = { correct: isCorrect };
+          if (isCorrect) correctCount++;
+        });
+      } else if (targetModule.quiz && targetModule.quiz.length > 0) {
+        totalCount = targetModule.quiz.length;
+        targetModule.quiz.forEach((qData, index) => {
+          const selectedIndex = answers[index.toString()];
+          const isCorrect = selectedIndex === qData.correctIndex;
+          results[index.toString()] = { correct: isCorrect };
+          if (isCorrect) correctCount++;
+        });
+      } else {
+        return res.status(400).json({ error: "This module has no quiz." });
+      }
       
       const score = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
-      const passed = score >= 80; // Example threshold
+      const passed = score >= 80; 
       
       if (passed) {
-        // Automatically add to completedModules
         await adminDb.collection('users').doc(uid).update({
           completedModules: FieldValue.arrayUnion(moduleId)
         });

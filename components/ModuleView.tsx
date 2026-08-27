@@ -245,58 +245,41 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
         }
       });
       
-      // If we are taking a custom quiz from the database
-      if (quizVersion === 'alternative' && activeQuiz.some(q => q.id)) {
-        const res = await fetch('/api/grade-quiz', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify({
-            moduleId: module.id,
-            answers: answersMap
-          })
-        });
+      // Send standard or alternative quizzes to the server for secure grading
+      const res = await fetch('/api/grade-quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          moduleId: module.id,
+          answers: answersMap,
+          isAlternative: quizVersion === 'alternative' && activeQuiz.some(q => q.id)
+        })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setGradedResults(data);
+        setScore(data.correctCount);
         
-        const data = await res.json();
-        if (res.ok) {
-          setGradedResults(data);
-          setScore(data.correctCount);
-          
-          // Update userAnswers with server truths for review
-          const updatedAnswers = userAnswers.map(a => {
-            const q = activeQuiz[a.questionIdx];
-            if (q && q.id && data.results[q.id]) {
-              return {
-                ...a,
-                isCorrect: data.results[q.id].correct,
-                correctIndex: data.results[q.id].correctIndex
-              };
-            }
-            return a;
-          });
-          setUserAnswers(updatedAnswers);
-        }
-      } else {
-        // Fallback for static (built-in) standard quizzes that aren't in the database
-        // For standard quizzes, the correctIndex IS available locally (from static data).
-        const finalScore = userAnswers.filter(a => {
-           const q = activeQuiz[a.questionIdx];
-           return a.selectedIdx === q.correctIndex;
-        }).length;
-        
+        // Update userAnswers with server truths for review
         const updatedAnswers = userAnswers.map(a => {
-           const q = activeQuiz[a.questionIdx];
-           return {
-             ...a,
-             isCorrect: a.selectedIdx === q.correctIndex,
-             correctIndex: q.correctIndex
-           };
+          const q = activeQuiz[a.questionIdx];
+          const resultKey = q.id || a.questionIdx.toString();
+          if (data.results[resultKey]) {
+            return {
+              ...a,
+              isCorrect: data.results[resultKey].correct,
+              correctIndex: data.results[resultKey].correctIndex
+            };
+          }
+          return a;
         });
-        
         setUserAnswers(updatedAnswers);
-        setScore(finalScore);
+      } else {
+        console.error("Grading failed:", data.error);
       }
     } catch (err) {
       console.error("Failed to grade quiz:", err);

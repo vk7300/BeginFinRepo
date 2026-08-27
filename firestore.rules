@@ -182,10 +182,9 @@ service cloud.firestore {
       allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       // Only the owner can create their credential record, must supply matching userId
       allow create: if false;
-      // Only the owner can update their credential
-      allow update: if isAuthenticated() && ('userId' in resource.data) && isOwner(resource.data.userId) && isValidCredential(request.resource.data);
-      // Only the owner can delete their credential
-      allow delete: if isAuthenticated() && ('userId' in resource.data) && isOwner(resource.data.userId);
+      // Updates and deletions must go through the server
+      allow update: if false;
+      allow delete: if false;
     }
 
     match /articles/{articleId} {
