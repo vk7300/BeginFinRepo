@@ -4,6 +4,8 @@ import path from "path";
 import fs from "fs";
 import { rateLimit } from "express-rate-limit";
 import cors from "cors";
+import { modules } from "./data/courseData.js";
+import answerKeys from "./server/answerKeys.json" assert { type: "json" };
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps } from "firebase-admin/app";
@@ -172,7 +174,7 @@ async function startServer() {
         return res.status(400).json({ error: "Valid moduleId is required" });
       }
 
-      const targetModule = modules.find(m => m.id === moduleId);
+      const targetModule = modules.find((m: any) => m.id === moduleId);
       if (!targetModule) {
         return res.status(400).json({ error: "Invalid module ID." });
       }
@@ -190,7 +192,9 @@ async function startServer() {
         .get();
 
       const hasCustomQuiz = !questionsSnap.empty;
-      const hasStandardQuiz = targetModule.quiz && targetModule.quiz.length > 0;
+      
+      // Determine if it has standard quiz by checking answerKeys
+      const hasStandardQuiz = !!(answerKeys as any)[moduleId];
 
       if (hasCustomQuiz || hasStandardQuiz) {
         return res.status(403).json({ error: "This module requires passing a quiz. Use /api/grade-quiz instead." });
@@ -206,14 +210,13 @@ async function startServer() {
       return res.status(500).json({ error: "Failed to complete module" });
     }
   });
-
   // API endpoint to grade a quiz
   app.post("/api/grade-quiz", requireAuth, async (req, res) => {
     try {
-      const { moduleId, answers, isAlternative } = req.body; 
+      const { moduleId, answers, language = 'en' } = req.body; 
       const uid = (req as any).user.uid;
       
-      const targetModule = modules.find(m => m.id === moduleId);
+      const targetModule = modules.find((m: any) => m.id === moduleId);
       if (!targetModule) {
         return res.status(400).json({ error: "Invalid module ID." });
       }
@@ -224,24 +227,25 @@ async function startServer() {
         .get();
         
       let correctCount = 0;
-      let totalCount = snapshot.docs.length;
+      let totalCount = 0;
+      const results: Record<string, { correct: boolean; correctIndex?: number }> = {};
       
-      const results: Record<string, { correct: boolean }> = {};
-      
-      if (isAlternative && totalCount > 0) {
-        snapshot.docs.forEach(doc => {
+      if (!snapshot.empty) {
+        totalCount = snapshot.docs.length;
+        snapshot.docs.forEach((doc: any) => {
           const qData = doc.data();
           const selectedIndex = answers[doc.id];
           const isCorrect = selectedIndex === qData.correctIndex;
-          results[doc.id] = { correct: isCorrect };
+          results[doc.id] = { correct: isCorrect, correctIndex: qData.correctIndex };
           if (isCorrect) correctCount++;
         });
-      } else if (targetModule.quiz && targetModule.quiz.length > 0) {
-        totalCount = targetModule.quiz.length;
-        targetModule.quiz.forEach((qData, index) => {
+      } else if ((answerKeys as any)[moduleId] && (answerKeys as any)[moduleId][language]) {
+        const correctAnswers = (answerKeys as any)[moduleId][language];
+        totalCount = correctAnswers.length;
+        correctAnswers.forEach((correctIndex: number, index: number) => {
           const selectedIndex = answers[index.toString()];
-          const isCorrect = selectedIndex === qData.correctIndex;
-          results[index.toString()] = { correct: isCorrect };
+          const isCorrect = selectedIndex === correctIndex;
+          results[index.toString()] = { correct: isCorrect, correctIndex };
           if (isCorrect) correctCount++;
         });
       } else {
@@ -269,7 +273,6 @@ async function startServer() {
       return res.status(500).json({ error: "Failed to grade quiz" });
     }
   });
-
 
   // API endpoint to issue a certificate securely
   app.post("/api/issue-certificate", requireAuth, async (req, res) => {
@@ -736,6 +739,56 @@ Please process this request in Certifier.io.`,
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  
+  app.delete("/api/delete-account", requireAuth, async (req, res) => {
+    try {
+      const uid = (req as any).user.uid;
+      
+      const batch = adminDb.batch();
+      
+      // 1. Delete user document
+      batch.delete(adminDb.collection('users').doc(uid));
+      
+      // 2. Clean up classes and student associations
+      const classesRef = adminDb.collection('classes');
+      
+      const teacherSnap = await classesRef.where('teacherId', '==', uid).get();
+      for (const d of teacherSnap.docs) {
+        batch.delete(d.ref);
+        const alertsSnap = await adminDb.collection('classes').doc(d.id).collection('alerts').get();
+        alertsSnap.docs.forEach((ad: any) => batch.delete(ad.ref));
+      }
+      
+      const studentSnap = await classesRef.where('studentIds', 'array-contains', uid).get();
+      studentSnap.docs.forEach((d: any) => {
+        const studentIds = (d.data().studentIds || []).filter((id: string) => id !== uid);
+        batch.update(d.ref, { studentIds });
+      });
+      
+      // 3. Delete all credentials
+      const credsSnap = await adminDb.collection('credentials').where('userId', '==', uid).get();
+      credsSnap.docs.forEach((d: any) => batch.delete(d.ref));
+      
+      // 4. Delete alerts created by this user
+      const userDoc = await adminDb.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        const uData = userDoc.data();
+        if (uData?.classId) {
+          const userAlertsSnap = await adminDb.collection('classes').doc(uData.classId).collection('alerts').where('userId', '==', uid).get();
+          userAlertsSnap.docs.forEach((ad: any) => batch.delete(ad.ref));
+        }
+      }
+      
+      await batch.commit();
+      await adminAuth.deleteUser(uid);
+      
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      return res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

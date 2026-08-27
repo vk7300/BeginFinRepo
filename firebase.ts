@@ -22,13 +22,13 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 // Initialize App Check if recaptchaSiteKey is provided
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && firebaseConfig.recaptchaSiteKey) {
   try {
-    if (!firebaseConfig.recaptchaSiteKey) {
+    if (import.meta.env.DEV) {
       (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
     }
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(firebaseConfig.recaptchaSiteKey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'),
+      provider: new ReCaptchaV3Provider(firebaseConfig.recaptchaSiteKey),
       isTokenAutoRefreshEnabled: true
     });
   } catch (error) {

@@ -240,8 +240,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
         if (q && q.id) {
           answersMap[q.id] = a.selectedIdx;
         } else {
-          // If using static standard quiz without IDs, fallback to local grading (just in case)
-          // But wait, the standard quizzes don't have DB IDs! They are static.
+          answersMap[a.questionIdx.toString()] = a.selectedIdx;
         }
       });
       
@@ -255,7 +254,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
         body: JSON.stringify({
           moduleId: module.id,
           answers: answersMap,
-          isAlternative: quizVersion === 'alternative' && activeQuiz.some(q => q.id)
+          language: language
         })
       });
       
