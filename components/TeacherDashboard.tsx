@@ -180,6 +180,11 @@ export const TeacherDashboard: React.FC<{
       return onSnapshot(q, (snapshot) => {
         const classAlerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AlertData));
         setAlerts(prev => ({ ...prev, [cls.id]: classAlerts }));
+      }, (err) => {
+        // Ignore permission-denied errors that occur when a class is deleted while the listener is still active
+        if (!err.message.includes('insufficient permissions')) {
+          console.error('TeacherDashboard Alerts Snapshot Error:', err);
+        }
       });
     });
 

@@ -131,7 +131,9 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid);
+      allow get: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.teacherId == request.auth.uid);
+      allow list: if isOwner(userId) || isAdmin();
+      allow list: if isAuthenticated() && resource.data.teacherId == request.auth.uid;
       allow create: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && uidUnchanged();
       allow update: if (isOwner(userId) && uidNotModified() && isValidUser(request.resource.data) && 
                        (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher']) &&
@@ -155,8 +157,9 @@ service cloud.firestore {
 
     match /classes/{classId} {
       // Block arbitrary class scraping: get/listing only allowed if user is the teacher or a student in the class
-      allow get: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || (resource.data.studentIds is list && request.auth.uid in resource.data.studentIds));
-      allow list: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || (resource.data.studentIds is list && request.auth.uid in resource.data.studentIds));
+      allow get: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == classId);
+      allow list: if isAuthenticated() && resource.data.teacherId == request.auth.uid;
+      
       // Only teachers can create classes
       allow create: if isTeacher() && isValidClass(request.resource.data);
       // Only the class teacher can update or delete the class
