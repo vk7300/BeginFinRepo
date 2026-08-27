@@ -96,62 +96,66 @@ export const Dashboard: React.FC<Props> = ({
     setIsJoining(true);
     setJoinFeedback({ status: 'idle', message: '' });
     if (triggerLoading) triggerLoading("Joining class...", 2500);
+
+    if (!user.displayName || user.displayName === 'Learner' || user.displayName === 'Anonymous') {
+      setIsAskingName({ 
+        classId: joinCode.toUpperCase(), 
+        teacherId: '',
+        className: 'the class'
+      });
+      setTempName(user.displayName || '');
+      setIsJoining(false);
+      return;
+    }
+
+    await submitJoinClass(user.displayName);
+  };
+
+  const submitJoinClass = async (displayNameToUse: string) => {
     try {
-      const classRef = doc(db, 'classes', joinCode.toUpperCase());
-      const classDoc = await getDoc(classRef);
+      const token = await user!.getIdToken();
+      const response = await fetch('/api/join-class', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          joinCode: joinCode.toUpperCase(),
+          displayName: displayNameToUse
+        })
+      });
       
-      if (!classDoc.exists()) {
-        setJoinFeedback({ 
-          status: 'not_found', 
-          message: `Couldn't Find Class: No active class found with code "${joinCode.toUpperCase()}". Check the code with your teacher.` 
-        });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setJoinFeedback({ 
+            status: 'not_found', 
+            message: `Couldn't Find Class: No active class found with code "${joinCode.toUpperCase()}". Check the code with your teacher.` 
+          });
+        } else {
+          setJoinFeedback({ status: 'error', message: data.error || 'Failed to join class.' });
+        }
         setIsJoining(false);
         return;
       }
       
-      const classData = classDoc.data();
-      
-      if (user) {
-        // If user doesn't have a display name, or we want to confirm it for the class
-        if (!user.displayName || user.displayName === 'Learner' || user.displayName === 'Anonymous') {
-          setIsAskingName({ 
-            classId: classDoc.id, 
-            teacherId: classData.teacherId,
-            className: classData.className
-          });
-          setTempName(user.displayName || '');
-        } else {
-          await setDoc(doc(db, 'users', user.uid), {
-            classId: classDoc.id,
-            teacherId: classData.teacherId,
-            joinCode: joinCode.toUpperCase()
-          }, { merge: true });
-          
-          // Add student to the class document's studentIds array directly
-          try {
-            const { arrayUnion } = await import('../firebase');
-            await updateDoc(classRef, {
-              studentIds: arrayUnion(user.uid)
-            });
-          } catch (e) {
-            console.warn("Could not automatically update class studentIds:", e);
-          }
-          
-          setJoinFeedback({ 
-            status: 'joined', 
-            message: `Joined ${classData.className || 'Class'}!`, 
-            className: classData.className 
-          });
-          setTimeout(() => {
-            setShowJoinInput(false);
-            setJoinFeedback({ status: 'idle', message: '' });
-            setJoinCode('');
-          }, 1800);
-        }
-      }
+      setJoinFeedback({ 
+        status: 'joined', 
+        message: `Joined ${data.className || 'Class'}!`, 
+        className: data.className 
+      });
+      setIsAskingName(null);
+      setTempName('');
+      setTimeout(() => {
+        setShowJoinInput(false);
+        setJoinFeedback({ status: 'idle', message: '' });
+        setJoinCode('');
+      }, 1800);
     } catch (err) {
-      handleFirestoreError(err, OperationType.GET, 'classes');
-      setJoinFeedback({ status: 'error', message: 'Failed to join class. Please try again.' });
+      console.error('Failed to join class API call:', err);
+      setJoinFeedback({ status: 'error', message: 'Network error. Please try again.' });
     } finally {
       setIsJoining(false);
     }
@@ -178,46 +182,9 @@ export const Dashboard: React.FC<Props> = ({
   const handleConfirmName = async () => {
     if (!user || !isAskingName || !tempName.trim()) return;
     setIsJoining(true);
-    try {
-      // Sanitize input: Character limit (80 max) and clean up HTML tags to prevent XSS/Payload injection
-      const cleaned = tempName.trim().replace(/<\/?[^>]+(>|$)/g, "");
-      const finalName = cleaned.substring(0, 80);
-      await setDoc(doc(db, 'users', user.uid), {
-        displayName: finalName,
-        classId: isAskingName.classId,
-        teacherId: isAskingName.teacherId,
-        joinCode: joinCode.toUpperCase()
-      }, { merge: true });
-      
-      // Add student to the class document's studentIds array directly
-      try {
-        const { arrayUnion } = await import('../firebase');
-        const classRef = doc(db, 'classes', isAskingName.classId);
-        await updateDoc(classRef, {
-          studentIds: arrayUnion(user.uid)
-        });
-      } catch (e) {
-        console.warn("Could not automatically update class studentIds:", e);
-      }
-      
-      setJoinFeedback({ 
-        status: 'joined', 
-        message: `Joined ${isAskingName.className || 'Class'}!`, 
-        className: isAskingName.className 
-      });
-      setIsAskingName(null);
-      setTempName('');
-      setTimeout(() => {
-        setShowJoinInput(false);
-        setJoinFeedback({ status: 'idle', message: '' });
-        setJoinCode('');
-      }, 1800);
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
-      setJoinFeedback({ status: 'error', message: 'Failed to save name. Please try again.' });
-    } finally {
-      setIsJoining(false);
-    }
+    const cleaned = tempName.trim().replace(/<\/?[^>]+(>|$)/g, "");
+    const finalName = cleaned.substring(0, 80);
+    await submitJoinClass(finalName);
   };
 
   const requiredCompletedCount = completedIds.filter(id => requiredModules.some(m => m.id === id)).length;

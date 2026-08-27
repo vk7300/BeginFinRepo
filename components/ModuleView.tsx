@@ -36,29 +36,25 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
     }
   }, [step, onStepChange]);
 
-  // Load published custom questions from Firestore
+  // Load published custom questions from API
   useEffect(() => {
     let active = true;
     const fetchCustomQuestions = async () => {
       try {
-        const q = query(
-          collection(db, 'questions'),
-          where('moduleId', '==', module.id),
-          where('isPublished', '==', true)
-        );
-        const snap = await getDocs(q);
+        const token = user ? await user.getIdToken() : '';
+        const res = await fetch(`/api/questions/${module.id}`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error('Failed to fetch questions');
+        const list = await res.json();
+        
         if (!active) return;
         
-        const list = snap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as any[];
-        
         // Filter by active language. If none for active language, fallback to English ('en')
-        const langFiltered = list.filter(item => item.language === language);
+        const langFiltered = list.filter((item: any) => item.language === language);
         const finalQuestions = langFiltered.length > 0 
           ? langFiltered 
-          : list.filter(item => item.language === 'en' || !item.language);
+          : list.filter((item: any) => item.language === 'en' || !item.language);
           
         // Limit to maximum of 4 live questions per module
         setCustomQuestions(finalQuestions.slice(0, 4));
@@ -71,7 +67,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
     return () => {
       active = false;
     };
-  }, [module.id, language]);
+  }, [module.id, language, user]);
 
   const [quizVersion, setQuizVersion] = useState<'standard' | 'alternative'>('standard');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -79,7 +75,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
   const [score, setScore] = useState(0);
   const [finishedQuiz, setFinishedQuiz] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [userAnswers, setUserAnswers] = useState<{questionIdx: number, selectedIdx: number, isCorrect: boolean}[]>([]);
+  const [userAnswers, setUserAnswers] = useState<{questionIdx: number, selectedIdx: number, isCorrect: boolean, correctIndex?: number}[]>([]);
   const [showReview, setShowReview] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -200,18 +196,18 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
     return optionsWithIndices;
   }, [activeQuiz, currentQuestionIdx, step, finishedQuiz]);
 
-  const handleAnswer = (originalIndex: number) => {
-    if (isTransitioning || showFeedback) return;
+  const [isGrading, setIsGrading] = useState(false);
+  const [gradedResults, setGradedResults] = useState<any>(null);
 
-    // Check if we already answered this question to update it
-    const isCorrect = originalIndex === activeQuiz[currentQuestionIdx].correctIndex;
-    
+  const handleAnswer = (originalIndex: number) => {
+    if (isTransitioning) return;
+
     setUserAnswers(prev => {
       const existingIdx = prev.findIndex(a => a.questionIdx === currentQuestionIdx);
       const newAnswer = {
         questionIdx: currentQuestionIdx,
         selectedIdx: originalIndex,
-        isCorrect
+        isCorrect: false // will be updated by server
       };
       
       if (existingIdx >= 0) {
@@ -222,17 +218,99 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
       return [...prev, newAnswer];
     });
 
-    setShowFeedback(true);
+    // Advance to next question automatically after a short delay for smoothness
+    setIsTransitioning(true);
+    setTimeout(() => {
+      if (currentQuestionIdx < activeQuiz.length - 1) {
+        setCurrentQuestionIdx(q => q + 1);
+      }
+      setIsTransitioning(false);
+    }, 400);
+  };
+
+  const submitQuiz = async () => {
+    setIsGrading(true);
+    try {
+      const token = user ? await user.getIdToken() : '';
+      
+      // Build answers map: { [questionId]: selectedIndex }
+      const answersMap: Record<string, number> = {};
+      userAnswers.forEach(a => {
+        const q = activeQuiz[a.questionIdx];
+        if (q && q.id) {
+          answersMap[q.id] = a.selectedIdx;
+        } else {
+          // If using static standard quiz without IDs, fallback to local grading (just in case)
+          // But wait, the standard quizzes don't have DB IDs! They are static.
+        }
+      });
+      
+      // If we are taking a custom quiz from the database
+      if (quizVersion === 'alternative' && activeQuiz.some(q => q.id)) {
+        const res = await fetch('/api/grade-quiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            moduleId: module.id,
+            answers: answersMap
+          })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          setGradedResults(data);
+          setScore(data.correctCount);
+          
+          // Update userAnswers with server truths for review
+          const updatedAnswers = userAnswers.map(a => {
+            const q = activeQuiz[a.questionIdx];
+            if (q && q.id && data.results[q.id]) {
+              return {
+                ...a,
+                isCorrect: data.results[q.id].correct,
+                correctIndex: data.results[q.id].correctIndex
+              };
+            }
+            return a;
+          });
+          setUserAnswers(updatedAnswers);
+        }
+      } else {
+        // Fallback for static (built-in) standard quizzes that aren't in the database
+        // For standard quizzes, the correctIndex IS available locally (from static data).
+        const finalScore = userAnswers.filter(a => {
+           const q = activeQuiz[a.questionIdx];
+           return a.selectedIdx === q.correctIndex;
+        }).length;
+        
+        const updatedAnswers = userAnswers.map(a => {
+           const q = activeQuiz[a.questionIdx];
+           return {
+             ...a,
+             isCorrect: a.selectedIdx === q.correctIndex,
+             correctIndex: q.correctIndex
+           };
+        });
+        
+        setUserAnswers(updatedAnswers);
+        setScore(finalScore);
+      }
+    } catch (err) {
+      console.error("Failed to grade quiz:", err);
+    } finally {
+      setIsGrading(false);
+      setFinishedQuiz(true);
+    }
   };
 
   const handleNextQuestion = () => {
     if (currentQuestionIdx < activeQuiz.length - 1) {
       setCurrentQuestionIdx(q => q + 1);
     } else {
-      // Calculate final score before finishing
-      const finalScore = userAnswers.filter(a => a.isCorrect).length;
-      setScore(finalScore);
-      setFinishedQuiz(true);
+      submitQuiz();
     }
   };
 
@@ -367,7 +445,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                 {currentShuffledOptions.map((option, i) => {
                   const answerObj = userAnswers.find(a => a.questionIdx === currentQuestionIdx);
                   const isSelected = answerObj?.selectedIdx === option.originalIndex;
-                  const isCorrectOption = option.originalIndex === activeQuiz[currentQuestionIdx].correctIndex;
+                  const isCorrectOption = option.originalIndex === (userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.correctIndex ?? activeQuiz[currentQuestionIdx].correctIndex);
                   
                   let btnStyle = 'border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-800 bg-white';
                   let badgeStyle = 'border-slate-300';
@@ -445,8 +523,8 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                       </span>
                       <span className="opacity-90">
                         {userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.isCorrect 
-                          ? `"${activeQuiz[currentQuestionIdx].options[activeQuiz[currentQuestionIdx].correctIndex]}" is the right answer.` 
-                          : `The correct answer is "${activeQuiz[currentQuestionIdx].options[activeQuiz[currentQuestionIdx].correctIndex]}".`
+                          ? `"${activeQuiz[currentQuestionIdx].options[userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.correctIndex ?? activeQuiz[currentQuestionIdx].correctIndex]}" is the right answer.` 
+                          : `The correct answer is "${activeQuiz[currentQuestionIdx].options[userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.correctIndex ?? activeQuiz[currentQuestionIdx].correctIndex]}".`
                         }
                       </span>
                     </div>
@@ -519,7 +597,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                             </p>
                             <p className="font-medium text-emerald-700 flex items-start gap-1.5">
                               <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> 
-                              <span>Correct: {question.options[question.correctIndex]}</span>
+                              <span>Correct: {question.options[answer.correctIndex ?? question.correctIndex]}</span>
                             </p>
                           </div>
                         </div>

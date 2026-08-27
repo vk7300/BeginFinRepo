@@ -1047,16 +1047,27 @@ const App: React.FC = () => {
     }
   };
 
-  const saveProgress = useCallback(async (updatedModules: string[]) => {
-    if (user) {
-      const userDocRef = doc(db, 'users', user.uid);
+  const saveProgress = useCallback(async (updatedModules: string[], newlyCompletedModuleId?: string) => {
+    if (user && newlyCompletedModuleId) {
       try {
+        const token = await user.getIdToken();
+        await fetch('/api/complete-module', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ moduleId: newlyCompletedModuleId })
+        });
+        
+        // Also update the local document's lastUpdated
+        const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, {
-          completedModules: updatedModules,
           lastUpdated: new Date().toISOString()
         }, { merge: true });
+        
       } catch (err) {
-        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
+        console.error('Failed to save progress via API:', err);
       }
     }
   }, [user]);
@@ -1068,7 +1079,7 @@ const App: React.FC = () => {
     
     if (!completedModules.includes(moduleId)) {
       setCompletedModules(updatedModules);
-      saveProgress(updatedModules);
+      saveProgress(updatedModules, moduleId);
 
       // Send notification if in a class
       if (classId) {

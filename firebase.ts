@@ -1,5 +1,6 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, ReCaptchaV3Provider } from 'firebase/app-check';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, sendPasswordResetEmail } from 'firebase/auth';
 import { initializeFirestore, getFirestore, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, arrayUnion } from 'firebase/firestore';
 
@@ -13,11 +14,24 @@ const firebaseConfig = {
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseConfigJson as any).firestoreDatabaseId || 'ai-studio-815a8484-ccb3-4aa6-90b6-77fad11b53ba'
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseConfigJson as any).firestoreDatabaseId || 'ai-studio-815a8484-ccb3-4aa6-90b6-77fad11b53ba',
+  recaptchaSiteKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY || (firebaseConfigJson as any).recaptchaSiteKey || ''
 };
 
 // Initialize Firebase SDK
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
+// Initialize App Check if recaptchaSiteKey is provided
+if (typeof window !== 'undefined' && firebaseConfig.recaptchaSiteKey) {
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(firebaseConfig.recaptchaSiteKey),
+      isTokenAutoRefreshEnabled: true
+    });
+  } catch (error) {
+    console.warn("Failed to initialize Firebase App Check:", error);
+  }
+}
 
 // Ensure Firestore is initialized with long-polling to work reliably in sandboxed iframe previews and proxies
 let dbInstance;

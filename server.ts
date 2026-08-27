@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const adminApp = getApps().length === 0
   : getApps()[0];
 
 const adminAuth = getAuth(adminApp);
+const adminDb = getFirestore(adminApp);
 
 let aiClient: GoogleGenAI | null = null;
 function getGenAI(): GoogleGenAI | null {
@@ -85,6 +87,9 @@ async function startServer() {
     'https://ais-dev-3pukbrm6cjmwehc3hl7xhd-20819416614.us-west2.run.app',
     'https://ais-pre-3pukbrm6cjmwehc3hl7xhd-20819416614.us-west2.run.app'
   ];
+  if (process.env.ALLOWED_ORIGINS) {
+    allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(','));
+  }
 
   app.use(cors({
     origin: (origin, callback) => {
@@ -97,6 +102,186 @@ async function startServer() {
     credentials: true
   }));
   app.use(express.json());
+
+  // Helper function to verify Firebase auth token
+  const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Missing or invalid authorization token" });
+    }
+    const token = authHeader.split("Bearer ")[1];
+    try {
+      (req as any).user = await adminAuth.verifyIdToken(token);
+      next();
+    } catch (err) {
+      return res.status(401).json({ error: "Unauthorized request" });
+    }
+  };
+
+  // API endpoint to get questions without correctIndex
+  app.get("/api/questions/:moduleId", requireAuth, async (req, res) => {
+    try {
+      const { moduleId } = req.params;
+      const snapshot = await adminDb.collection('questions')
+        .where('moduleId', '==', moduleId)
+        .where('isPublished', '==', true)
+        .get();
+        
+      const questions = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          moduleId: data.moduleId,
+          language: data.language,
+          question: data.question,
+          options: data.options,
+          // Exclude correctIndex
+        };
+      });
+      
+      return res.json(questions);
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      return res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  });
+
+  // API endpoint to complete a module (for static modules without a database quiz)
+  app.post("/api/complete-module", requireAuth, async (req, res) => {
+    try {
+      const { moduleId } = req.body;
+      const uid = (req as any).user.uid;
+      
+      if (!moduleId || typeof moduleId !== 'string') {
+        return res.status(400).json({ error: "Invalid module ID." });
+      }
+      
+      const userDoc = await adminDb.collection("users").doc(uid).get();
+      const userData = userDoc.data();
+      if (userData?.completedModules?.includes(moduleId)) {
+        return res.json({ success: true, message: "Already completed." });
+      }
+
+      // Ensure the module does not have a quiz before allowing direct completion
+      const questionsSnap = await adminDb.collection('questions')
+        .where('moduleId', '==', moduleId)
+        .where('isPublished', '==', true)
+        .get();
+        
+      if (!questionsSnap.empty) {
+        return res.status(403).json({ error: "This module requires passing a quiz. Use /api/grade-quiz instead." });
+      }
+
+      await adminDb.collection('users').doc(uid).update({
+        completedModules: FieldValue.arrayUnion(moduleId)
+      });
+      
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Error completing module:", error);
+      return res.status(500).json({ error: "Failed to complete module" });
+    }
+  });
+
+  // API endpoint to grade a quiz
+  app.post("/api/grade-quiz", requireAuth, async (req, res) => {
+    try {
+      const { moduleId, answers } = req.body; // answers is { questionId: selectedIndex }
+      const uid = (req as any).user.uid;
+      
+      const snapshot = await adminDb.collection('questions')
+        .where('moduleId', '==', moduleId)
+        .where('isPublished', '==', true)
+        .get();
+        
+      let correctCount = 0;
+      let totalCount = snapshot.docs.length;
+      
+      const results: Record<string, { correct: boolean, correctIndex: number }> = {};
+      
+      snapshot.docs.forEach(doc => {
+        const qData = doc.data();
+        const selectedIndex = answers[doc.id];
+        const isCorrect = selectedIndex === qData.correctIndex;
+        
+        results[doc.id] = {
+          correct: isCorrect,
+          correctIndex: qData.correctIndex
+        };
+        
+        if (isCorrect) correctCount++;
+      });
+      
+      const score = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
+      const passed = score >= 80; // Example threshold
+      
+      if (passed) {
+        // Automatically add to completedModules
+        await adminDb.collection('users').doc(uid).update({
+          completedModules: FieldValue.arrayUnion(moduleId)
+        });
+      }
+      
+      return res.json({
+        passed,
+        score,
+        results,
+        correctCount,
+        totalCount
+      });
+    } catch (error) {
+      console.error("Error grading quiz:", error);
+      return res.status(500).json({ error: "Failed to grade quiz" });
+    }
+  });
+
+  // API endpoint to join a class
+  app.post("/api/join-class", requireAuth, async (req, res) => {
+    try {
+      const { joinCode, displayName } = req.body;
+      const uid = (req as any).user.uid;
+      
+      if (!joinCode || typeof joinCode !== 'string' || joinCode.length !== 6) {
+        return res.status(400).json({ error: "Invalid join code." });
+      }
+      
+      const classRef = adminDb.collection('classes').doc(joinCode.toUpperCase());
+      const classDoc = await classRef.get();
+      
+      if (!classDoc.exists) {
+        return res.status(404).json({ error: "Class not found." });
+      }
+      
+      const classData = classDoc.data()!;
+      
+      // Add student to class
+      await classRef.update({
+        studentIds: FieldValue.arrayUnion(uid)
+      });
+      
+      // Update student profile
+      const userUpdate: any = {
+        classId: classDoc.id,
+        teacherId: classData.teacherId,
+        joinCode: joinCode.toUpperCase()
+      };
+      if (displayName) {
+        userUpdate.displayName = sanitizeHeader(displayName).substring(0, 80);
+      }
+      
+      await adminDb.collection('users').doc(uid).set(userUpdate, { merge: true });
+      
+      return res.json({ 
+        success: true, 
+        className: classData.className,
+        classId: classDoc.id,
+        teacherId: classData.teacherId
+      });
+    } catch (error: any) {
+      console.error("Error joining class:", error);
+      return res.status(500).json({ error: "Failed to join class." });
+    }
+  });
 
   // Rate limiting: 100 requests per 15 minutes per IP
   const limiter = rateLimit({
@@ -363,19 +548,28 @@ BeginFin Curriculum Reference:
         return res.status(401).json({ error: "Unauthorized request" });
       }
 
-      const { name, email, serialNumber, consent, userId } = req.body;
+      const { name, serialNumber, consent } = req.body;
 
-      if (!name || consent !== true) {
-        return res.status(400).json({ error: "Full name and explicit consent are required." });
+      if (consent !== true) {
+        return res.status(400).json({ error: "Explicit consent is required." });
+      }
+
+      if (!decodedToken.email) {
+        return res.status(400).json({ error: "Authenticated account must have a verified email address to request a digital credential." });
       }
       
-      const verifiedEmail = decodedToken.email || email;
-      const verifiedUserId = decodedToken.uid || userId;
+      const verifiedEmail = decodedToken.email;
+      const verifiedUserId = decodedToken.uid;
+      const verifiedName = decodedToken.name || name;
+
+      if (!verifiedName) {
+        return res.status(400).json({ error: "Full name is required." });
+      }
 
       // Safe sanitized logging without writing student PII to stdout
       console.log(`[Certifier] Digital credential request processed at ${new Date().toISOString()}`);
 
-      const cleanName = sanitizeHeader(name).substring(0, 100);
+      const cleanName = sanitizeHeader(verifiedName).substring(0, 100);
       const cleanEmail = sanitizeHeader(verifiedEmail).substring(0, 100);
       const cleanSerial = sanitizeHeader(serialNumber || 'N/A').substring(0, 50);
       const cleanUserId = sanitizeHeader(verifiedUserId || 'N/A').substring(0, 60);

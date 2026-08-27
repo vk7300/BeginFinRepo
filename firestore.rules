@@ -57,7 +57,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && request.auth.token.email_verified == true && (
-        request.auth.token.email in ['kv303157@gmail.com', 'kruzssmith@gmail.com', 'vishnukakarla108@gmail.com']
+        request.auth.token.email in ['kv303157@gmail.com', 'kruzksmith@gmail.com', 'vishnukakarla108@gmail.com']
       );
     }
 
@@ -102,6 +102,10 @@ service cloud.firestore {
              data.issueDate is string && data.issueDate.size() == 10 &&
              data.expirationDate is string && data.expirationDate.size() == 10 &&
              (!('isPublic' in data) || data.isPublic is bool) &&
+             (!('completedModules' in data) || (
+               data.completedModules is list && 
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.completedModules.hasAll(data.completedModules)
+             )) &&
              (!('userId' in data) || (data.userId is string && (data.userId == request.auth.uid || isAdmin())));
     }
 
@@ -131,6 +135,7 @@ service cloud.firestore {
       allow create: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && uidUnchanged();
       allow update: if (isOwner(userId) && uidNotModified() && isValidUser(request.resource.data) && 
                        (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher']) &&
+                       (!('completedModules' in request.resource.data.diff(resource.data).affectedKeys())) &&
                        (
                          !('classId' in request.resource.data.diff(resource.data).affectedKeys()) ||
                          request.resource.data.classId == null ||
@@ -175,12 +180,12 @@ service cloud.firestore {
       // Direct verification requires authenticated owner/admin
       allow get: if isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin());
       allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      // Only the owner can create their credential record
-      allow create: if isAuthenticated() && (!('userId' in request.resource.data) || request.auth.uid == request.resource.data.userId) && isValidCredential(request.resource.data);
+      // Only the owner can create their credential record, must supply matching userId
+      allow create: if isAuthenticated() && ('userId' in request.resource.data) && request.auth.uid == request.resource.data.userId && isValidCredential(request.resource.data);
       // Only the owner can update their credential
-      allow update: if isAuthenticated() && (!('userId' in resource.data) || isOwner(resource.data.userId)) && isValidCredential(request.resource.data);
+      allow update: if isAuthenticated() && ('userId' in resource.data) && isOwner(resource.data.userId) && isValidCredential(request.resource.data);
       // Only the owner can delete their credential
-      allow delete: if isAuthenticated() && (!('userId' in resource.data) || isOwner(resource.data.userId));
+      allow delete: if isAuthenticated() && ('userId' in resource.data) && isOwner(resource.data.userId);
     }
 
     match /articles/{articleId} {
@@ -210,8 +215,9 @@ service cloud.firestore {
                data.updatedAt is string;
       }
 
-      // Authenticated users can read questions
-      allow read: if isAuthenticated();
+      // Questions (with correctIndex) must only be accessed directly by admins. 
+      // Students fetch via API which strips the correctIndex.
+      allow read: if isAdmin();
       // Only Admin can write/delete questions
       allow create, update: if isAdmin() && isValidQuestion(request.resource.data);
       allow delete: if isAdmin();
