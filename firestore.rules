@@ -181,7 +181,7 @@ service cloud.firestore {
       allow get: if isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin());
       allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       // Only the owner can create their credential record, must supply matching userId
-      allow create: if isAuthenticated() && ('userId' in request.resource.data) && request.auth.uid == request.resource.data.userId && isValidCredential(request.resource.data);
+      allow create: if false;
       // Only the owner can update their credential
       allow update: if isAuthenticated() && ('userId' in resource.data) && isOwner(resource.data.userId) && isValidCredential(request.resource.data);
       // Only the owner can delete their credential

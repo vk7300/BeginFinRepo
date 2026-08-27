@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle, Globe, EyeOff } from 'lucide-react';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
-import { db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, auth, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
 
 interface Props {
   userName: string;
@@ -69,18 +69,21 @@ export const CertificateView: React.FC<Props> = ({
         const issueDate = now.toISOString().substring(0, 10);
         const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
 
-        const credRef = doc(db, 'credentials', userId);
-        await setDoc(credRef, {
-          title: "Certificate of Financial Literacy Completion",
-          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
-          graduateName: userName,
-          issueDate,
-          expirationDate: expDate,
-          isPublic: isPublicVerification,
-          userId,
-          completedModules: completedIds,
-          updatedAt: now.toISOString()
-        }, { merge: true });
+        
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        await fetch('/api/issue-certificate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({ graduateName: userName, isPublic: isPublicVerification })
+        });
+      } catch (err) {
+        console.error("Failed to sync credential", err);
+      }
+
       } catch (err) {
         console.warn('Auto credential sync notice:', err);
       }
@@ -124,18 +127,21 @@ export const CertificateView: React.FC<Props> = ({
       const issueDate = now.toISOString().substring(0, 10);
       const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
 
-      const credRef = doc(db, 'credentials', userId);
-      await setDoc(credRef, {
-        title: "Certificate of Financial Literacy Completion",
-        serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
-        graduateName: userName || "BeginFin Student",
-        issueDate,
-        expirationDate: expDate,
-        isPublic: nextStatus,
-        userId,
-        completedModules: completedIds,
-        updatedAt: now.toISOString()
-      }, { merge: true });
+      
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        await fetch('/api/issue-certificate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({ graduateName: userName, isPublic: isPublicVerification })
+        });
+      } catch (err) {
+        console.error("Failed to sync credential", err);
+      }
+
 
       setIsPublicVerification(nextStatus);
     } catch (err) {
@@ -165,18 +171,21 @@ export const CertificateView: React.FC<Props> = ({
         const issueDate = now.toISOString().substring(0, 10);
         const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
 
-        const credRef = doc(db, 'credentials', userId);
-        await setDoc(credRef, {
-          title: "Certificate of Financial Literacy Completion",
-          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
-          graduateName: finalName,
-          issueDate,
-          expirationDate: expDate,
-          isPublic: isPublicVerification,
-          userId,
-          completedModules: completedIds,
-          updatedAt: now.toISOString()
-        }, { merge: true });
+        
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        await fetch('/api/issue-certificate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({ graduateName: userName, isPublic: isPublicVerification })
+        });
+      } catch (err) {
+        console.error("Failed to sync credential", err);
+      }
+
 
         setUserName(finalName);
         setIsNameSet(true);
