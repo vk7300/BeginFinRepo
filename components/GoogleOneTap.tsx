@@ -26,7 +26,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
 
   const clientId =
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    firebaseConfigJson.oAuthClientId ||
+    (firebaseConfigJson as Record<string, string | undefined>).oAuthClientId ||
     '910198173440-3veu2i1nuj4fkjp2ki6gam0gdj5kc9tl.apps.googleusercontent.com';
 
   // Keep global success callback reference updated without triggering re-initialization
@@ -172,11 +172,11 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+        <div className="w-12 h-12 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 text-[#7F7FFA] flex items-center justify-center mb-4">
           <ShieldCheck className="w-6 h-6" />
         </div>
 
-        <h3 className="text-xl font-bold text-slate-900 mb-2">
+        <h3 className="text-xl font-bold text-[#3C3C3C] mb-2">
           Confirm Age & Agreement
         </h3>
         
@@ -190,7 +190,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
           </div>
         )}
 
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 mb-6">
+        <div className="p-4 rounded-2xl bg-[#F4F8FA] border border-slate-200/80 mb-6">
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <input 
               type="checkbox"
@@ -199,15 +199,15 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
                 setAgreed(e.target.checked);
                 if (e.target.checked) setConsentError('');
               }}
-              className="mt-1 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-colors cursor-pointer shrink-0"
+              className="mt-1 w-4 h-4 rounded border-slate-300 text-[#7F7FFA] focus:ring-[#7F7FFA] transition-colors cursor-pointer shrink-0"
             />
             <span className="text-xs text-slate-700 leading-snug">
-              I certify that I am at least <strong className="text-slate-900">14 years of age</strong> and agree to BeginFin's{' '}
+              I certify that I am at least <strong className="text-[#3C3C3C]">14 years of age</strong> and agree to BeginFin's{' '}
               <a 
                 href="/terms" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-indigo-600 font-semibold underline underline-offset-2 hover:text-indigo-700"
+                className="text-[#7F7FFA] font-semibold underline underline-offset-2 hover:text-[#7F7FFA]/80"
                 onClick={(e) => e.stopPropagation()}
               >
                 Terms of Use
@@ -217,7 +217,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
                 href="/privacy" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-indigo-600 font-semibold underline underline-offset-2 hover:text-indigo-700"
+                className="text-[#7F7FFA] font-semibold underline underline-offset-2 hover:text-[#7F7FFA]/80"
                 onClick={(e) => e.stopPropagation()}
               >
                 Privacy Policy
@@ -231,7 +231,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
             type="button"
             onClick={handleCancelConsent}
             disabled={isSigningIn}
-            className="py-3 px-4 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-colors text-sm"
+            className="py-3 px-4 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-colors text-sm cursor-pointer"
           >
             Cancel
           </button>
@@ -239,7 +239,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
             type="button"
             onClick={handleConfirmConsent}
             disabled={!agreed || isSigningIn}
-            className="py-3 px-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+            className="py-3 px-4 bg-[#7F7FFA] text-white font-bold rounded-2xl hover:bg-[#7F7FFA]/90 transition-all shadow-lg shadow-[#7F7FFA]/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm cursor-pointer"
           >
             {isSigningIn ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Agree & Sign In'}
           </button>

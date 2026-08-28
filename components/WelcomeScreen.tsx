@@ -221,12 +221,12 @@ export const WelcomeScreen: React.FC<Props> = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#F4F8FA] text-[#3C3C3C] overflow-x-hidden">
       {/* Glassmorphic Header */}
       <header>
         <nav className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[150] max-w-6xl mx-auto transition-all duration-500 transform-gpu ${
           isScrolled 
-            ? 'top-3 sm:top-4 bg-white/90 backdrop-blur-xl shadow-lg py-2 sm:py-2.5 px-3.5 sm:px-6 border-slate-200/60' 
+            ? 'top-3 sm:top-4 bg-white/95 backdrop-blur-xl shadow-lg py-2 sm:py-2.5 px-3.5 sm:px-6 border-slate-200/70' 
             : 'top-3.5 sm:top-5 bg-[#0d0f18]/90 backdrop-blur-2xl border-white/15 shadow-2xl py-2 sm:py-3 px-3.5 sm:px-6'
         } border rounded-full flex items-center justify-between`}>
         <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -236,24 +236,24 @@ export const WelcomeScreen: React.FC<Props> = ({
             className="w-7 h-7 sm:w-8 sm:h-8 object-contain rounded-xl shadow-sm" 
             referrerPolicy="no-referrer" 
           />
-          <span className={`font-extrabold tracking-tight text-lg sm:text-xl ${isScrolled ? 'text-slate-900' : 'text-white'}`}>BeginFin</span>
+          <span className={`font-extrabold tracking-tight text-lg sm:text-xl ${isScrolled ? 'text-[#3C3C3C]' : 'text-white'}`}>BeginFin</span>
         </div>
 
         <div className="hidden lg:flex items-center gap-7">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-slate-900 hover:text-indigo-600' : 'text-slate-200 hover:text-white'} transition-colors`}>HOME</button>
-          <button onClick={onViewCurriculum} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-slate-900 hover:text-indigo-600' : 'text-slate-200 hover:text-white'} transition-colors`}>CURRICULUM</button>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>HOME</button>
+          <button onClick={onViewCurriculum} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>CURRICULUM</button>
           <button 
             onClick={() => {
               if (onViewTools) onViewTools();
               else navigate('/tools');
             }} 
-            className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-slate-900 hover:text-indigo-600' : 'text-slate-200 hover:text-white'} transition-colors`}
+            className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}
           >
             TOOLS
           </button>
-          <button onClick={onViewResources} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-slate-900 hover:text-indigo-600' : 'text-slate-200 hover:text-white'} transition-colors`}>RESOURCES</button>
-          {onViewAbout && <button onClick={onViewAbout} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-slate-900 hover:text-indigo-600' : 'text-slate-200 hover:text-white'} transition-colors`}>ABOUT</button>}
-          <button onClick={onOpenGuide} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100' : 'text-white bg-[#222536] hover:bg-[#2c3046] border border-white/5'} transition-all px-4 py-1.5 rounded-full shadow-sm`}>
+          <button onClick={onViewResources} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>RESOURCES</button>
+          {onViewAbout && <button onClick={onViewAbout} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>ABOUT</button>}
+          <button onClick={onOpenGuide} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#7F7FFA] bg-[#F4F8FA] hover:bg-[#ECECFC]' : 'text-white bg-[#222536] hover:bg-[#2c3046] border border-white/5'} transition-all px-4 py-1.5 rounded-full shadow-sm`}>
             GUIDE
           </button>
         </div>
@@ -261,7 +261,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           <button 
             onClick={user ? onStart : onLogin}
-            className="bg-[#5046e5] text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold sm:font-extrabold text-[10px] sm:text-[11px] uppercase tracking-wide sm:tracking-wider shadow-md hover:bg-[#4338ca] transition-all active:scale-95 whitespace-nowrap"
+            className="bg-[#7F7FFA] text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold sm:font-extrabold text-[10px] sm:text-[11px] uppercase tracking-wide sm:tracking-wider shadow-md hover:bg-[#6868EB] transition-all active:scale-95 whitespace-nowrap"
           >
             {user ? 'CONTINUE' : 'GET STARTED'}
           </button>
@@ -269,7 +269,7 @@ export const WelcomeScreen: React.FC<Props> = ({
           {!user ? (
             <button 
               onClick={onStart}
-              className={`hidden sm:flex items-center px-4 py-2 rounded-full border ${isScrolled ? 'border-slate-200 bg-white/80 text-slate-900' : 'border-white/30 bg-white/10 text-white'} backdrop-blur-md hover:bg-white/20 transition-all text-[11px] font-extrabold uppercase tracking-wider`}
+              className={`hidden sm:flex items-center px-4 py-2 rounded-full border ${isScrolled ? 'border-slate-200 bg-white/80 text-[#3C3C3C]' : 'border-white/30 bg-white/10 text-white'} backdrop-blur-md hover:bg-white/20 transition-all text-[11px] font-extrabold uppercase tracking-wider`}
             >
               GUEST MODE
             </button>
@@ -277,12 +277,12 @@ export const WelcomeScreen: React.FC<Props> = ({
             <div className="relative">
               <button 
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`flex items-center gap-2 ${isScrolled ? 'bg-slate-100 border-slate-200' : 'bg-[#181b2a] border-white/20'} backdrop-blur-md px-3 py-1.5 rounded-full border hover:bg-white/20 transition-all`}
+                className={`flex items-center gap-2 ${isScrolled ? 'bg-[#F4F8FA] border-slate-200' : 'bg-[#181b2a] border-white/20'} backdrop-blur-md px-3 py-1.5 rounded-full border hover:bg-white/20 transition-all`}
               >
-                <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-[9px] font-bold text-white uppercase">
+                <div className="w-5 h-5 rounded-full bg-[#7F7FFA] flex items-center justify-center text-[9px] font-bold text-white uppercase">
                   {user.displayName?.[0] || 'U'}
                 </div>
-                <span className={`text-[10px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-slate-900' : 'text-white'} hidden sm:inline`}>
+                <span className={`text-[10px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C]' : 'text-white'} hidden sm:inline`}>
                   {user.displayName?.split(' ')[0]}
                 </span>
               </button>
@@ -293,7 +293,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                       onOpenSettings();
                       setShowUserMenu(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-[10px] font-bold text-[#3C3C3C] hover:bg-[#F4F8FA] transition-colors flex items-center gap-2"
                   >
                     Settings
                   </button>
@@ -310,7 +310,7 @@ export const WelcomeScreen: React.FC<Props> = ({
 
           <button 
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className={`lg:hidden p-2 sm:p-2.5 rounded-full ${isScrolled ? 'text-slate-800 border-slate-200/40 bg-white/50' : 'text-white border-white/20 bg-white/10'} hover:bg-white/20 transition-all flex items-center justify-center border shrink-0`}
+            className={`lg:hidden p-2 sm:p-2.5 rounded-full ${isScrolled ? 'text-[#3C3C3C] border-slate-200/40 bg-white/50' : 'text-white border-white/20 bg-white/10'} hover:bg-white/20 transition-all flex items-center justify-center border shrink-0`}
             aria-label="Toggle Mobile Menu"
           >
             {showMobileMenu ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -382,7 +382,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                     setShowMobileMenu(false);
                     onViewResources();
                   }} 
-                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
+                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
                 >
                   <Library className="w-4 h-4 shrink-0" /> Resources
                 </button>
@@ -392,7 +392,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                       setShowMobileMenu(false);
                       onViewAbout();
                     }} 
-                    className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
+                    className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <Users className="w-4 h-4 shrink-0" /> About
                   </button>
@@ -402,9 +402,9 @@ export const WelcomeScreen: React.FC<Props> = ({
                     setShowMobileMenu(false);
                     onOpenGuide();
                   }} 
-                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors flex items-center gap-3"
+                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#7F7FFA] bg-[#F4F8FA] hover:bg-[#7F7FFA]/10 transition-colors flex items-center gap-3 cursor-pointer"
                 >
-                  <BookOpen className="w-4 h-4 shrink-0 text-indigo-500" /> Guide
+                  <BookOpen className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Guide
                 </button>
               </div>
             </motion.div>
@@ -433,10 +433,18 @@ export const WelcomeScreen: React.FC<Props> = ({
             }}
           />
 
+          {/* Hero Glow Backdrop */}
+          <div 
+            className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle 650px at ${mousePosition.x}px ${mousePosition.y}px, rgba(127, 127, 250, 0.28) 0%, rgba(104, 104, 235, 0.12) 45%, transparent 75%)`
+            }}
+          />
+
           {/* Hero Content */}
           <div className="relative z-10 flex flex-col items-center justify-center max-w-4xl mx-auto">
             {/* Top Pill Badge */}
-            <div className="inline-flex items-center px-6 py-2 sm:px-8 sm:py-2.5 bg-white text-slate-900 rounded-full font-bold text-xs sm:text-sm md:text-base shadow-lg mb-8 md:mb-10 tracking-tight">
+            <div className="inline-flex items-center px-6 py-2 sm:px-8 sm:py-2.5 bg-[#F4F8FA] text-[#3C3C3C] border border-[#7F7FFA]/20 rounded-full font-bold text-xs sm:text-sm md:text-base shadow-lg mb-8 md:mb-10 tracking-tight">
               Personal Finance Certification
             </div>
 
@@ -481,21 +489,21 @@ export const WelcomeScreen: React.FC<Props> = ({
       </section>
 
       {/* Impact & Media Recognition Bento Grid */}
-      <section className="pt-8 pb-4 md:pt-10 md:pb-6 bg-[#fbfbfd] border-t border-slate-200/60 relative z-20">
+      <section className="pt-8 pb-4 md:pt-10 md:pb-6 bg-[#F4F8FA] border-t border-slate-200/60 relative z-20">
         <div className="container mx-auto px-6 max-w-6xl space-y-5">
 
           {/* Metrics & Media Bento Grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
             
             {/* Bento Metric 1 */}
-            <div className="md:col-span-4 bg-white p-8 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-indigo-200 hover:shadow-[0_12px_35px_rgba(148,164,255,0.12)] transition-all duration-500 flex flex-col justify-between group">
+            <div className="md:col-span-4 bg-white p-8 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 hover:shadow-[0_12px_35px_rgba(127,127,250,0.12)] transition-all duration-500 flex flex-col justify-between group">
               <div className="space-y-4">
-                <div className="w-11 h-11 bg-indigo-50/80 rounded-xl border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-11 h-11 bg-[#F4F8FA] rounded-xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-4xl md:text-5xl font-normal text-slate-900 tracking-tight">10,000+</h3>
-                  <p className="text-xs font-semibold text-slate-900 mt-1">Unique Visitors</p>
+                  <h3 className="text-4xl md:text-5xl font-normal text-[#3C3C3C] tracking-tight">10,000+</h3>
+                  <p className="text-xs font-semibold text-[#3C3C3C] mt-1">Unique Visitors</p>
                   <p className="text-xs text-slate-500 mt-0.5 font-normal">Empowered since launch in 2026</p>
                 </div>
               </div>
@@ -505,11 +513,11 @@ export const WelcomeScreen: React.FC<Props> = ({
             </div>
 
             {/* Bento Metric 2 - Dark Gradient Featured */}
-            <div className="md:col-span-4 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white p-8 rounded-[2rem] shadow-xl border border-slate-800 hover:border-indigo-500/40 transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl group-hover:bg-indigo-500/30 transition-all duration-500" />
+            <div className="md:col-span-4 bg-gradient-to-br from-slate-950 via-[#0d1029] to-slate-900 text-white p-8 rounded-[2rem] shadow-xl border border-slate-800 hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-[#7F7FFA]/20 rounded-full blur-2xl group-hover:bg-[#7F7FFA]/30 transition-all duration-500" />
               
               <div className="space-y-4 relative z-10">
-                <div className="w-11 h-11 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 flex items-center justify-center text-indigo-300 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-11 h-11 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
@@ -524,27 +532,27 @@ export const WelcomeScreen: React.FC<Props> = ({
             </div>
 
             {/* Bento Metric 3 */}
-            <div className="md:col-span-4 bg-white p-8 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-indigo-200 hover:shadow-[0_12px_35px_rgba(148,164,255,0.12)] transition-all duration-500 flex flex-col justify-between group">
+            <div className="md:col-span-4 bg-white p-8 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 hover:shadow-[0_12px_35px_rgba(127,127,250,0.12)] transition-all duration-500 flex flex-col justify-between group">
               <div className="space-y-4">
-                <div className="w-11 h-11 bg-indigo-50/80 rounded-xl border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-11 h-11 bg-[#F4F8FA] rounded-xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
                   <Globe className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-4xl md:text-5xl font-normal text-slate-900 tracking-tight">25+</h3>
-                  <p className="text-xs font-semibold text-slate-900 mt-1">Countries Reached</p>
+                  <h3 className="text-4xl md:text-5xl font-normal text-[#3C3C3C] tracking-tight">25+</h3>
+                  <p className="text-xs font-semibold text-[#3C3C3C] mt-1">Countries Reached</p>
                   <p className="text-xs text-slate-500 mt-0.5 font-normal">Spreading financial literacy globally</p>
                 </div>
               </div>
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-end">
-                <Globe className="w-3.5 h-3.5 text-indigo-500" />
+                <Globe className="w-3.5 h-3.5 text-[#7F7FFA]" />
               </div>
             </div>
 
             {/* Bento Card 4: Media & Press Row */}
-            <div className="md:col-span-12 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-indigo-200 transition-all duration-500">
+            <div className="md:col-span-12 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/30 transition-all duration-500">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="text-center md:text-left shrink-0">
-                  <h4 className="text-lg font-medium text-slate-900 tracking-tight">Featured by</h4>
+                  <h4 className="text-lg font-medium text-[#3C3C3C] tracking-tight">Featured by</h4>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-6 md:gap-8">
@@ -588,11 +596,11 @@ export const WelcomeScreen: React.FC<Props> = ({
       </section>
 
       {/* Main Platform Features Bento Grid */}
-      <section ref={contentRef} className="pt-8 pb-16 md:pt-10 md:pb-24 px-6 bg-white border-t border-slate-100">
+      <section ref={contentRef} className="pt-8 pb-16 md:pt-10 md:pb-24 px-6 bg-[#F4F8FA] border-t border-slate-200/60">
         <div className="container mx-auto max-w-6xl space-y-12">
           
           <div className="space-y-3 max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-5xl font-normal text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-3xl md:text-5xl font-normal text-[#3C3C3C] tracking-tight leading-tight">
               Structured for mastery.
             </h2>
             <p className="text-slate-500 text-sm md:text-base font-normal max-w-xl mx-auto">
@@ -605,15 +613,15 @@ export const WelcomeScreen: React.FC<Props> = ({
             
             {/* Feature Bento 1: Large Featured Dark Gradient Card */}
             <div className="lg:col-span-8 bg-gradient-to-br from-slate-950 via-[#0d1029] to-slate-900 text-white p-8 md:p-10 rounded-[2.5rem] border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between group">
-              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl group-hover:bg-indigo-500/25 transition-all duration-700 pointer-events-none" />
+              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-[#7F7FFA]/15 rounded-full blur-3xl group-hover:bg-[#7F7FFA]/25 transition-all duration-700 pointer-events-none" />
 
               <div className="space-y-6 relative z-10">
-                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center text-indigo-300">
+                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center text-[#7F7FFA]">
                   <BookOpen className="w-6 h-6" />
                 </div>
 
                 <div className="space-y-2 max-w-lg">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-indigo-300">8 Units</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#7F7FFA]">8 Units</span>
                   <h3 className="text-2xl md:text-4xl font-normal text-white tracking-tight leading-snug">
                     National Standards-Aligned Curriculum
                   </h3>
@@ -635,7 +643,7 @@ export const WelcomeScreen: React.FC<Props> = ({
 
                 <button 
                   onClick={onViewCurriculum}
-                  className="px-6 py-2.5 bg-white text-slate-900 rounded-full font-medium text-xs hover:bg-slate-100 transition-all flex items-center gap-1.5 active:scale-95 shadow-md"
+                  className="px-6 py-2.5 bg-white text-slate-900 rounded-full font-medium text-xs hover:bg-slate-100 transition-all flex items-center gap-1.5 active:scale-95 shadow-md cursor-pointer"
                 >
                   <span>Explore Units</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -644,15 +652,15 @@ export const WelcomeScreen: React.FC<Props> = ({
             </div>
 
             {/* Feature Bento 2: Light Calculator Card */}
-            <div className="lg:col-span-4 bg-gradient-to-b from-white to-indigo-50/20 p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-indigo-200 transition-all duration-500 flex flex-col justify-between group">
+            <div className="lg:col-span-4 bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between group">
               <div className="space-y-5">
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-12 h-12 bg-[#F4F8FA] rounded-2xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
                   <Lightbulb className="w-6 h-6" />
                 </div>
 
                 <div className="space-y-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-600">Interactive Tools</span>
-                  <h3 className="text-xl md:text-2xl font-normal text-slate-900 tracking-tight">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7F7FFA]">Interactive Tools</span>
+                  <h3 className="text-xl md:text-2xl font-normal text-[#3C3C3C] tracking-tight">
                     Financial Calculators & Simulations
                   </h3>
                   <p className="text-xs text-slate-500 leading-relaxed font-normal">
@@ -663,20 +671,20 @@ export const WelcomeScreen: React.FC<Props> = ({
 
               <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hands-On Practice</span>
-                <ChevronRight className="w-4 h-4 text-indigo-500 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-[#7F7FFA] group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
 
             {/* Feature Bento 3: Light Credential Card */}
-            <div className="lg:col-span-5 bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-indigo-200 transition-all duration-500 flex flex-col justify-between group">
+            <div className="lg:col-span-5 bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between group">
               <div className="space-y-5">
-                <div className="w-12 h-12 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-12 h-12 bg-[#F4F8FA] rounded-2xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
                   <Award className="w-6 h-6" />
                 </div>
 
                 <div className="space-y-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-600">Verified Outcome</span>
-                  <h3 className="text-xl md:text-2xl font-normal text-slate-900 tracking-tight">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7F7FFA]">Verified Outcome</span>
+                  <h3 className="text-xl md:text-2xl font-normal text-[#3C3C3C] tracking-tight">
                     LinkedIn-Shareable Certificate
                   </h3>
                   <p className="text-xs text-slate-500 leading-relaxed font-normal">
@@ -686,7 +694,7 @@ export const WelcomeScreen: React.FC<Props> = ({
               </div>
 
               <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-end">
-                <Award className="w-4 h-4 text-amber-500" />
+                <Award className="w-4 h-4 text-[#7F7FFA]" />
               </div>
             </div>
 
@@ -704,7 +712,7 @@ export const WelcomeScreen: React.FC<Props> = ({
               <div className="flex items-center gap-3 relative z-10 shrink-0">
                 <button 
                   onClick={onStart}
-                  className="px-7 py-3 bg-white text-slate-900 rounded-full font-medium text-xs hover:bg-slate-100 transition-all active:scale-95 shadow-md"
+                  className="px-7 py-3 bg-white text-slate-900 rounded-full font-medium text-xs hover:bg-slate-100 transition-all active:scale-95 shadow-md cursor-pointer"
                 >
                   Start Now
                 </button>
@@ -716,11 +724,11 @@ export const WelcomeScreen: React.FC<Props> = ({
       </section>
 
       {/* Student Reviews Bento */}
-      <section className="py-16 md:py-24 px-6 bg-[#fbfbfd] border-t border-slate-200/60">
+      <section className="py-16 md:py-24 px-6 bg-[#F4F8FA] border-t border-slate-200/60">
         <div className="container mx-auto max-w-6xl space-y-10">
           
           <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-normal text-slate-900 tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-normal text-[#3C3C3C] tracking-tight">
               Real results from real learners.
             </h2>
           </div>
@@ -728,20 +736,20 @@ export const WelcomeScreen: React.FC<Props> = ({
           {/* Student Quote Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {reviews.slice(0, 3).map((rev) => (
-              <div key={rev.id} className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between space-y-4">
+              <div key={rev.id} className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-300 flex flex-col justify-between space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-1 text-amber-400">
+                  <div className="flex items-center gap-1 text-[#7F7FFA]">
                     {[...Array(rev.stars)].map((_, idx) => (
-                      <Star key={idx} className="w-3.5 h-3.5 fill-amber-400" />
+                      <Star key={idx} className="w-3.5 h-3.5 fill-[#7F7FFA] text-[#7F7FFA]" />
                     ))}
                   </div>
-                  <p className="text-xs md:text-sm text-slate-700 font-normal leading-relaxed italic">
+                  <p className="text-xs md:text-sm text-[#3C3C3C] font-normal leading-relaxed italic">
                     "{rev.text}"
                   </p>
                 </div>
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
                   <span>{rev.name}</span>
-                  <span className="text-indigo-600 font-semibold">Verified Learner</span>
+                  <span className="text-[#7F7FFA] font-semibold">Verified Learner</span>
                 </div>
               </div>
             ))}

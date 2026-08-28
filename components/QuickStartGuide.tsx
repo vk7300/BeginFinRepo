@@ -42,7 +42,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
     const addHeaderFooter = (pageNum: number, totalPages: number) => {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.setTextColor(148, 163, 184);
+      doc.setTextColor(60, 60, 60);
       
       doc.text('BEGINFIN EDUCATOR RESOURCES', margin, 12);
       doc.text('QUICK START GUIDE', pageWidth - margin - 35, 12);
@@ -66,7 +66,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(199, 210, 254);
+    doc.setTextColor(127, 127, 250);
     doc.text('Classroom Setup, Student Management & Implementation Checklist', margin + 8, y + 16);
 
     y += 32;
@@ -78,7 +78,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
       }
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      doc.setTextColor(79, 70, 229);
+      doc.setTextColor(127, 127, 250);
       doc.text(`${num}. ${title}`, margin, y);
       y += 2;
       doc.setDrawColor(226, 232, 240);
@@ -90,7 +90,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
     const addParagraph = (text: string) => {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      doc.setTextColor(51, 65, 85);
+      doc.setTextColor(60, 60, 60);
       const lines = doc.splitTextToSize(text, pageWidth - margin * 2);
       if (y + lines.length * 4 > pageHeight - 20) {
         doc.addPage();
@@ -176,9 +176,9 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
             </button>
             <button
               onClick={generatePDF}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-indigo-600 text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-indigo-300" />
+              <Download className="w-3.5 h-3.5 text-[#7F7FFA]" />
               <span>Save as PDF</span>
             </button>
           </div>
@@ -190,7 +190,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
         {/* Navigation Sidebar */}
         <aside className="hidden lg:block w-64 shrink-0 no-print sticky top-28 h-fit">
           <div className="bg-white rounded-[24px] border border-slate-200/80 p-5 shadow-sm space-y-2">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-3 px-3">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-[#7F7FFA] mb-3 px-3">
               Guide Navigation
             </div>
             <nav className="space-y-1">
@@ -198,10 +198,10 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
                 <button
                   key={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all flex items-center justify-between group cursor-pointer"
+                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-[#7F7FFA] hover:bg-[#F4F8FA] transition-all flex items-center justify-between group cursor-pointer"
                 >
                   <span>{section.title}</span>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-500" />
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-[#7F7FFA]" />
                 </button>
               ))}
             </nav>
@@ -213,10 +213,10 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           
           {/* Cover Hero Bento Section */}
           <section className="bg-[#0b0f19] text-white p-8 md:p-12 rounded-[32px] border border-white/10 relative overflow-hidden shadow-2xl">
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/30 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#7F7FFA]/30 rounded-full blur-[100px] pointer-events-none" />
 
             <div className="relative z-10 max-w-2xl">
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-indigo-200 border border-white/10 inline-block mb-6">
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-[#7F7FFA] border border-white/10 inline-block mb-6">
                 Educator Guide
               </span>
               <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-4 leading-tight">
@@ -231,10 +231,10 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 1. Overview */}
           <section id="intro" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 01
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Overview</h2>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Overview</h2>
             </div>
             
             <p className="text-slate-600 text-sm leading-relaxed font-normal">
@@ -247,25 +247,25 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
                 { icon: Users, title: 'Class Dashboard', desc: 'Real-time completion tracking and performance summaries.' },
                 { icon: Shield, title: 'Browser-Based', desc: 'Runs directly in standard web browsers with zero software installation.' }
               ].map((item, i) => (
-                <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
-                  <item.icon className="w-5 h-5 text-indigo-600" />
-                  <h3 className="font-bold text-slate-900 text-xs">{item.title}</h3>
+                <div key={i} className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                  <item.icon className="w-5 h-5 text-[#7F7FFA]" />
+                  <h3 className="font-bold text-[#3C3C3C] text-xs">{item.title}</h3>
                   <p className="text-slate-500 text-xs leading-relaxed font-normal">{item.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="p-6 bg-indigo-50/80 rounded-2xl border border-indigo-100/80 space-y-3">
-              <h3 className="font-bold text-indigo-950 text-xs uppercase tracking-wider flex items-center gap-2">
-                <Info className="w-4 h-4 text-indigo-600" /> Embedded Simulators
+            <div className="p-6 bg-[#F4F8FA] rounded-2xl border border-[#7F7FFA]/20 space-y-3">
+              <h3 className="font-bold text-[#3C3C3C] text-xs uppercase tracking-wider flex items-center gap-2">
+                <Info className="w-4 h-4 text-[#7F7FFA]" /> Embedded Simulators
               </h3>
               <ul className="space-y-2 text-slate-700 text-xs font-normal">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0 mt-0.5" />
                   <span><strong>Career & Budget Simulator:</strong> Allows students to examine gross income, taxes, local housing costs, and savings rates across sample professions in Austin, TX.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0 mt-0.5" />
                   <span><strong>Credit Score Game:</strong> Evaluates decision-making scenarios regarding borrowing, credit utilization, and timely payments.</span>
                 </li>
               </ul>
@@ -275,10 +275,10 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 2. Teacher Account Setup */}
           <section id="teacher" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 02
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Teacher Account Setup</h2>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Teacher Account Setup</h2>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -287,11 +287,11 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
                 { step: '2', title: 'Create Class', text: 'Define class sections corresponding to your teaching schedule.' },
                 { step: '3', title: 'Share Class Code', text: 'Distribute the generated class code for students to join your roster.' }
               ].map((s) => (
-                <div key={s.step} className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-3">
-                  <span className="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                <div key={s.step} className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-3">
+                  <span className="w-7 h-7 rounded-full bg-[#7F7FFA] text-white font-bold text-xs flex items-center justify-center">
                     {s.step}
                   </span>
-                  <h3 className="font-bold text-slate-900 text-sm">{s.title}</h3>
+                  <h3 className="font-bold text-[#3C3C3C] text-sm">{s.title}</h3>
                   <p className="text-slate-500 text-xs leading-relaxed font-normal">{s.text}</p>
                 </div>
               ))}
@@ -301,10 +301,10 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 3. Google Classroom Integration */}
           <section id="classroom" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 03
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Google Classroom Integration</h2>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Google Classroom Integration</h2>
             </div>
 
             <p className="text-slate-600 text-sm leading-relaxed font-normal">
@@ -312,22 +312,22 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
             </p>
 
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
-                <h3 className="font-bold text-slate-900 text-sm">1. OAuth Connection</h3>
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-[#3C3C3C] text-sm">1. OAuth Connection</h3>
                 <p className="text-slate-500 text-xs leading-relaxed font-normal">
                   Click "Sign in with Google" on your Teacher Dashboard to grant permission to read courses and sync assignments.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
-                <h3 className="font-bold text-slate-900 text-sm">2. Course & Roster Import</h3>
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-[#3C3C3C] text-sm">2. Course & Roster Import</h3>
                 <p className="text-slate-500 text-xs leading-relaxed font-normal">
                   Select your active Google Classroom courses to import student rosters directly into your BeginFin class sections.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
-                <h3 className="font-bold text-slate-900 text-sm">3. Direct Coursework & Posts</h3>
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-[#3C3C3C] text-sm">3. Direct Coursework & Posts</h3>
                 <p className="text-slate-500 text-xs leading-relaxed font-normal">
                   Assign BeginFin learning units with custom point values and due dates or broadcast announcements straight to student streams.
                 </p>
@@ -338,28 +338,28 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 4. Managing Assignments */}
           <section id="assignments" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 04
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Managing Assignments</h2>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Managing Assignments</h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-3">
-                <h3 className="font-bold text-slate-900 text-sm">Creating Challenges</h3>
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-3">
+                <h3 className="font-bold text-[#3C3C3C] text-sm">Creating Challenges</h3>
                 <ul className="space-y-2 text-slate-600 text-xs font-normal">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Select required financial units</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Set target completion dates</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Assign to individual class periods</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Select required financial units</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Set target completion dates</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Assign to individual class periods</li>
                 </ul>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-3">
-                <h3 className="font-bold text-slate-900 text-sm">Reviewing Progress</h3>
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-3">
+                <h3 className="font-bold text-[#3C3C3C] text-sm">Reviewing Progress</h3>
                 <ul className="space-y-2 text-slate-600 text-xs font-normal">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Monitor completion rates</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Review quiz attempt summaries</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Export grade summaries to CSV</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Monitor completion rates</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Review quiz attempt summaries</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Export grade summaries to CSV</li>
                 </ul>
               </div>
             </div>
@@ -368,17 +368,17 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 5. Student Account Setup */}
           <section id="student" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 05
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Student Account Setup</h2>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Student Account Setup</h2>
             </div>
 
             <div className="space-y-4 text-slate-600 text-sm font-normal leading-relaxed">
               <p>
                 Students register using email credentials or permitted SSO options and input the teacher's class code during sign-up to join the class roster.
               </p>
-              <p className="text-xs text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+              <p className="text-xs text-slate-500 bg-[#F4F8FA] p-4 rounded-xl border border-slate-200/60">
                 <strong>Guest Mode:</strong> Allows immediate exploration of learning units without account creation. Guest progress is not saved to a class gradebook.
               </p>
             </div>
@@ -387,22 +387,22 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 6. Privacy & Terms */}
           <section id="privacy" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 06
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Privacy & Data Governance</h2>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Privacy & Data Governance</h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 text-xs text-slate-600">
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
-                <h3 className="font-bold text-slate-900">Privacy Protocols</h3>
+              <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-[#3C3C3C]">Privacy Protocols</h3>
                 <p className="text-slate-500 leading-relaxed font-normal">
                   Minimal operational data is collected solely for student progress tracking. Student records are not sold or used for third-party advertising. We will share your name and email with Certifier.io, a trusted 3rd party digital credential provider, if the user requests.
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60 space-y-2">
-                <h3 className="font-bold text-slate-900">Terms of Service</h3>
+              <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <h3 className="font-bold text-[#3C3C3C]">Terms of Service</h3>
                 <p className="text-slate-500 leading-relaxed font-normal">
                   Designed for educational instruction. Users maintain full control over account credentials and data deletion requests.
                 </p>
@@ -413,10 +413,10 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 7. Implementation Checklist */}
           <section id="checklist" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 07
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Implementation Checklist</h2>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Implementation Checklist</h2>
             </div>
 
             <div className="overflow-x-auto">
@@ -444,7 +444,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
                       <td className="py-3 px-4 font-medium">{row.task}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          row.role === 'Teacher' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-100 text-slate-600'
+                          row.role === 'Teacher' ? 'bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20' : 'bg-slate-100 text-slate-600'
                         }`}>
                           {row.role}
                         </span>
@@ -459,7 +459,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
           {/* 8. Support & Contact */}
           <section id="support" className="bg-[#0b0f19] text-white rounded-[32px] border border-white/10 p-8 md:p-10 shadow-xl space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-indigo-300 font-bold text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 08
               </div>
               <h2 className="text-2xl font-bold text-white tracking-tight">Support & Inquiry Contacts</h2>
@@ -473,9 +473,9 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
                 { label: 'Account Assistance', email: 'support@begin-fin.com' }
               ].map((c, i) => (
                 <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-indigo-300 tracking-wider block">{c.label}</span>
+                  <span className="text-[10px] uppercase font-bold text-[#7F7FFA] tracking-wider block">{c.label}</span>
                   <a href={`mailto:${c.email}`} className="text-xs font-semibold text-slate-200 hover:text-white transition-colors flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                    <Mail className="w-3.5 h-3.5 text-[#7F7FFA]" />
                     <span>{c.email}</span>
                   </a>
                 </div>

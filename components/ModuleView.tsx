@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, BookOpen, GraduationCap, ArrowRight, RotateCcw, XCircle, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, GraduationCap, ArrowRight, RotateCcw, XCircle, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, Loader2 } from 'lucide-react';
 import { getModuleIcon } from './CurriculumView';
 import { Module, QuizQuestion } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
@@ -317,7 +317,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <div className="min-w-0">
-            <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 text-[9px] font-black uppercase tracking-widest rounded-full border border-indigo-500/30 inline-flex items-center gap-1 mb-1">
+            <span className="px-2 py-0.5 bg-[#7F7FFA]/20 text-[#7F7FFA] text-[9px] font-black uppercase tracking-widest rounded-full border border-[#7F7FFA]/30 inline-flex items-center gap-1 mb-1">
               {getModuleIcon(module.id, "w-2.5 h-2.5")} Focus Area
             </span>
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight truncate">
@@ -327,16 +327,16 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
         </div>
 
         {/* Top Progress in Header for Quick Context */}
-        <div className="relative z-10 hidden sm:flex items-center gap-3 shrink-0 bg-white/5 border border-white/10 px-3.5 py-2 rounded-2xl backdrop-blur-md">
+        <div className="relative z-10 hidden sm:flex items-center gap-3 shrink-0 bg-white/10 border border-white/15 px-3.5 py-2 rounded-2xl backdrop-blur-md">
           {step === 'content' ? (
             <div className="text-right">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-300">Lesson</span>
-              <p className="text-xs font-bold text-white">Section {currentSectionIdx + 1} / {contentSections.length}</p>
+              <span className="text-[10px] uppercase tracking-wider font-bold text-[#7F7FFA]">Lesson</span>
+              <p className="text-xs font-bold text-white">Section {currentSectionIdx + 1} of {contentSections.length}</p>
             </div>
           ) : (
             <div className="text-right">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-amber-300">Quiz</span>
-              <p className="text-xs font-bold text-white">Q {currentQuestionIdx + 1} of {activeQuiz.length}</p>
+              <span className="text-[10px] uppercase tracking-wider font-bold text-[#7F7FFA]">Quiz</span>
+              <p className="text-xs font-bold text-white">Question {currentQuestionIdx + 1} of {activeQuiz.length}</p>
             </div>
           )}
         </div>
@@ -357,42 +357,42 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
               {/* Question Header & Progress Bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="inline-block px-2.5 py-1 bg-amber-50 text-amber-800 text-[10px] font-black uppercase tracking-wider rounded-lg border border-amber-200/60">
+                  <span className="inline-block px-2.5 py-1 bg-[#F4F8FA] text-[#7F7FFA] text-[10px] font-black uppercase tracking-wider rounded-lg border border-[#7F7FFA]/20">
                     Question {currentQuestionIdx + 1} of {activeQuiz.length}
                   </span>
-                  <span className="text-xs font-semibold text-slate-500">
+                  <span className="text-xs font-semibold text-slate-500 font-mono">
                     {Math.round(((currentQuestionIdx + 1) / Math.max(activeQuiz.length, 1)) * 100)}% Completed
                   </span>
                 </div>
                 
-                {/* Thin progress bar */}
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                {/* Iris Pulse on Glacial White progress bar */}
+                <div className="w-full bg-[#F4F8FA] border border-slate-200/60 h-2 rounded-full overflow-hidden p-0.5">
                   <div 
-                    className="bg-amber-500 h-full rounded-full transition-all duration-300"
+                    className="bg-[#7F7FFA] h-full rounded-full transition-all duration-300 ease-out"
                     style={{ width: `${((currentQuestionIdx + 1) / Math.max(activeQuiz.length, 1)) * 100}%` }}
                   />
                 </div>
 
                 {/* Question Prompt */}
                 {activeQuiz[currentQuestionIdx] && (
-                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 tracking-tight leading-snug pt-1">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#3C3C3C] tracking-tight leading-snug pt-1">
                     {activeQuiz[currentQuestionIdx].question}
                   </h3>
                 )}
               </div>
 
-              {/* Options Grid */}
+              {/* Options Grid: Iris Pulse for selected, Glacial White for default */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1">
                 {currentOptions.map((option, i) => {
                   const answerObj = userAnswers.find(a => a.questionIdx === currentQuestionIdx);
                   const isSelected = answerObj?.selectedIdx === option.originalIndex;
                   
-                  let btnStyle = 'border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-800 bg-white';
-                  let badgeStyle = 'border-slate-300';
-                  let dotStyle = 'bg-indigo-600 opacity-0 scale-50';
+                  let btnStyle = 'border-slate-200/90 bg-[#F4F8FA] hover:border-[#7F7FFA]/50 hover:bg-[#ECECFC]/40 text-[#3C3C3C]';
+                  let badgeStyle = 'border-slate-300 bg-white';
+                  let dotStyle = 'bg-[#7F7FFA] opacity-0 scale-50';
 
                   if (isSelected) {
-                    btnStyle = 'border-[#7F7FFA] bg-indigo-50/60 text-indigo-950 shadow-xs ring-2 ring-indigo-500/20';
+                    btnStyle = 'border-[#7F7FFA] bg-[#F4F8FA] text-[#3C3C3C] shadow-xs ring-2 ring-[#7F7FFA]/25';
                     badgeStyle = 'border-[#7F7FFA] bg-[#7F7FFA]';
                     dotStyle = 'bg-white scale-100 opacity-100';
                   }
@@ -403,7 +403,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                       type="button"
                       onClick={() => handleAnswer(option.originalIndex)}
                       disabled={isSubmitting}
-                      className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 outline-none flex items-center justify-between gap-2.5 group min-h-[58px] ${btnStyle}`}
+                      className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 outline-none flex items-center justify-between gap-2.5 group min-h-[58px] cursor-pointer ${btnStyle}`}
                     >
                       <span className="text-xs sm:text-sm md:text-[15px] font-semibold leading-snug pr-2">
                         {option.text}
@@ -431,7 +431,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                   className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all ${
                     currentQuestionIdx === 0 || isSubmitting
                     ? 'bg-slate-50 text-slate-300 cursor-not-allowed border border-transparent' 
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    : 'bg-[#F4F8FA] border border-slate-200 text-slate-700 hover:bg-slate-100 cursor-pointer'
                   }`}
                 >
                   <ChevronLeft className="w-4 h-4" /> {t.prevQuestion}
@@ -439,10 +439,10 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                 <button 
                   onClick={handleNextQuestion}
                   disabled={!userAnswers.find(a => a.questionIdx === currentQuestionIdx) || isSubmitting}
-                  className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs active:scale-[0.98] ${
+                  className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs active:scale-[0.98] cursor-pointer ${
                     !userAnswers.find(a => a.questionIdx === currentQuestionIdx) || isSubmitting
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                    : 'bg-[#7F7FFA] text-white hover:bg-indigo-700 shadow-indigo-500/20'
+                    : 'bg-[#7F7FFA] text-white hover:bg-[#6868EB]'
                   }`}
                 >
                   {isSubmitting ? (
@@ -462,35 +462,43 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
               </div>
             </div>
           ) : (
-            /* Quiz Completion / Results View */
+            /* Quiz Completion / Results View: Iris Pulse to Glacial White Gradient Reveal */
             <div className="text-center space-y-4 animate-in zoom-in duration-300 py-2">
               {showReview ? (
                 <div className="text-left space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Review Mistakes</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-[#3C3C3C] tracking-tight">Review Mistakes</h3>
                     <button 
                       onClick={() => setShowReview(false)}
-                      className="text-[#7F7FFA] font-bold text-xs sm:text-sm hover:underline"
+                      className="text-[#7F7FFA] font-bold text-xs sm:text-sm hover:underline cursor-pointer"
                     >
                       Back to Results
                     </button>
                   </div>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
                     {gradingResults.filter(a => !a.isCorrect).map((result, i) => {
                       const question = activeQuiz[result.questionIdx];
                       if (!question) return null;
                       return (
-                        <div key={i} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                          <p className="font-bold text-xs sm:text-sm text-slate-900">{question.question}</p>
-                          <div className="space-y-1 bg-white p-2.5 rounded-xl border border-slate-100 text-xs">
-                            <p className="font-medium text-rose-600 flex items-start gap-1.5">
-                              <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> 
-                              <span>Your Answer: {question.options[result.selectedIdx] || 'None'}</span>
-                            </p>
-                            <p className="font-medium text-emerald-700 flex items-start gap-1.5">
-                              <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> 
-                              <span>Correct: {question.options[result.correctIndex]}</span>
-                            </p>
+                        <div key={i} className="p-4 bg-[#F4F8FA] rounded-2xl border border-slate-200 space-y-2.5">
+                          <p className="font-bold text-xs sm:text-sm text-[#3C3C3C]">{question.question}</p>
+                          <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-200/70 text-xs">
+                            {/* Accessible semantic red pairing with icon + clear label */}
+                            <div className="font-medium text-rose-700 flex items-start gap-2">
+                              <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" /> 
+                              <div>
+                                <span className="font-bold uppercase tracking-wider text-[10px] text-rose-600 block">Your Answer:</span>
+                                <span>{question.options[result.selectedIdx] || 'None'}</span>
+                              </div>
+                            </div>
+                            {/* Accessible semantic green pairing with icon + clear label */}
+                            <div className="font-medium text-emerald-800 flex items-start gap-2 pt-1 border-t border-slate-100">
+                              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> 
+                              <div>
+                                <span className="font-bold uppercase tracking-wider text-[10px] text-emerald-700 block">Correct Answer:</span>
+                                <span>{question.options[result.correctIndex]}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
@@ -500,55 +508,68 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
               ) : (
                 <>
                   {isPerfectScore ? (
-                    <div className="space-y-3">
-                      <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto border border-emerald-100">
-                        <GraduationCap className="w-7 h-7 text-emerald-600" />
+                    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-[#7F7FFA]/15 via-[#F4F8FA] to-white border-2 border-[#7F7FFA]/30 shadow-md space-y-4">
+                      {/* Subtle Radial Glow */}
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-[#7F7FFA]/15 rounded-full blur-3xl -translate-y-12 translate-x-12 pointer-events-none" />
+
+                      <div className="w-16 h-16 bg-[#7F7FFA] text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                        <GraduationCap className="w-8 h-8 text-white" />
                       </div>
-                      <div>
-                        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{t.masteryAchieved}</h3>
-                        <p className="text-slate-500 font-medium text-xs sm:text-sm mt-1">
-                          {t.perfectScore}: <span className="text-emerald-600 font-bold">{score}/{activeQuiz.length}</span>
+                      
+                      <div className="max-w-md mx-auto">
+                        <h3 className="text-xl sm:text-2xl font-bold text-[#3C3C3C] tracking-tight">{t.masteryAchieved}</h3>
+                        <p className="text-slate-600 font-medium text-xs sm:text-sm mt-1">
+                          You demonstrated complete mastery on this unit.
                         </p>
                       </div>
-                      <button 
-                        onClick={() => onComplete()}
-                        className="w-full max-w-sm mx-auto bg-[#7F7FFA] text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
-                      >
-                        {t.completeUnit} <ArrowRight className="w-4 h-4" />
-                      </button>
+
+                      {/* Score Reveal Badge */}
+                      <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-[#7F7FFA]/30 rounded-2xl shadow-xs">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t.perfectScore}:</span>
+                        <span className="text-lg font-black text-[#7F7FFA] font-mono">{score}/{activeQuiz.length} (100%)</span>
+                      </div>
+
+                      <div className="pt-2">
+                        <button 
+                          onClick={() => onComplete()}
+                          className="w-full max-w-sm mx-auto bg-[#7F7FFA] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#6868EB] transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 text-sm cursor-pointer"
+                        >
+                          {t.completeUnit} <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-w-md mx-auto">
-                      <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
+                    <div className="space-y-4 max-w-md mx-auto bg-[#F4F8FA] border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs">
+                      <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto border border-rose-200">
                         <XCircle className="w-6 h-6 text-rose-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">{t.reviewRequired}</h3>
-                        <p className="text-rose-600 mt-1 font-bold bg-rose-50 py-1 px-4 rounded-full inline-block text-sm border border-rose-100">
-                          Score: {score}/{activeQuiz.length} (100% Required)
-                        </p>
+                        <h3 className="text-lg sm:text-xl font-bold text-[#3C3C3C] tracking-tight">{t.reviewRequired}</h3>
+                        <div className="mt-2 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold font-mono">
+                          Score: {score}/{activeQuiz.length} (100% Mastery Required)
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                      <p className="text-xs text-slate-600 leading-relaxed bg-white p-3.5 rounded-xl border border-slate-200/70">
                         {t.masteryRequirement}
                       </p>
                       <div className="grid grid-cols-2 gap-2.5 pt-1">
                         <button 
                           onClick={handleRetry}
-                          className="bg-[#7F7FFA] text-white font-bold py-2.5 px-3 rounded-xl hover:bg-indigo-700 transition-all shadow-xs flex items-center justify-center gap-1.5 text-xs"
+                          className="bg-[#7F7FFA] text-white font-bold py-2.5 px-3 rounded-xl hover:bg-[#6868EB] transition-all shadow-xs flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                         >
                           <RotateCcw className="w-3.5 h-3.5" /> {t.retryQuiz}
                         </button>
                         <button 
                           onClick={handleReview}
-                          className="bg-white border border-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-xs"
+                          className="bg-white border border-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                         >
-                          <BookOpen className="w-3.5 h-3.5" /> {t.reviewUnit}
+                          <ChevronLeft className="w-3.5 h-3.5" /> {t.reviewUnit}
                         </button>
                       </div>
                       {gradingResults.some(r => !r.isCorrect) && (
                         <button 
                           onClick={() => setShowReview(true)}
-                          className="w-full bg-slate-100 border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 text-xs"
+                          className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                         >
                           Review Mistakes
                         </button>
@@ -561,29 +582,27 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
           )}
         </div>
       ) : (
-        /* Main Bento Grid for Lesson Content */
+        /* Main Bento Grid for Lesson Content: Content Cards on Glacial White (#F4F8FA) */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           
-          {/* Left Sidebar Tracker Card */}
+          {/* Left Sidebar Tracker Card on Glacial White */}
           <div className="lg:col-span-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-4 sticky top-4">
+            <div className="bg-[#F4F8FA] p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-4 sticky top-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7F7FFA]">Lesson Progress</span>
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight mt-0.5">
+                <h3 className="text-lg font-bold text-[#3C3C3C] tracking-tight mt-0.5">
                   Section {currentSectionIdx + 1} of {contentSections.length}
                 </h3>
               </div>
               
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-center text-[#7F7FFA] shrink-0">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-slate-800">
+                    <p className="text-xs font-bold text-[#3C3C3C]">
                       {contentSections[currentSectionIdx].title || `Part ${currentSectionIdx + 1}`}
                     </p>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                    {/* Iris Pulse on Glacial White Track */}
+                    <div className="w-full bg-white border border-slate-200/60 h-2 rounded-full mt-2 overflow-hidden p-0.5">
                       <div 
                         className="bg-[#7F7FFA] h-full rounded-full transition-all duration-500"
                         style={{ width: `${((currentSectionIdx + 1) / contentSections.length) * 100}%` }}
@@ -595,12 +614,12 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
             </div>
           </div>
 
-          {/* Right Main Content Card */}
-          <div className="lg:col-span-8 bg-white text-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col min-h-[480px]">
-            <div className="flex-1 text-slate-700 leading-relaxed space-y-4 mb-6 text-sm sm:text-base">
+          {/* Right Main Content Card on Glacial White */}
+          <div className="lg:col-span-8 bg-[#F4F8FA] text-[#3C3C3C] rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col min-h-[480px]">
+            <div className="flex-1 leading-relaxed space-y-4 mb-6 text-sm sm:text-base font-normal">
               <div key={currentSectionIdx} className="animate-in fade-in slide-in-from-right-4 duration-300">
                 {contentSections[currentSectionIdx].title && (
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-bold text-[#3C3C3C] mb-4 tracking-tight">
                     {contentSections[currentSectionIdx].title}
                   </h3>
                 )}
@@ -616,10 +635,10 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                       return (
                         <div key={i} className="flex items-start gap-2.5 pl-1.5 py-0.5 leading-relaxed">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#7F7FFA] mt-2.5 shrink-0" />
-                          <div className="text-slate-700 text-sm sm:text-base flex-1">
+                          <div className="text-slate-700 text-sm sm:text-base flex-1 font-normal">
                             {parts.map((part, pIdx) => {
                               if (part.startsWith('**') && part.endsWith('**')) {
-                                return <strong key={pIdx} className="text-slate-900 font-bold">{part.slice(2, -2)}</strong>;
+                                return <strong key={pIdx} className="text-[#3C3C3C] font-bold">{part.slice(2, -2)}</strong>;
                               }
                               return part;
                             })}
@@ -629,10 +648,10 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                     }
 
                     return (
-                      <p key={i} className="leading-relaxed text-slate-700 text-sm sm:text-base">
+                      <p key={i} className="leading-relaxed text-slate-700 text-sm sm:text-base font-normal">
                         {parts.map((part, pIdx) => {
                           if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={pIdx} className="text-slate-900 font-bold">{part.slice(2, -2)}</strong>;
+                            return <strong key={pIdx} className="text-[#3C3C3C] font-bold">{part.slice(2, -2)}</strong>;
                           }
                           return part;
                         })}
@@ -643,18 +662,18 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 mt-auto pt-4 border-t border-slate-100">
+            <div className="flex flex-col sm:flex-row gap-3 mt-auto pt-4 border-t border-slate-200/70">
               {currentSectionIdx > 0 && (
                 <button 
                   onClick={handlePrevSection}
-                  className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-all text-sm"
+                  className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-100 transition-all text-sm cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" /> {t.prevSection}
                 </button>
               )}
               <button 
                 onClick={handleNextSection}
-                className="flex-[2] bg-[#7F7FFA] text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98] text-sm group"
+                className="flex-[2] bg-[#7F7FFA] text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-[#6868EB] transition-all shadow-md active:scale-[0.98] text-sm group cursor-pointer"
               >
                 {currentSectionIdx < contentSections.length - 1 ? (
                   <>

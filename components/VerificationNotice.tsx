@@ -46,19 +46,19 @@ export const VerificationNotice: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#F4F8FA] flex items-center justify-center p-6 font-sans">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 border border-slate-100 text-center"
+        className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 border border-slate-200/80 text-center"
       >
-        <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-          <Mail className="w-10 h-10 text-indigo-600" />
+        <div className="w-20 h-20 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+          <Mail className="w-10 h-10 text-[#7F7FFA]" />
         </div>
 
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-4">Check your email!</h2>
+        <h2 className="text-3xl font-black text-[#3C3C3C] tracking-tight mb-4">Check your email!</h2>
         <p className="text-slate-500 font-medium mb-8 leading-relaxed">
-          We've sent a verification link to <span className="text-indigo-600 font-bold">{auth.currentUser?.email}</span>. 
+          We've sent a verification link to <span className="text-[#7F7FFA] font-bold">{auth.currentUser?.email}</span>. 
           Please click the link in your email to unlock your financial journey.
         </p>
 
@@ -87,7 +87,7 @@ export const VerificationNotice: React.FC = () => {
         <div className="space-y-4">
           <button 
             onClick={handleRefresh}
-            className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-3 group"
+            className="w-full py-4 bg-[#7F7FFA] text-white font-black rounded-2xl hover:bg-[#7F7FFA]/90 transition-all shadow-xl shadow-[#7F7FFA]/20 flex items-center justify-center gap-3 group cursor-pointer"
           >
             <span>I've verified my email</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -97,14 +97,14 @@ export const VerificationNotice: React.FC = () => {
             <button 
               onClick={handleResend}
               disabled={isResending}
-              className="py-3 bg-slate-50 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-2 text-xs border border-slate-100"
+              className="py-3 bg-slate-50 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-2 text-xs border border-slate-100 cursor-pointer"
             >
               {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               Resend Email
             </button>
             <button 
               onClick={() => signOut(auth)}
-              className="py-3 bg-slate-50 text-rose-600 font-bold rounded-xl hover:bg-rose-50 transition-all flex items-center justify-center gap-2 text-xs border border-rose-100"
+              className="py-3 bg-slate-50 text-rose-600 font-bold rounded-xl hover:bg-rose-50 transition-all flex items-center justify-center gap-2 text-xs border border-rose-100 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               Sign Out

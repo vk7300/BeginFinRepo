@@ -441,44 +441,44 @@ export const CreditScoreGame: React.FC<Props> = ({
               </div>
 
               <div className="space-y-3 text-xs">
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                <div className="p-3 bg-[#F4F8FA] rounded-2xl border border-slate-200 flex justify-between items-center">
                   <div>
-                    <span className="font-bold text-slate-900 block">1. Payment History</span>
+                    <span className="font-bold text-[#3C3C3C] block">1. Payment History</span>
                     <span className="text-slate-500 text-[11px]">Pay on time, every time</span>
                   </div>
-                  <span className="font-mono font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">35%</span>
+                  <span className="font-mono font-black text-[#7F7FFA] bg-white px-2.5 py-1 rounded-lg border border-[#7F7FFA]/20">35%</span>
                 </div>
 
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                <div className="p-3 bg-[#F4F8FA] rounded-2xl border border-slate-200 flex justify-between items-center">
                   <div>
-                    <span className="font-bold text-slate-900 block">2. Amounts Owed / Utilization</span>
+                    <span className="font-bold text-[#3C3C3C] block">2. Amounts Owed / Utilization</span>
                     <span className="text-slate-500 text-[11px]">Keep balances under 10–30% of limits</span>
                   </div>
-                  <span className="font-mono font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">30%</span>
+                  <span className="font-mono font-black text-[#7F7FFA] bg-white px-2.5 py-1 rounded-lg border border-[#7F7FFA]/20">30%</span>
                 </div>
 
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                <div className="p-3 bg-[#F4F8FA] rounded-2xl border border-slate-200 flex justify-between items-center">
                   <div>
-                    <span className="font-bold text-slate-900 block">3. Length of Credit History</span>
+                    <span className="font-bold text-[#3C3C3C] block">3. Length of Credit History</span>
                     <span className="text-slate-500 text-[11px]">Age of oldest and average accounts</span>
                   </div>
-                  <span className="font-mono font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">15%</span>
+                  <span className="font-mono font-black text-[#7F7FFA] bg-white px-2.5 py-1 rounded-lg border border-[#7F7FFA]/20">15%</span>
                 </div>
 
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                <div className="p-3 bg-[#F4F8FA] rounded-2xl border border-slate-200 flex justify-between items-center">
                   <div>
-                    <span className="font-bold text-slate-900 block">4. New Credit & Hard Inquiries</span>
+                    <span className="font-bold text-[#3C3C3C] block">4. New Credit & Hard Inquiries</span>
                     <span className="text-slate-500 text-[11px]">Avoid opening too many lines quickly</span>
                   </div>
-                  <span className="font-mono font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">10%</span>
+                  <span className="font-mono font-black text-[#7F7FFA] bg-white px-2.5 py-1 rounded-lg border border-[#7F7FFA]/20">10%</span>
                 </div>
 
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                <div className="p-3 bg-[#F4F8FA] rounded-2xl border border-slate-200 flex justify-between items-center">
                   <div>
-                    <span className="font-bold text-slate-900 block">5. Credit Mix</span>
+                    <span className="font-bold text-[#3C3C3C] block">5. Credit Mix</span>
                     <span className="text-slate-500 text-[11px]">Revolving cards + installment loans</span>
                   </div>
-                  <span className="font-mono font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">10%</span>
+                  <span className="font-mono font-black text-[#7F7FFA] bg-white px-2.5 py-1 rounded-lg border border-[#7F7FFA]/20">10%</span>
                 </div>
               </div>
             </div>
@@ -489,10 +489,10 @@ export const CreditScoreGame: React.FC<Props> = ({
             <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-lg">Test Real-Life Scenarios</h3>
+                  <h3 className="font-extrabold text-[#3C3C3C] text-lg">Test Real-Life Scenarios</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Toggle actions to observe immediate credit score changes.</p>
                 </div>
-                <span className="text-xs font-bold text-[#7F7FFA] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                <span className="text-xs font-bold text-[#7F7FFA] bg-[#F4F8FA] px-3 py-1 rounded-full border border-[#7F7FFA]/20">
                   {activeScenarioIds.length} Selected
                 </span>
               </div>
@@ -719,7 +719,7 @@ export const CreditScoreGame: React.FC<Props> = ({
             <div className="space-y-6">
               {/* Header progress */}
               <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-                <span className="px-3 py-1 bg-indigo-50 text-[#7F7FFA] rounded-full text-xs font-bold uppercase tracking-wider border border-indigo-100">
+                <span className="px-3 py-1 bg-[#F4F8FA] text-[#7F7FFA] rounded-full text-xs font-bold uppercase tracking-wider border border-[#7F7FFA]/20">
                   Scenario {quizIdx + 1} of {DECISION_CHALLENGES.length}
                 </span>
                 <span className="text-xs font-bold text-slate-500 font-mono">
@@ -824,14 +824,14 @@ export const CreditScoreGame: React.FC<Props> = ({
                 <p className="text-sm text-slate-500 mt-1">You demonstrated strong understanding of credit principles.</p>
               </div>
 
-              <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl max-w-xs mx-auto">
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block">Final Score</span>
-                <span className="text-3xl font-black text-indigo-950 font-mono">{quizScore} / {DECISION_CHALLENGES.length * 50} pts</span>
+              <div className="p-4 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl max-w-xs mx-auto">
+                <span className="text-xs font-bold text-[#7F7FFA] uppercase tracking-wider block">Final Score</span>
+                <span className="text-3xl font-black text-[#3C3C3C] font-mono">{quizScore} / {DECISION_CHALLENGES.length * 50} pts</span>
               </div>
 
               <button
                 onClick={handleResetQuiz}
-                className="px-6 py-3 bg-[#7F7FFA] text-white font-bold rounded-xl hover:bg-indigo-700 transition-all text-xs inline-flex items-center gap-2 shadow-md"
+                className="px-6 py-3 bg-[#7F7FFA] text-white font-bold rounded-xl hover:bg-[#7F7FFA]/90 transition-all text-xs inline-flex items-center gap-2 shadow-md cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" /> Retake Challenge
               </button>

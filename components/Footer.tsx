@@ -91,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="flex flex-wrap justify-center items-center gap-3">
           <a 
             href="mailto:support@begin-fin.com"
-            className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-[11px] font-semibold text-indigo-300 tracking-wider flex items-center gap-2 hover:bg-white/10 transition-colors"
+            className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-[11px] font-semibold text-[#7F7FFA] tracking-wider flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer"
           >
             <Mail className="w-3.5 h-3.5" /> support@begin-fin.com
           </a>
@@ -99,7 +99,7 @@ export const Footer: React.FC<FooterProps> = ({
             href="https://www.instagram.com/begin_fin/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="p-3 bg-white/5 border border-white/10 rounded-full text-indigo-300 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center"
+            className="p-3 bg-white/5 border border-white/10 rounded-full text-[#7F7FFA] hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center cursor-pointer"
             title="Instagram"
           >
             <Instagram className="w-4 h-4" />
@@ -108,7 +108,7 @@ export const Footer: React.FC<FooterProps> = ({
             href="https://www.linkedin.com/company/begin-fin/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="p-3 bg-white/5 border border-white/10 rounded-full text-indigo-300 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center"
+            className="p-3 bg-white/5 border border-white/10 rounded-full text-[#7F7FFA] hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center cursor-pointer"
             title="LinkedIn"
           >
             <Linkedin className="w-4 h-4" />

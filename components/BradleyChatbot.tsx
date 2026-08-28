@@ -260,10 +260,10 @@ export const BradleyChatbot: React.FC<BradleyChatbotProps> = ({ user }) => {
               className="mb-3 max-w-[290px] bg-slate-900/95 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-[0_16px_36px_rgba(0,0,0,0.22)] border border-white/10 flex items-center gap-3 cursor-pointer hover:bg-slate-900 transition-all group"
             >
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-white">
-                <Sparkles className="w-4 h-4 text-indigo-300" />
+                <Sparkles className="w-4 h-4 text-[#7F7FFA]" />
               </div>
               <div className="flex-1 pr-2">
-                <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest leading-none mb-1">BeginFin AI</p>
+                <p className="text-[10px] font-bold text-[#7F7FFA] uppercase tracking-widest leading-none mb-1">BeginFin AI</p>
                 <p className="text-xs font-medium text-slate-100 leading-snug">
                   Confused? Let Bradley by BeginFin help.
                 </p>

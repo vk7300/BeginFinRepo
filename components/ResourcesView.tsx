@@ -123,7 +123,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ onBack }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-24">
+    <div className="min-h-screen bg-[#F4F8FA] text-[#3C3C3C] font-sans pb-24">
       <Helmet>
         <title>BeginFin Resources | Financial Education Tools</title>
       </Helmet>
@@ -151,7 +151,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ onBack }) => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-3xl mx-auto mb-12"
         >
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-5 leading-[1.1]">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#3C3C3C] mb-5 leading-[1.1]">
             Resources
           </h1>
           <p className="text-lg md:text-xl text-slate-500 font-normal leading-relaxed">
@@ -167,23 +167,23 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ onBack }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: index * 0.05 }}
-              className="bg-white p-8 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:border-indigo-200 hover:shadow-[0_12px_35px_rgba(148,164,255,0.12)] transition-all duration-500 group"
+              className="bg-white p-8 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:border-[#7F7FFA]/40 hover:shadow-[0_12px_35px_rgba(127,127,250,0.12)] transition-all duration-500 group"
             >
               <div>
                 <div className="flex items-center justify-between gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-105 transition-transform duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
                     {item.icon}
                   </div>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200/60">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#F4F8FA] text-slate-600 border border-slate-200/60">
                     {item.badge}
                   </span>
                 </div>
 
-                <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-600 block mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-[#7F7FFA] block mb-2">
                   {item.type}
                 </span>
 
-                <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-3 leading-snug">
+                <h3 className="text-xl font-bold tracking-tight text-[#3C3C3C] mb-3 leading-snug">
                   {item.title}
                 </h3>
 
@@ -198,7 +198,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ onBack }) => {
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer shadow-md group/link"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer shadow-md group/link"
                   >
                     <span>Visit Resource</span>
                     <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover/link:text-white transition-colors" />
@@ -218,11 +218,11 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ onBack }) => {
           transition={{ delay: 0.3 }}
           className="p-8 bg-white border border-slate-200/80 rounded-[28px] shadow-sm flex items-start gap-4"
         >
-          <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-900 mb-1">Resource Attribution Notice</h4>
+            <h4 className="text-sm font-bold text-[#3C3C3C] mb-1">Resource Attribution Notice</h4>
             <p className="text-slate-500 text-xs leading-relaxed font-normal">
               External courses, textbooks, and university libraries referenced above belong to their respective authors and publishers. BeginFin does not monetize or claim ownership of external content.
             </p>

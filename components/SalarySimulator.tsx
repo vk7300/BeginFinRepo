@@ -270,8 +270,8 @@ export const SalarySimulator: React.FC = () => {
         </div>
 
         {/* Informational Disclaimer Banner */}
-        <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/70 text-xs text-amber-900 leading-relaxed">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 text-xs text-[#3C3C3C] leading-relaxed">
+          <AlertCircle className="w-4 h-4 text-[#7F7FFA] shrink-0 mt-0.5" />
           <p>
             <strong>Informational Notice:</strong> For informational and educational purposes only. National average entry compensation and living costs vary considerably by state, metropolitan cost-of-living index, local municipal taxes, employer benefit deductibles, and individual financial lifestyle.
           </p>

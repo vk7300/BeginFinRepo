@@ -1,12 +1,22 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-cursive: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Inter", ui-sans-serif, system-ui, sans-serif;
+:root {
+  --iris-pulse: #7F7FFA;
+  --slate-gray: #3C3C3C;
+  --glacial-white: #F4F8FA;
+}
 
-  --color-indigo-50: #F5F5FE;
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-cursive: "Dancing Script", "Great Vibes", cursive;
+  --font-mono: "Inter", monospace;
+
+  --color-iris-pulse: #7F7FFA;
+  --color-slate-gray: #3C3C3C;
+  --color-glacial-white: #F4F8FA;
+
+  --color-indigo-50: #F4F8FA;
   --color-indigo-100: #ECECFC;
   --color-indigo-200: #DCDCFB;
   --color-indigo-300: #C3C3F8;
@@ -18,9 +28,9 @@
   --color-indigo-900: #262670;
   --color-indigo-950: #17174A;
 
-  --color-brand: #5656D4;
-  --color-brand-hover: #4343B2;
-  --color-brand-dark: #353590;
+  --color-brand: #7F7FFA;
+  --color-brand-hover: #6868EB;
+  --color-brand-dark: #5656D4;
   --color-brand-accent: #7F7FFA;
 
   --animate-nudge: nudge 2s ease-in-out infinite;
@@ -45,8 +55,10 @@
 }
 
 @layer base {
-  html {
+  html, body {
     @apply font-sans;
+    background-color: #F4F8FA;
+    color: #3C3C3C;
   }
 
   ::selection {

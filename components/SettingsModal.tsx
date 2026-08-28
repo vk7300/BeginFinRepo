@@ -181,12 +181,12 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
       >
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+            <div className="w-10 h-10 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-xl flex items-center justify-center text-[#7F7FFA]">
               <Shield className="w-5 h-5" />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Account Settings</h3>
+            <h3 className="text-2xl font-black text-[#3C3C3C] tracking-tight">Account Settings</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer">
             <X className="w-6 h-6 text-slate-400" />
           </button>
         </div>
@@ -204,14 +204,14 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                     type="tel" 
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold focus:border-indigo-600 focus:bg-white transition-all outline-none text-slate-900"
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-[#3C3C3C]"
                     placeholder="+1234567890"
                   />
                 </div>
                 <button 
                   onClick={handleUpdatePhone}
                   disabled={isUpdatingPhone || !newPhone || newPhone === user?.phoneNumber}
-                  className="px-6 py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-200"
+                  className="px-6 py-4 bg-[#7F7FFA] text-white font-bold rounded-xl hover:bg-[#6868EB] transition-all disabled:opacity-50 shadow-sm cursor-pointer"
                 >
                   {isUpdatingPhone ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update'}
                 </button>
@@ -232,7 +232,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     disabled={isGoogleUser}
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold focus:border-indigo-600 focus:bg-white transition-all outline-none disabled:opacity-50 text-slate-900"
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none disabled:opacity-50 text-[#3C3C3C]"
                     placeholder={isGoogleUser ? 'Managed via Google' : 'Enter new email'}
                   />
                 </div>
@@ -240,7 +240,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                   <button 
                     onClick={handleUpdateEmail}
                     disabled={isUpdatingEmail || newEmail === user?.email}
-                    className="px-6 py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-200"
+                    className="px-6 py-4 bg-[#7F7FFA] text-white font-bold rounded-xl hover:bg-[#6868EB] transition-all disabled:opacity-50 shadow-sm cursor-pointer"
                   >
                     {isUpdatingEmail ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update'}
                   </button>
@@ -255,16 +255,16 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
           )}
 
           {/* Contact Support & Data Requests */}
-          <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center text-center gap-4">
+          <div className="p-6 bg-[#F4F8FA] rounded-3xl border border-slate-200/60 flex flex-col items-center text-center gap-4">
             <div>
-              <h4 className="text-sm font-black text-slate-900 mb-1">Data, Privacy & Support</h4>
+              <h4 className="text-sm font-black text-[#3C3C3C] mb-1">Data, Privacy & Support</h4>
               <p className="text-xs text-slate-600 font-medium leading-relaxed">
                 Please email us at support@begin-fin.com for data download and/or deletion requests as well as user support.
               </p>
             </div>
             <a 
               href="mailto:support@begin-fin.com"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#7F7FFA] text-white rounded-xl text-xs font-bold hover:bg-[#6868EB] transition-all shadow-sm"
             >
               <Mail className="w-4 h-4" /> Email Support
             </a>
@@ -283,7 +283,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
               <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 mb-6">
                 <Lock className="w-8 h-8" />
               </div>
-              <h4 className="text-xl font-black text-slate-900 mb-2">Re-authentication Required</h4>
+              <h4 className="text-xl font-black text-[#3C3C3C] mb-2">Re-authentication Required</h4>
               <p className="text-sm text-slate-500 font-medium mb-8">
                 {isGoogleUser 
                   ? "For security, please sign in with Google again to confirm this action."
@@ -298,7 +298,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                   aria-label="Confirm Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-200 focus:border-indigo-600 rounded-xl mb-6 outline-none font-bold text-slate-900"
+                  className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-200 focus:border-[#7F7FFA] rounded-xl mb-6 outline-none font-bold text-[#3C3C3C]"
                 />
               )}
 

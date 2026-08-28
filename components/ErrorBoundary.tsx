@@ -47,16 +47,16 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+        <div className="min-h-screen bg-[#F4F8FA] flex items-center justify-center p-4 font-sans">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-200/80">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Oops!</h1>
-            <p className="text-gray-600 mb-8">{errorMessage}</p>
+            <h1 className="text-2xl font-bold text-[#3C3C3C] mb-2">Oops!</h1>
+            <p className="text-slate-600 mb-8">{errorMessage}</p>
             <button
               onClick={this.handleReset}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-xl font-semibold transition-colors cursor-pointer"
             >
               <RefreshCcw className="w-5 h-5" />
               Reload Application

@@ -7,10 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        'beginfin-blue': '#5656D4',
-        'beginfin-primary': '#5656D4',
+        'iris-pulse': '#7F7FFA',
+        'slate-gray': '#3C3C3C',
+        'glacial-white': '#F4F8FA',
+        'beginfin-blue': '#7F7FFA',
+        'beginfin-primary': '#7F7FFA',
         brand: {
-          50: '#F5F5FE',
+          50: '#F4F8FA',
           100: '#ECECFC',
           200: '#DCDCFB',
           300: '#C3C3F8',
@@ -22,7 +25,7 @@ export default {
           900: '#262670',
         },
         indigo: {
-          50: '#F5F5FE',
+          50: '#F4F8FA',
           100: '#ECECFC',
           200: '#DCDCFB',
           300: '#C3C3F8',
@@ -36,7 +39,6 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        grotesk: ['Space Grotesk', 'sans-serif'],
       },
     },
   },

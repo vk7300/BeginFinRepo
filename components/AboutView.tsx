@@ -123,7 +123,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
             {/* Value 3 */}
             <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Users className="w-4 h-4 text-indigo-600" />
+                <Users className="w-4 h-4 text-[#7F7FFA]" />
                 <span>Learners are at the heart of everything we build.</span>
               </h3>
               <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
@@ -134,7 +134,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
             {/* Value 4 */}
             <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Eye className="w-4 h-4 text-blue-600" />
+                <Eye className="w-4 h-4 text-[#7F7FFA]" />
                 <span>We answer directly to our learners, not to investors or other stakeholders.</span>
               </h3>
               <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
@@ -145,7 +145,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
             {/* Value 5 */}
             <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Lock className="w-4 h-4 text-amber-600" />
+                <Lock className="w-4 h-4 text-[#7F7FFA]" />
                 <span>BeginFin has never generated a single dollar in revenue, and we never plan to.</span>
               </h3>
               <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
@@ -182,7 +182,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-start gap-3">
-              <Award className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+              <Award className="w-5 h-5 text-[#7F7FFA] shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Gubernatorial Commendation</h3>
                 <p className="text-xs text-slate-600">Governor of the State of Texas (2026)</p>
@@ -199,7 +199,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
           </div>
 
           {/* Jump$tart Clearinghouse Alignment Box */}
-          <div className="p-5 rounded-2xl bg-indigo-50/80 border border-indigo-100 space-y-3">
+          <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 space-y-3">
             <p className="text-xs sm:text-sm text-slate-800 leading-relaxed">
               BeginFin’s open-source curriculum is vetted for alignment by the <strong>Jump$tart Clearinghouse</strong> for alignment with the <em>National Standards for Personal Finance Education</em>.
             </p>

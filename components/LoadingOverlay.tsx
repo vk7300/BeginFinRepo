@@ -23,13 +23,13 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-24 h-24 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full"
+              className="w-24 h-24 border-4 border-[#7F7FFA]/20 border-t-[#7F7FFA] rounded-full"
             />
             {/* Inner spinning ring (reverse) */}
             <motion.div
               animate={{ rotate: -360 }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-2 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full"
+              className="absolute inset-2 border-4 border-[#7F7FFA]/20 border-t-[#7F7FFA]/60 rounded-full"
             />
             {/* Center icon */}
             <div className="absolute inset-0 flex items-center justify-center">
@@ -48,17 +48,17 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
               <motion.span
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity, times: [0, 0.5, 1] }}
-                className="w-1.5 h-1.5 bg-indigo-500 rounded-full"
+                className="w-1.5 h-1.5 bg-[#7F7FFA] rounded-full"
               />
               <motion.span
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, times: [0, 0.5, 1] }}
-                className="w-1.5 h-1.5 bg-indigo-500 rounded-full"
+                className="w-1.5 h-1.5 bg-[#7F7FFA] rounded-full"
               />
               <motion.span
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: 0.4, times: [0, 0.5, 1] }}
-                className="w-1.5 h-1.5 bg-indigo-500 rounded-full"
+                className="w-1.5 h-1.5 bg-[#7F7FFA] rounded-full"
               />
             </div>
           </motion.div>

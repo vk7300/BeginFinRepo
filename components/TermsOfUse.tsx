@@ -34,9 +34,9 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
 
             <section className="space-y-4">
               <h4 className="font-bold uppercase tracking-tight text-slate-900">DISCLAIMER: NO FINANCIAL ADVICE</h4>
-              <div className="bg-amber-50 p-6 rounded-2xl border-2 border-amber-100 flex gap-4">
-                <AlertTriangle className="w-8 h-8 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-amber-900 font-bold italic leading-relaxed">
+              <div className="bg-[#F4F8FA] p-6 rounded-2xl border-2 border-[#7F7FFA]/30 flex gap-4">
+                <AlertTriangle className="w-8 h-8 text-[#7F7FFA] shrink-0 mt-0.5" />
+                <p className="text-[#3C3C3C] font-bold italic leading-relaxed">
                   BeginFin is an EDUCATIONAL PLATFORM ONLY. The materials, interactive modules, simulators, and tools provided on this website are NOT intended to be financial, investment, legal, or tax advice. Always seek the advice of a qualified professional for your specific circumstances. We do not provide personalized recommendations.
                 </p>
               </div>

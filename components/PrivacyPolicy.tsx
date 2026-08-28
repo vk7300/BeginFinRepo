@@ -28,33 +28,33 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
           
           <div className="space-y-8 text-[#3C3C3C] text-sm leading-relaxed text-justify">
             <div className="text-center mb-12">
-              <h1 className="text-3xl font-black text-slate-900 mb-2">PRIVACY POLICY</h1>
+              <h1 className="text-3xl font-black text-[#3C3C3C] mb-2">PRIVACY POLICY</h1>
               <p className="italic text-[10pt] text-slate-500">Last Revised: {currentDate}</p>
             </div>
 
             <section className="space-y-4">
-              <h4 className="font-bold uppercase tracking-tight text-slate-900">DISCLAIMER: EDUCATIONAL ONLY</h4>
-              <div className="bg-amber-50 p-6 rounded-2xl border-2 border-amber-100 flex gap-4">
-                <AlertTriangle className="w-8 h-8 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-amber-900 font-bold italic leading-relaxed">
+              <h4 className="font-bold uppercase tracking-tight text-[#3C3C3C]">DISCLAIMER: EDUCATIONAL ONLY</h4>
+              <div className="bg-[#F4F8FA] p-6 rounded-2xl border-2 border-[#7F7FFA]/20 flex gap-4">
+                <AlertTriangle className="w-8 h-8 text-[#7F7FFA] shrink-0 mt-0.5" />
+                <p className="text-[#3C3C3C] font-bold italic leading-relaxed">
                   BeginFin is an open-access educational platform and student-led initiative founded in Temple, Texas. WE DO NOT PROVIDE INDIVIDUALIZED FINANCIAL, INVESTMENT, LEGAL, OR TAX ADVICE. Learners should consult qualified professionals regarding their specific circumstances.
                 </p>
               </div>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">1. INTRODUCTION, SCOPE & FOUNDATIONAL STATUS</h4>
+              <h4 className="font-bold text-[#3C3C3C]">1. INTRODUCTION, SCOPE & FOUNDATIONAL STATUS</h4>
               <p>BeginFin ("we," "us," or "our") is a 100% free educational platform founded in December 2025 in Temple, Texas by high school co-founders Vishnu Kakarla and Kruz Smith. BeginFin operates as a student-led Open Educational Resource (OER) with zero revenue, zero external monetization, and is not a registered 501(c)(3) non-profit entity or financial advisory firm. The curriculum is open-source and free to use for non-commercial educational purposes. This Privacy Policy explains our data collection, handling, and security practices across begin-fin.com and its application portal.</p>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">2. COMPLIANCE DISCLOSURE, MINIMUM AGE (14+) & CHILDREN'S PRIVACY</h4>
+              <h4 className="font-bold text-[#3C3C3C]">2. COMPLIANCE DISCLOSURE, MINIMUM AGE (14+) & CHILDREN'S PRIVACY</h4>
               <p>BeginFin is designed for learners aged 14 and older. We do not knowingly collect, solicit, or maintain personal information from individuals under 14 years of age. All users must certify that they are at least 14 years of age and accept our Terms of Use and Privacy Policy upon account registration or sign-in. If we discover that personal data of an individual under 14 has been collected without authorized institutional or parental consent, we will promptly take steps to delete that account and all associated data.</p>
               <p>Because BeginFin is an independently maintained, bootstrapped educational project operating with limited resources, we do not conduct formal third-party audit certifications (such as formal FERPA, COPPA, or SOC 2 third-party compliance audits). However, we rigorously uphold the foundational principles of learner privacy: <strong>we guarantee that we never sell, monetize, rent, or trade personal or educational data, and we do not serve third-party advertising or build commercial tracking profiles.</strong> School educators should evaluate platform fit in accordance with their district policies.</p>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">3. LEARNER EDUCATIONAL RECORDS IN SCHOOL MODE</h4>
+              <h4 className="font-bold text-[#3C3C3C]">3. LEARNER EDUCATIONAL RECORDS IN SCHOOL MODE</h4>
               <p>When used in classroom settings or connected through teacher class codes, BeginFin operates to support academic learning:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Classroom Role:</strong> BeginFin provides progress reporting utilities for educators. Student learning records remain under the instructional oversight of the verified teacher.</li>
@@ -65,10 +65,10 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">4. INFORMATION WE COLLECT & WHY</h4>
+              <h4 className="font-bold text-[#3C3C3C]">4. INFORMATION WE COLLECT & WHY</h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border border-slate-200 rounded-xl overflow-hidden text-xs">
-                  <thead className="bg-slate-100 text-slate-900 font-bold border-b border-slate-200">
+                  <thead className="bg-[#F4F8FA] text-[#3C3C3C] font-bold border-b border-slate-200">
                     <tr>
                       <th className="p-3.5">Category</th>
                       <th className="p-3.5">Description & Purpose</th>
@@ -76,35 +76,35 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
                     <tr className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-3.5 font-semibold text-slate-900">Account Credentials</td>
+                      <td className="p-3.5 font-semibold text-[#3C3C3C]">Account Credentials</td>
                       <td className="p-3.5">Email address, full name, or Google OAuth identity identifier to maintain saved progress across devices</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-3.5 font-semibold text-slate-900">Coursework & Assessment Records</td>
+                      <td className="p-3.5 font-semibold text-[#3C3C3C]">Coursework & Assessment Records</td>
                       <td className="p-3.5">Module completion percentages, quiz scores, certificate generation timestamps, and academic mastery metrics</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-3.5 font-semibold text-slate-900">Google Classroom Data (Educators Optional)</td>
+                      <td className="p-3.5 font-semibold text-[#3C3C3C]">Google Classroom Data (Educators Optional)</td>
                       <td className="p-3.5">Course names, class rosters, assignments, and announcements synchronized solely at the direction of authorized teachers</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-3.5 font-semibold text-slate-900">Local Browser Storage & Preferences</td>
+                      <td className="p-3.5 font-semibold text-[#3C3C3C]">Local Browser Storage & Preferences</td>
                       <td className="p-3.5">Saving user language preference (English/Spanish), guest progress, and daily AI assistant rate-limit counters</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-3.5 font-semibold text-slate-900">Technical Diagnostics</td>
+                      <td className="p-3.5 font-semibold text-[#3C3C3C]">Technical Diagnostics</td>
                       <td className="p-3.5">Basic browser version and error logs used exclusively for performance troubleshooting</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              <div className="p-4 bg-indigo-50/80 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-950">
+              <div className="p-4 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-xl text-xs font-bold text-[#3C3C3C]">
                 We do NOT collect Social Security Numbers, Bank Account Information, Credit Card Numbers, Dates of Birth, or sensitive personal financial account credentials.
               </div>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">5. CLIENT-SIDE SIMULATORS & FINANCIAL PRIVACY</h4>
+              <h4 className="font-bold text-[#3C3C3C]">5. CLIENT-SIDE SIMULATORS & FINANCIAL PRIVACY</h4>
               <p>BeginFin features interactive financial modeling tools, including the Entry Salary & Living Cost Simulator, Credit Score Sandbox, and Interactive Tax Roadmap:</p>
               <ul className="list-disc ml-6 space-y-2 text-xs font-medium text-slate-700">
                 <li><strong>Local Execution:</strong> All numerical inputs, simulated wages, hypothetical budgets, and credit adjustments are computed entirely on your device within the browser.</li>
@@ -113,7 +113,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">6. THIRD-PARTY SERVICES & INTEGRATIONS</h4>
+              <h4 className="font-bold text-[#3C3C3C]">6. THIRD-PARTY SERVICES & INTEGRATIONS</h4>
               <p>Data sharing is strictly limited to services required to deliver core application functionality. We do not sell or monetize personal data:</p>
               <ul className="list-disc ml-6 space-y-2 mb-4">
                 <li><strong>Cloud Infrastructure & Authentication:</strong> Google Cloud Platform, Firebase (Firestore database and Firebase Authentication), and Google Identity Services provide secure hosting, real-time database synchronization, and encrypted user authentication.</li>
@@ -125,12 +125,12 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">7. DATA SECURITY & RETENTION</h4>
+              <h4 className="font-bold text-[#3C3C3C]">7. DATA SECURITY & RETENTION</h4>
               <p>We maintain technical and administrative safeguards to protect your personal data, including TLS 1.3 encryption for data in transit, AES-256 encryption at rest within Firestore, and strict access controls. Data is retained during the active life of the user account. Accounts inactive for more than 24 consecutive months are scheduled for automatic deletion or anonymization.</p>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">8. USER PRIVACY RIGHTS & DATA CONTROL</h4>
+              <h4 className="font-bold text-[#3C3C3C]">8. USER PRIVACY RIGHTS & DATA CONTROL</h4>
               <p>All users have control over their personal data:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Access and Export:</strong> Request a summary of your account and learning data by contacting support@begin-fin.com.</li>
@@ -141,9 +141,9 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">9. CONTACT INFORMATION</h4>
+              <h4 className="font-bold text-[#3C3C3C]">9. CONTACT INFORMATION</h4>
               <p>If you have questions, feedback, or requests regarding this Privacy Policy or our data practices, please contact us at:</p>
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 font-sans text-sm">
+              <div className="bg-[#F4F8FA] p-6 rounded-2xl border border-slate-200/80 font-sans text-sm">
                 <strong>BeginFin Privacy & Support Team</strong><br />
                 Temple & Belton, TX<br />
                 Email: support@begin-fin.com<br />

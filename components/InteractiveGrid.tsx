@@ -17,7 +17,7 @@ export const InteractiveGrid: React.FC = () => {
       <div
         className="absolute inset-0 transition-all duration-500 ease-out"
         style={{
-          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(0, 255, 0, 0.15), transparent 30%)`,
+          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(127, 127, 250, 0.12), transparent 30%)`,
         }}
       />
       <div

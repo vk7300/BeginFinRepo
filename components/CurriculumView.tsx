@@ -177,7 +177,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
       // Unit Header
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
-      doc.setTextColor(99, 102, 241);
+      doc.setTextColor(127, 127, 250);
       doc.text(`UNIT ${index + 1}`, margin, y);
       y += 5;
 
@@ -207,7 +207,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
           y = 25;
         }
 
-        doc.setFillColor(99, 102, 241);
+        doc.setFillColor(127, 127, 250);
         doc.circle(margin + 2, y - 1, 0.7, 'F');
 
         doc.setFont('helvetica', 'normal');
@@ -232,7 +232,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-24">
+    <div className="min-h-screen bg-[#F4F8FA] text-[#3C3C3C] font-sans pb-24">
       <Helmet>
         <title>BeginFin Curriculum | Personal Finance Learning Outcomes</title>
       </Helmet>
@@ -255,9 +255,9 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               onClick={generatePDF}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-indigo-600 text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md hover:shadow-indigo-200/50 cursor-pointer group"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer group"
             >
-              <FileText className="w-4 h-4 text-indigo-300 group-hover:text-white transition-colors" />
+              <FileText className="w-4 h-4 text-[#7F7FFA] group-hover:text-white transition-colors" />
               <span>Export PDF Curriculum</span>
             </motion.button>
           </div>
@@ -330,10 +330,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="md:col-span-4 bg-white p-8 rounded-[32px] border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:border-indigo-200 transition-all group"
+            className="md:col-span-4 bg-white p-8 rounded-[32px] border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:border-[#7F7FFA]/40 transition-all group"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] mb-6 group-hover:scale-105 transition-transform">
                 <Award className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-3">
@@ -350,10 +350,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="md:col-span-4 bg-white p-8 rounded-[32px] border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:border-indigo-200 transition-all group"
+            className="md:col-span-4 bg-white p-8 rounded-[32px] border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:border-[#7F7FFA]/40 transition-all group"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] mb-6 group-hover:scale-105 transition-transform">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-3">
@@ -374,7 +374,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
           >
             <div className="relative z-10 max-w-xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-indigo-200 text-xs font-medium mb-4">
-                <Globe className="w-3.5 h-3.5 text-indigo-400" />
+                <Globe className="w-3.5 h-3.5 text-[#7F7FFA]" />
                 <span>Global Reach</span>
               </div>
               <h3 className="text-2xl font-bold tracking-tight text-white mb-2">
@@ -387,7 +387,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
 
             <div className="relative z-10 shrink-0">
               <div className="text-3xl font-extrabold text-white mb-1">10,000+</div>
-              <div className="text-xs text-indigo-300 font-medium uppercase tracking-wider">Active Learners</div>
+              <div className="text-xs text-[#7F7FFA] font-medium uppercase tracking-wider">Active Learners</div>
             </div>
           </motion.div>
         </div>
@@ -408,7 +408,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
                 className={`rounded-[28px] p-8 transition-all duration-300 break-inside-avoid print:break-inside-avoid ${
                   isDarkCard
                     ? 'bg-[#0b0f19] text-white border border-white/10 shadow-xl'
-                    : 'bg-white text-slate-900 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:border-indigo-200'
+                    : 'bg-white text-slate-900 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40'
                 }`}
               >
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -416,8 +416,8 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
                   <div className="flex items-start gap-5 flex-1">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
                       isDarkCard
-                        ? 'bg-white/10 text-indigo-300 border border-white/10'
-                        : 'bg-indigo-50 text-indigo-600 border border-indigo-100/80'
+                        ? 'bg-white/10 text-[#7F7FFA] border border-white/10'
+                        : 'bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20'
                     }`}>
                       {getModuleIcon(module.id, "w-7 h-7")}
                     </div>
@@ -427,7 +427,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                           isDarkCard
                             ? 'bg-white/10 text-indigo-200 border border-white/10'
-                            : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                            : 'bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20'
                         }`}>
                           UNIT {index + 1}
                         </span>
@@ -451,7 +451,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
                         className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                           isDarkCard
                             ? 'bg-white text-slate-900 hover:bg-slate-100 shadow-md'
-                            : 'bg-[#0b0f19] text-white hover:bg-indigo-600 shadow-md'
+                            : 'bg-[#0b0f19] text-white hover:bg-[#7F7FFA] shadow-md'
                         }`}
                       >
                         <span>Start Unit</span>
@@ -464,7 +464,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
                 {/* Specific Learning Outcomes Grid */}
                 <div className="mt-8 pt-6 border-t border-slate-200/20">
                   <div className={`text-xs font-semibold uppercase tracking-wider mb-4 ${
-                    isDarkCard ? 'text-indigo-300' : 'text-indigo-600'
+                    isDarkCard ? 'text-[#7F7FFA]' : 'text-[#7F7FFA]'
                   }`}>
                     Specific Learning Outcomes
                   </div>
@@ -480,7 +480,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
                         }`}
                       >
                         <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${
-                          isDarkCard ? 'text-indigo-400' : 'text-indigo-600'
+                          isDarkCard ? 'text-[#7F7FFA]' : 'text-[#7F7FFA]'
                         }`} />
                         <span>{outcome}</span>
                       </div>

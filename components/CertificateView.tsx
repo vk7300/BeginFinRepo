@@ -192,27 +192,27 @@ export const CertificateView: React.FC<Props> = ({
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4 sm:p-6 lg:p-8 no-print">
         <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-slate-100 max-w-lg w-full text-center space-y-6">
-          <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto text-[#7F7FFA]">
+          <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mx-auto text-[#7F7FFA]">
             <AlertCircle className="w-10 h-10" />
           </div>
           
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Account Required for Certificate</h2>
+            <h2 className="text-2xl font-black text-[#3C3C3C] tracking-tight">Account Required for Certificate</h2>
             <p className="text-slate-500 text-sm leading-relaxed">
-              To guarantee credential integrity, certificates of completion are exclusive to registered BeginFin accounts.
+              To maintain credential integrity, certificates of completion are exclusive to registered BeginFin accounts.
             </p>
           </div>
 
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-left space-y-3">
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Account Benefits:</h4>
-            <ul className="space-y-2.5 text-xs text-slate-500 font-medium">
+          <div className="bg-[#F4F8FA] border border-slate-200/80 rounded-2xl p-4 text-left space-y-3">
+            <h4 className="text-xs font-bold text-[#3C3C3C] uppercase tracking-wider">Account Benefits:</h4>
+            <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span><strong>Progress Sync:</strong> Your current module progress will automatically synchronize to your account.</span>
+                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span><strong className="text-[#3C3C3C]">Progress Sync:</strong> Your current module progress will automatically synchronize to your account.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span><strong>Official Credential:</strong> Download verified certificates of completion upon completing all units.</span>
+                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span><strong className="text-[#3C3C3C]">Official Credential:</strong> Download verified certificates of completion upon completing all units.</span>
               </li>
             </ul>
           </div>
@@ -220,13 +220,13 @@ export const CertificateView: React.FC<Props> = ({
           <div className="pt-2 flex flex-col sm:flex-row gap-3">
             <button
               onClick={onLogin}
-              className="flex-1 bg-[#7F7FFA] hover:bg-[#5656D4] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all"
+              className="flex-1 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold py-3.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all min-h-[44px] cursor-pointer"
             >
               <LogIn className="w-4 h-4" /> Sign In / Create Account
             </button>
             <button
               onClick={onBack}
-              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-xl transition-all"
+              className="flex-1 bg-[#F4F8FA] hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-xl border border-slate-200/80 transition-all min-h-[44px] cursor-pointer"
             >
               Continue Learning
             </button>
@@ -242,10 +242,10 @@ export const CertificateView: React.FC<Props> = ({
       <div className="min-h-[60vh] flex items-center justify-center p-4 no-print">
         <div className="bg-white rounded-3xl shadow-xl p-10 border border-slate-100 max-w-md w-full">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Award className="w-10 h-10 text-[#7F7FFA]" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Claim Your Certificate</h2>
+            <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Claim Your Certificate</h2>
             <p className="text-slate-500 mt-2 text-sm leading-relaxed">
               Enter your full legal name. This will appear on your certificate.
             </p>
@@ -269,7 +269,7 @@ export const CertificateView: React.FC<Props> = ({
             <button 
               type="submit"
               disabled={isSaving}
-              className="w-full bg-[#7F7FFA] hover:bg-[#5656D4] text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              className="w-full bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -281,7 +281,7 @@ export const CertificateView: React.FC<Props> = ({
           
           <button 
             onClick={onBack}
-            className="w-full mt-6 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
+            className="w-full mt-6 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors cursor-pointer"
           >
             I'll do this later
           </button>
@@ -291,16 +291,16 @@ export const CertificateView: React.FC<Props> = ({
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto px-4 pb-20 relative">
+    <div className="space-y-8 max-w-5xl mx-auto px-4 pb-20 relative font-sans">
       <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold transition-colors">
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold transition-colors cursor-pointer">
           <ArrowLeft className="w-4 h-4" /> Return to Dashboard
         </button>
         
         <div className="flex flex-wrap items-center gap-3 relative">
           {showIncompleteNotice && (
             <div className="absolute -top-12 right-0 md:left-auto bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap shadow-xl flex items-center gap-2 z-50">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              <AlertTriangle className="w-3.5 h-3.5 text-[#7F7FFA]" />
               Finish all {requiredModules.length} units to unlock download! ({completedCount}/{requiredModules.length} complete)
               <div className="absolute top-full right-6 border-8 border-transparent border-t-slate-900" />
             </div>
@@ -323,7 +323,7 @@ export const CertificateView: React.FC<Props> = ({
             disabled={!allCompleted}
             className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2.5 transition-all shadow-md ${
               allCompleted 
-                ? 'bg-[#7F7FFA] text-white hover:bg-[#5656D4] cursor-pointer' 
+                ? 'bg-[#7F7FFA] text-white hover:bg-[#6868EB] cursor-pointer' 
                 : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
             }`}
             title={allCompleted ? "Download official PDF certificate" : "Complete all units to unlock download"}
@@ -336,8 +336,8 @@ export const CertificateView: React.FC<Props> = ({
 
       {/* Completion status notification */}
       {!allCompleted && (
-        <div className="no-print bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 flex items-start sm:items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+        <div className="no-print bg-[#F4F8FA] border border-[#7F7FFA]/30 rounded-2xl p-4 text-[#3C3C3C] flex items-start sm:items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-[#7F7FFA] shrink-0 mt-0.5 sm:mt-0" />
           <div className="text-xs sm:text-sm font-medium">
             <span className="font-bold">Course In Progress: </span>
             You have completed {completedCount} of {requiredModules.length} modules. Finish all modules to remove the "NOT COMPLETED" watermark and unlock official PDF certificate downloads.
@@ -479,7 +479,7 @@ export const CertificateView: React.FC<Props> = ({
         <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-bold">
           <button 
             onClick={() => setIsNameSet(false)}
-            className="text-slate-500 hover:text-[#5656D4] hover:underline underline-offset-4 transition-all cursor-pointer"
+            className="text-slate-500 hover:text-[#6868EB] hover:underline underline-offset-4 transition-all cursor-pointer py-1"
           >
             Need to change the name? Edit Certificate Name
           </button>
@@ -488,7 +488,7 @@ export const CertificateView: React.FC<Props> = ({
               <span className="text-slate-300">•</span>
               <button 
                 onClick={requestDigitalCredential}
-                className="text-[#5656D4] hover:text-[#4343B2] hover:underline underline-offset-4 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="text-[#7F7FFA] hover:text-[#6868EB] hover:underline underline-offset-4 transition-all flex items-center gap-1.5 cursor-pointer py-1"
               >
                 <ShieldCheck className="w-3.5 h-3.5" /> Request Digital Credential
               </button>
