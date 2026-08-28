@@ -65,6 +65,7 @@ async function startServer() {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     
     // Content-Security-Policy scoped to Firebase, Gemini, Google Fonts, and self
     const cspDirectives = [
@@ -72,7 +73,7 @@ async function startServer() {
       "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://i.postimg.cc https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com",
+      "img-src 'self' data: blob: https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com",
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://generativelanguage.googleapis.com https://accounts.google.com https://www.google.com https://www.recaptcha.net wss: ws:",
       "frame-src 'self' https://accounts.google.com https://www.google.com https://www.recaptcha.net https://docs.google.com",
       "object-src 'none'",
@@ -137,16 +138,18 @@ async function startServer() {
   });
 
   // Serve public/dist assets directly with precise mime-types to avoid SPA index.html fallback
-  app.get('/favicon.ico', (req, res) => {
-    res.redirect('https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png');
-  });
-
-  app.get('/favicon.png', (req, res) => {
-    res.redirect('https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png');
-  });
-
-  app.get('/logo.png', (req, res) => {
-    res.redirect('https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png');
+  app.get(['/favicon.ico', '/favicon.png', '/logo.png'], (req, res) => {
+    const distLogo = path.join(process.cwd(), 'dist', 'logo.png');
+    const publicLogo = path.join(process.cwd(), 'public', 'logo.png');
+    if (fs.existsSync(distLogo)) {
+      res.setHeader('Content-Type', 'image/png');
+      res.sendFile(distLogo);
+    } else if (fs.existsSync(publicLogo)) {
+      res.setHeader('Content-Type', 'image/png');
+      res.sendFile(publicLogo);
+    } else {
+      res.sendStatus(404);
+    }
   });
 
   app.get('/og-image.png', (req, res) => {

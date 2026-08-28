@@ -167,7 +167,7 @@ const ConfirmModal: React.FC<{ onCancel: () => void; onConfirm: () => void }> = 
 
 const LoginModalContent: React.FC<{ 
   onClose: () => void; 
-  onGoogleLogin: () => void;
+  onGoogleLogin: () => Promise<void>;
   onEmailAuth: (email: string, pass: string, isSignUp: boolean) => Promise<void>;
 }> = ({ onClose, onGoogleLogin, onEmailAuth }) => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
@@ -177,12 +177,25 @@ const LoginModalContent: React.FC<{
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [authMethod, setAuthMethod] = useState<'input' | 'verify'>('input');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [resetSent, setResetSent] = useState(false);
 
   const mapAuthError = (error: any) => {
     const code = error.code || error.message || '';
+    if (code.includes('auth/unauthorized-domain')) {
+      return "This domain is not authorized in Firebase Authentication. Please add this domain to Firebase Console > Authentication > Settings > Authorized domains.";
+    }
+    if (code.includes('auth/popup-blocked')) {
+      return "Pop-up was blocked by your browser. Please allow pop-ups for this site or try again.";
+    }
+    if (code.includes('auth/cancelled-popup-request')) {
+      return "Another sign-in window is already active.";
+    }
+    if (code.includes('auth/operation-not-allowed')) {
+      return "Google Sign-In is not enabled in Firebase Console. Please verify Authentication providers.";
+    }
     if (code.includes('reCAPTCHA has already been rendered') || code.includes('auth/reCAPTCHA-has-already-been-rendered')) {
       return "Security check is ready. Please try clicking the button again.";
     }
@@ -264,13 +277,22 @@ const LoginModalContent: React.FC<{
     }
   };
 
-  const handleGoogleClick = () => {
+  const handleGoogleClick = async () => {
     if (!agreedToTerms) {
       setError("Please confirm you are at least 14 years old and agree to the Terms of Use and Privacy Policy to continue.");
       return;
     }
     setError('');
-    onGoogleLogin();
+    setIsGoogleLoading(true);
+    try {
+      await onGoogleLogin();
+    } catch (err: any) {
+      if (err?.code !== 'auth/popup-closed-by-user') {
+        setError(mapAuthError(err));
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   const handleAuthSubmit = async (isSignUpChoice: boolean, e?: React.FormEvent) => {
@@ -387,10 +409,15 @@ const LoginModalContent: React.FC<{
       <button 
         type="button"
         onClick={handleGoogleClick}
-        className="w-full py-4 bg-white border border-slate-200 rounded-[1.5rem] font-bold text-slate-800 hover:border-[#7F7FFA] hover:bg-slate-50 hover:shadow-md transition-all flex items-center justify-center gap-3 shadow-xs active:scale-[0.98] text-base mb-6 group cursor-pointer"
+        disabled={isGoogleLoading || isLoading}
+        className="w-full py-4 bg-white border border-slate-200 rounded-[1.5rem] font-bold text-slate-800 hover:border-[#7F7FFA] hover:bg-slate-50 hover:shadow-md transition-all flex items-center justify-center gap-3 shadow-xs active:scale-[0.98] text-base mb-6 group cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 transition-transform group-hover:scale-110" alt="Google" referrerPolicy="no-referrer" />
-        <span>Continue with Google</span>
+        {isGoogleLoading ? (
+          <Loader2 className="w-5 h-5 animate-spin text-[#7F7FFA]" />
+        ) : (
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 transition-transform group-hover:scale-110" alt="Google" referrerPolicy="no-referrer" />
+        )}
+        <span>{isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
       </button>
 
       <div className="relative py-1 mb-6">
@@ -685,19 +712,27 @@ const App: React.FC = () => {
 
   const t = uiTranslations[language];
 
-  // Auth Listener
+  // Auth Listener and Redirect Handler
   useEffect(() => {
+    // Process any incoming redirect authentication (e.g., from signInWithRedirect fallback)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setShowLoginModal(false);
+          if (currentView === 'welcome') {
+            handleStart(true);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Google redirect sign-in result error:", error);
+      });
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthReady(true);
       if (currentUser) {
         setUserName(currentUser.displayName || '');
-        // If they use email provider, check verification
-        const isEmailProvider = currentUser.providerData.some(p => p.providerId === 'password');
-        if (isEmailProvider && !currentUser.emailVerified) {
-          // Keep showing onboarding or dashboard but with a lock if we want, 
-          // but user said "ensure they verify it first", implying blocking access.
-        }
       }
     });
     return () => unsubscribe();
@@ -939,16 +974,39 @@ const App: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
+    // 1. Cancel any active Google One Tap prompt to prevent concurrent GIS collisions
+    try {
+      window.google?.accounts?.id?.cancel();
+    } catch {
+      // ignore
+    }
+
     try {
       await signInWithPopup(auth, googleProvider);
-      triggerPseudoLoading("Signing you in...");
       setShowLoginModal(false);
       if (currentView === 'welcome') {
         handleStart(true);
       }
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') return;
-      console.error("Login failed", error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        return;
+      }
+      
+      console.error("Google sign-in error:", error);
+
+      // If popup was blocked or prevented by browser/iframe restrictions, attempt redirect fallback
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          console.error("Redirect fallback error:", redirectErr);
+          throw redirectErr;
+        }
+      }
+
+      // Rethrow to surface to LoginModalContent UI
+      throw error;
     }
   };
 
@@ -1198,6 +1256,7 @@ const App: React.FC = () => {
         {/* Magic Google One Tap Login */}
         <GoogleOneTap
           user={user}
+          disabled={showLoginModal || !!user}
           onSuccess={(signedInUser) => {
             if (currentView === 'welcome') {
               handleStart(true);
@@ -1388,7 +1447,7 @@ const App: React.FC = () => {
                 <header className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-slate-200 px-6 flex items-center justify-between no-print bg-white/70 backdrop-blur-md">
                   <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
                     <div className="flex items-center gap-2">
-                       <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
+                       <img src="/logo.png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
                        <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
                     </div>
                   </div>
@@ -1434,7 +1493,7 @@ const App: React.FC = () => {
                 <header className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-slate-200 px-6 flex items-center justify-between no-print bg-white/70 backdrop-blur-md">
                   <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
                     <div className="flex items-center gap-2">
-                       <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
+                       <img src="/logo.png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
                        <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
                     </div>
                   </div>
@@ -1685,7 +1744,7 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
                     <div className="flex items-center gap-2">
-                       <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
+                       <img src="/logo.png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
                        <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
                     </div>
                   </div>

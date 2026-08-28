@@ -231,7 +231,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         } border rounded-full flex items-center justify-between`}>
         <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <img 
-            src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" 
+            src="/logo.png" 
             alt="BeginFin Logo" 
             className="w-7 h-7 sm:w-8 sm:h-8 object-contain rounded-xl shadow-sm" 
             referrerPolicy="no-referrer" 
@@ -560,7 +560,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                   <MediaLogoItem 
                     href="https://www.instagram.com/p/DYZuVOcnGEB/" 
                     title="Literacy Texas"
-                    src="https://www.literacytexas.org/wp-content/uploads/literacy-texas-logo.jpg"
+                    src="/press/literacy-texas.jpg"
                     alt="Literacy Texas"
                   />
 
@@ -568,7 +568,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                   <MediaLogoItem 
                     href="https://www.tdtnews.com/news/central_texas_news/article_47d078fc-2521-4f6f-aa27-a51c58e72187.html" 
                     title="Temple Daily Telegram"
-                    src="https://media.licdn.com/dms/image/v2/C560BAQGPLHhas9gbCQ/company-logo_200_200/company-logo_200_200/0/1647986352845/temple_daily_telegram_logo?e=2147483647&v=beta&t=6Hios5svRkG-smp5s2iCSRiipIBBvMqBqBfwKAlxpC4"
+                    src="/press/temple-daily-telegram.jpg"
                     alt="Temple Daily Telegram"
                   />
 
@@ -576,7 +576,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                   <MediaLogoItem 
                     href="https://www.kcentv.com/article/news/local/belton-isd-student-launch-financial-literacy-platform-beginfin/500-23379de3-4535-450b-8aa5-8d78d91b39f8" 
                     title="KCEN TV (NBC)"
-                    src="https://yt3.googleusercontent.com/859DfZu1p9946RUWnCBaryuftO2zxsBadlF0F7oDcz_I-7PvHK-2lK2OI_WpiQQf5z__Wo0o=s900-c-k-c0x00ffffff-no-rj"
+                    src="/press/kcen-tv.png"
                     alt="KCEN TV"
                   />
 
@@ -584,7 +584,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                   <MediaLogoItem 
                     href="https://jumpstartclearinghouse.org/resource/beginfin-financial-literacy-certification/" 
                     title="Jump$tart Clearinghouse"
-                    src="https://www.nationaldisabilityinstitute.org/wp-content/uploads/2019/04/jumpstart-kids-logo.jpg"
+                    src="/press/jumpstart.png"
                     alt="Jump$tart Clearinghouse"
                   />
                 </div>

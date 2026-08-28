@@ -382,7 +382,7 @@ export const CertificateView: React.FC<Props> = ({
           {/* Top Logo and Header */}
           <div className="space-y-2 md:space-y-4">
             <div className="flex items-center justify-center gap-2.5">
-               <img src="https://media.licdn.com/dms/image/v2/D560BAQHnYQWitFITCg/company-logo_100_100/B56Z8a8HsJHUAI-/0/1782863395852/begin_fin_logo?e=1789603200&v=beta&t=soL_gMehzor_b0etxBts8yvUj1R5KENX3NvnUCvSH34" alt="BeginFin Logo" className="w-7 h-7 md:w-11 md:h-11 object-contain rounded-lg shadow-xs" referrerPolicy="no-referrer" />
+               <img src="/logo.png" alt="BeginFin Logo" className="w-7 h-7 md:w-11 md:h-11 object-contain rounded-lg shadow-xs" referrerPolicy="no-referrer" />
                <span className="text-[12px] md:text-lg font-sans font-black tracking-widest text-[#2c5282] uppercase">BeginFin</span>
             </div>
             
