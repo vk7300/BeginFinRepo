@@ -13,6 +13,8 @@
         "classId": { "type": "string", "description": "ID of the class the student belongs to" },
         "teacherId": { "type": "string", "description": "UID of the teacher who owns the class" },
         "completedModules": { "type": "array", "items": { "type": "string" }, "description": "List of completed module IDs" },
+        "agreedToTerms": { "type": "boolean", "description": "Whether user is 14+ and agreed to Terms and Privacy Policy" },
+        "agreedToTermsAt": { "type": "string", "format": "date-time", "description": "Timestamp when user agreed to Terms" },
         "lastUpdated": { "type": "string", "format": "date-time", "description": "Last time progress was updated" },
         "creditScoreMaster": { "type": "boolean", "description": "Whether the user achieved the credit seal" },
         "highCreditScore": { "type": "integer", "description": "Highest credit score achieved" }
@@ -105,6 +107,34 @@
         "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
       },
       "required": ["id", "moduleId", "language", "question", "options", "correctIndex", "isPublished", "updatedAt"]
+    },
+    "certifierRequest": {
+      "title": "Certifier Credential Request",
+      "description": "Digital credential issuance request for Certifier.io",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User UID who requested credential" },
+        "graduateName": { "type": "string", "description": "Full legal or display name of the graduate" },
+        "email": { "type": "string", "description": "Recipient email" },
+        "serialNumber": { "type": "string", "description": "Credential serial number" },
+        "consent": { "type": "boolean", "description": "Consent to transmit info to Certifier.io" },
+        "status": { "type": "string", "enum": ["pending", "fulfilled"], "description": "Fulfillment status" },
+        "requestedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the request" }
+      },
+      "required": ["email", "consent"]
+    },
+    "dailyUserUsage": {
+      "title": "Daily AI Usage",
+      "description": "Daily Bradley AI usage limit record with TTL expiry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User UID" },
+        "date": { "type": "string", "description": "Calendar date string (YYYY-MM-DD)" },
+        "count": { "type": "integer", "description": "Messages used today" },
+        "lastUsedAt": { "type": "string", "format": "date-time", "description": "Timestamp of last message" },
+        "expiresAt": { "type": "string", "format": "date-time", "description": "Expiry timestamp for record cleanup" }
+      },
+      "required": ["userId", "date", "count"]
     }
   },
   "firestore": {
@@ -131,6 +161,14 @@
     "/articles/{articleId}": {
       "schema": "article",
       "description": "Public blog articles"
+    },
+    "/certifierRequests/{requestId}": {
+      "schema": "certifierRequest",
+      "description": "Certifier.io digital badge requests"
+    },
+    "/dailyUserUsage/{usageId}": {
+      "schema": "dailyUserUsage",
+      "description": "Daily Bradley AI usage counters"
     }
   }
 }

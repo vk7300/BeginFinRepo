@@ -48,7 +48,8 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">2. COMPLIANCE DISCLOSURE & NON-GUARANTEES</h4>
+              <h4 className="font-bold text-slate-900">2. COMPLIANCE DISCLOSURE, MINIMUM AGE (14+) & CHILDREN'S PRIVACY</h4>
+              <p>BeginFin is designed for learners aged 14 and older. We do not knowingly collect, solicit, or maintain personal information from individuals under 14 years of age. All users must certify that they are at least 14 years of age and accept our Terms of Use and Privacy Policy upon account registration or sign-in. If we discover that personal data of an individual under 14 has been collected without authorized institutional or parental consent, we will promptly take steps to delete that account and all associated data.</p>
               <p>Because BeginFin is an independently maintained, bootstrapped educational project operating with limited resources, we do not conduct formal third-party audit certifications (such as formal FERPA, COPPA, or SOC 2 third-party compliance audits). However, we rigorously uphold the foundational principles of learner privacy: <strong>we guarantee that we never sell, monetize, rent, or trade personal or educational data, and we do not serve third-party advertising or build commercial tracking profiles.</strong> School educators should evaluate platform fit in accordance with their district policies.</p>
             </section>
 

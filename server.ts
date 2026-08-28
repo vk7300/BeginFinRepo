@@ -8,6 +8,8 @@ import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
+import { getStrippedQuestionsForModule, gradeQuizAnswers } from "./server/quizAnswerKeys";
 
 dotenv.config();
 
@@ -19,6 +21,7 @@ const adminApp = getApps().length === 0
   : getApps()[0];
 
 const adminAuth = getAuth(adminApp);
+const adminDb = getFirestore(adminApp);
 
 let aiClient: GoogleGenAI | null = null;
 function getGenAI(): GoogleGenAI | null {
@@ -62,6 +65,22 @@ async function startServer() {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    
+    // Content-Security-Policy scoped to Firebase, Gemini, Google Fonts, and self
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: blob: https://i.postimg.cc https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com",
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://generativelanguage.googleapis.com https://accounts.google.com https://www.google.com https://www.recaptcha.net wss: ws:",
+      "frame-src 'self' https://accounts.google.com https://www.google.com https://www.recaptcha.net https://docs.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ];
+    res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+
     if (process.env.NODE_ENV === 'production') {
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
@@ -76,17 +95,23 @@ async function startServer() {
     next();
   });
 
-  // Strict CORS configuration
-  const allowedOrigins = [
+  // Strict CORS configuration with explicit origin allowlist
+  const explicitAllowedOrigins = new Set([
     'https://begin-fin.com',
     'https://www.begin-fin.com',
+    'https://beginfin.web.app',
+    'https://beginfin.firebaseapp.com',
     'http://localhost:3000',
     'http://127.0.0.1:3000'
-  ];
+  ]);
+
+  if (process.env.ALLOWED_ORIGINS) {
+    process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean).forEach(o => explicitAllowedOrigins.add(o));
+  }
 
   app.use(cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app') || origin.endsWith('.web.app') || origin.endsWith('.firebaseapp.com')) {
+      if (!origin || explicitAllowedOrigins.has(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy'));
@@ -168,7 +193,6 @@ async function startServer() {
   });
 
   // Daily Rate Limiting for Bradley AI Chatbot (Strict 5 messages per calendar day / 24h per registered user)
-  const dailyUserUsage = new Map<string, { date: string; count: number }>();
   const MAX_DAILY_MESSAGES = 5;
 
   // Helper to ensure response is clean plain text with no asterisks, hashtags, or markdown formatting
@@ -245,24 +269,53 @@ BeginFin Curriculum Reference:
         return res.status(400).json({ error: "Message is required." });
       }
 
-      // 2. Enforce 5 messages per calendar day limit per registered user
+      // 2. Enforce 5 messages per calendar day limit per registered user via Firestore with expiry
       const todayStr = new Date().toISOString().split('T')[0];
       const userUsageKey = `${effectiveUserId}_${todayStr}`;
-      const currentUsage = dailyUserUsage.get(userUsageKey) || { date: todayStr, count: 0 };
+      const usageDocRef = adminDb.collection("dailyUserUsage").doc(userUsageKey);
 
-      if (currentUsage.count >= MAX_DAILY_MESSAGES) {
+      let currentCount = 0;
+      try {
+        const usageSnap = await usageDocRef.get();
+        if (usageSnap.exists) {
+          const uData = usageSnap.data();
+          currentCount = typeof uData?.count === 'number' ? uData.count : 0;
+        }
+      } catch (dbErr) {
+        console.warn("Could not read daily user usage from Firestore:", dbErr);
+      }
+
+      if (currentCount >= MAX_DAILY_MESSAGES) {
         return res.status(429).json({ 
           error: "You have reached your daily limit of 5 messages with Bradley. Your daily limit resets tomorrow.",
           remainingToday: 0
         });
       }
 
+      // Helper to atomically record increment in Firestore with 48h expiry metadata
+      const recordUsageIncrement = async (current: number): Promise<number> => {
+        const newCount = current + 1;
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
+        try {
+          await usageDocRef.set({
+            userId: effectiveUserId,
+            date: todayStr,
+            count: newCount,
+            lastUsedAt: now.toISOString(),
+            expiresAt
+          }, { merge: true });
+        } catch (dbErr) {
+          console.warn("Could not persist daily AI usage in Firestore:", dbErr);
+        }
+        return newCount;
+      };
+
       const client = getGenAI();
 
       // If Gemini API Key is not configured in the environment, return a graceful fallback
       if (!client) {
-        const newCount = currentUsage.count + 1;
-        dailyUserUsage.set(userUsageKey, { date: todayStr, count: newCount });
+        const newCount = await recordUsageIncrement(currentCount);
         return res.json({
           reply: `I am Bradley, an AI assistant created by BeginFin. I am not a financial advisor, and I cannot provide personalized financial advice.\n\nTo enable live Google Gemini AI responses, please configure your GEMINI_API_KEY in your environment settings.\n\nIn the meantime, feel free to explore the 8 interactive units in the BeginFin curriculum!`,
           remainingToday: Math.max(0, MAX_DAILY_MESSAGES - newCount),
@@ -311,8 +364,7 @@ BeginFin Curriculum Reference:
       });
 
       // Increment usage count upon successful generation
-      const newCount = currentUsage.count + 1;
-      dailyUserUsage.set(userUsageKey, { date: todayStr, count: newCount });
+      const newCount = await recordUsageIncrement(currentCount);
 
       const rawReply = response.text || "I apologize, but I could not generate a response right now. Please try asking your question again.";
       const cleanReply = cleanPlainTextResponse(rawReply);
@@ -326,6 +378,213 @@ BeginFin Curriculum Reference:
       return res.status(500).json({ 
         error: "Failed to communicate with Bradley. Please try again in a few moments." 
       });
+    }
+  });
+
+  // Endpoint to fetch questions for a module with correctIndex stripped
+  app.get("/api/questions/:moduleId", async (req, res) => {
+    try {
+      const { moduleId } = req.params;
+      const strippedData = getStrippedQuestionsForModule(moduleId);
+      
+      if (!strippedData) {
+        return res.status(404).json({ error: `Module ${moduleId} not found.` });
+      }
+
+      // Check if any published custom questions exist in Firestore for this module
+      let customQuestions: Array<{ id: string; question: string; options: string[] }> = [];
+      try {
+        const customDocs = await adminDb.collection("questions")
+          .where("moduleId", "==", moduleId)
+          .where("isPublished", "==", true)
+          .get();
+
+        customQuestions = customDocs.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            question: data.question,
+            options: Array.isArray(data.options) ? data.options : []
+          };
+        });
+      } catch (dbErr) {
+        console.warn("Could not query custom questions from firestore:", dbErr);
+      }
+
+      return res.json({
+        moduleId,
+        quiz: strippedData.quiz,
+        quizAlternative: strippedData.quizAlternative,
+        customQuestions
+      });
+    } catch (err: any) {
+      console.error("Error fetching questions:", err?.message || err);
+      return res.status(500).json({ error: "Failed to load quiz questions." });
+    }
+  });
+
+  // Authenticated quiz grading endpoint
+  app.post("/api/grade-quiz", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Authentication required to submit quiz for grading." });
+      }
+
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      if (!idToken) {
+        return res.status(401).json({ error: "Authentication token missing." });
+      }
+
+      let verifiedUid: string;
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        if (!decodedToken || !decodedToken.uid) {
+          throw new Error("Invalid token payload");
+        }
+        verifiedUid = decodedToken.uid;
+      } catch (authErr: any) {
+        return res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
+      }
+
+      const { moduleId, quizVersion = "standard", answers } = req.body;
+
+      if (!moduleId || !Array.isArray(answers)) {
+        return res.status(400).json({ error: "moduleId and answers array are required." });
+      }
+
+      const gradeResult = gradeQuizAnswers(moduleId, quizVersion, answers);
+      if (!gradeResult) {
+        return res.status(404).json({ error: `Module ${moduleId} answer key not found.` });
+      }
+
+      let updatedCompletedModules: string[] = [];
+
+      // If passed, record module completion on the user profile via Admin SDK
+      if (gradeResult.passed) {
+        try {
+          const userDocRef = adminDb.collection("users").doc(verifiedUid);
+          const userDoc = await userDocRef.get();
+          let currentCompleted: string[] = [];
+          if (userDoc.exists) {
+            const data = userDoc.data();
+            currentCompleted = Array.isArray(data?.completedModules) ? data?.completedModules : [];
+          }
+          if (!currentCompleted.includes(moduleId)) {
+            updatedCompletedModules = [...currentCompleted, moduleId];
+            await userDocRef.set({
+              completedModules: updatedCompletedModules,
+              lastUpdated: new Date().toISOString()
+            }, { merge: true });
+          } else {
+            updatedCompletedModules = currentCompleted;
+          }
+        } catch (dbErr: any) {
+          console.error("Error writing completedModules via Admin SDK:", dbErr?.message || dbErr);
+        }
+      }
+
+      return res.json({
+        success: true,
+        passed: gradeResult.passed,
+        score: gradeResult.score,
+        totalQuestions: gradeResult.totalQuestions,
+        results: gradeResult.results,
+        completedModules: updatedCompletedModules
+      });
+    } catch (err: any) {
+      console.error("Error in /api/grade-quiz:", err?.message || err);
+      return res.status(500).json({ error: "Internal server error during quiz grading." });
+    }
+  });
+
+  // Certificate issuance endpoint: authenticated, validates full course completion server-side
+  const REQUIRED_MODULE_IDS = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8'];
+
+  app.post("/api/issue-certificate", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Authentication required to issue certificate." });
+      }
+
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      if (!idToken) {
+        return res.status(401).json({ error: "Authentication token missing." });
+      }
+
+      let verifiedUid: string;
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        if (!decodedToken || !decodedToken.uid) {
+          throw new Error("Invalid token payload");
+        }
+        verifiedUid = decodedToken.uid;
+      } catch (authErr: any) {
+        return res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
+      }
+
+      // Query user profile to verify completedModules server-side
+      const userDocRef = adminDb.collection("users").doc(verifiedUid);
+      const userDoc = await userDocRef.get();
+
+      if (!userDoc.exists) {
+        return res.status(404).json({ error: "User profile not found." });
+      }
+
+      const userData = userDoc.data() || {};
+      const completedModules: string[] = Array.isArray(userData.completedModules) ? userData.completedModules : [];
+
+      // Verify that all required modules have been completed
+      const missingModules = REQUIRED_MODULE_IDS.filter(mId => !completedModules.includes(mId));
+      if (missingModules.length > 0) {
+        return res.status(400).json({ 
+          error: `All required modules must be completed before a certificate can be issued. Missing: ${missingModules.join(', ')}`,
+          missingModules 
+        });
+      }
+
+      const { graduateName, isPublic } = req.body;
+      const cleanGraduateName = typeof graduateName === 'string' && graduateName.trim()
+        ? sanitizeHeader(graduateName).replace(/<\/?[^>]+(>|$)/g, "").substring(0, 100)
+        : (userData.displayName || "BeginFin Student");
+
+      const now = new Date();
+      const issueDate = now.toISOString().substring(0, 10);
+      const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
+
+      const credRef = adminDb.collection("credentials").doc(verifiedUid);
+      const existingCred = await credRef.get();
+      const existingData = existingCred.exists ? existingCred.data() : null;
+
+      const finalIssueDate = existingData?.issueDate || issueDate;
+      const finalExpDate = existingData?.expirationDate || expDate;
+      const finalSerial = existingData?.serialNumber || `BF-${verifiedUid.substring(0, 8).toUpperCase()}`;
+      const finalIsPublic = typeof isPublic === 'boolean' 
+        ? isPublic 
+        : (typeof existingData?.isPublic === 'boolean' ? existingData.isPublic : true);
+
+      const credData = {
+        title: "Certificate of Financial Literacy Completion",
+        serialNumber: finalSerial,
+        graduateName: cleanGraduateName,
+        issueDate: finalIssueDate,
+        expirationDate: finalExpDate,
+        isPublic: finalIsPublic,
+        userId: verifiedUid,
+        completedModules,
+        updatedAt: now.toISOString()
+      };
+
+      await credRef.set(credData, { merge: true });
+
+      return res.json({
+        success: true,
+        credential: credData
+      });
+    } catch (err: any) {
+      console.error("Error issuing certificate:", err?.message || err);
+      return res.status(500).json({ error: "Failed to issue certificate. Please try again." });
     }
   });
 

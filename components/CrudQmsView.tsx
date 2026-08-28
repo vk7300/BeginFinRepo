@@ -10,9 +10,6 @@ import { db, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, auth,
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
 
-// List of strictly authorized admin emails
-const AUTHORIZED_ADMIN_EMAILS = ['kv303157@gmail.com', 'kruzssmith@gmail.com', 'vishnukakarla108@gmail.com'];
-
 // Map of language codes to friendly names
 const languageNames: Record<string, string> = {
   en: 'English',
@@ -356,9 +353,72 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
     }
   };
 
-  // Authenticate status
-  const isAdmin = useMemo(() => {
-    return user && AUTHORIZED_ADMIN_EMAILS.includes(user.email || '');
+  // Authenticate status & role verification
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      setIsCheckingAdmin(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsCheckingAdmin(true);
+
+    // Helper to evaluate custom claims from ID token
+    const checkClaims = async (): Promise<boolean> => {
+      try {
+        const tokenResult = await user.getIdTokenResult?.();
+        if (tokenResult?.claims?.admin === true || tokenResult?.claims?.role === 'admin') {
+          if (isMounted) {
+            setIsAdmin(true);
+            setIsCheckingAdmin(false);
+          }
+          return true;
+        }
+      } catch (err) {
+        console.warn("Error verifying token claims:", err);
+      }
+      return false;
+    };
+
+    checkClaims();
+
+    // Real-time listener for user profile role in Firestore
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (snap) => {
+      if (!isMounted) return;
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data?.role === 'admin') {
+          setIsAdmin(true);
+          setIsCheckingAdmin(false);
+          return;
+        }
+      }
+      // If Firestore role is not admin, fallback to claims check
+      checkClaims().then((hasAdminClaim) => {
+        if (isMounted) {
+          setIsAdmin(Boolean(hasAdminClaim));
+          setIsCheckingAdmin(false);
+        }
+      });
+    }, (err) => {
+      console.warn("Error listening to user admin status:", err);
+      checkClaims().then((hasAdminClaim) => {
+        if (isMounted) {
+          setIsAdmin(Boolean(hasAdminClaim));
+          setIsCheckingAdmin(false);
+        }
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [user]);
 
   // Handle Toast Auto-Dismissal
@@ -722,6 +782,16 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
     }
   };
 
+  // Render loading state while checking administrator authorization
+  if (user && isCheckingAdmin) {
+    return (
+      <div className="max-w-md mx-auto my-16 bg-white rounded-[2rem] p-8 border border-slate-200 shadow-xl text-center space-y-4 animate-in fade-in duration-300">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto" />
+        <p className="text-slate-600 text-sm font-medium">Verifying administrator permissions...</p>
+      </div>
+    );
+  }
+
   // Render unauthorized state
   if (!isAdmin) {
     return (
@@ -739,9 +809,9 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
         {user ? (
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left text-xs text-slate-600 space-y-2">
             <p className="font-semibold">Logged in as:</p>
-            <p className="font-mono bg-white p-1.5 rounded border text-slate-800 break-all">{user.email}</p>
+            <p className="font-mono bg-white p-1.5 rounded border text-slate-800 break-all">{user.email || user.uid}</p>
             <p className="text-rose-500 font-semibold flex items-center gap-1 mt-1">
-              <XCircle className="w-3.5 h-3.5" /> This email is not authorized.
+              <XCircle className="w-3.5 h-3.5" /> This account does not have administrator privileges.
             </p>
           </div>
         ) : (

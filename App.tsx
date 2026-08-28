@@ -174,6 +174,7 @@ const LoginModalContent: React.FC<{
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [authMethod, setAuthMethod] = useState<'input' | 'verify'>('input');
@@ -263,8 +264,21 @@ const LoginModalContent: React.FC<{
     }
   };
 
+  const handleGoogleClick = () => {
+    if (!agreedToTerms) {
+      setError("Please confirm you are at least 14 years old and agree to the Terms of Use and Privacy Policy to continue.");
+      return;
+    }
+    setError('');
+    onGoogleLogin();
+  };
+
   const handleAuthSubmit = async (isSignUpChoice: boolean, e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSignUpChoice && !agreedToTerms) {
+      setError("Please confirm you are at least 14 years old and agree to the Terms of Use and Privacy Policy to create an account.");
+      return;
+    }
     setError('');
     setIsLoading(true);
 
@@ -323,7 +337,7 @@ const LoginModalContent: React.FC<{
     <div className="relative max-w-sm mx-auto px-2 py-4">
       <div id="recaptcha-container"></div>
       
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h3 className="text-3xl font-normal text-slate-900 tracking-tight mb-2">
           Welcome to <span className="font-medium text-indigo-600">BeginFin</span>
         </h3>
@@ -332,10 +346,47 @@ const LoginModalContent: React.FC<{
         </p>
       </div>
 
+      {/* Age & Consent Checkbox */}
+      <div className="p-3.5 mb-6 rounded-2xl bg-slate-50 border border-slate-200/80 text-left">
+        <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+          <input 
+            type="checkbox"
+            checked={agreedToTerms}
+            onChange={(e) => {
+              setAgreedToTerms(e.target.checked);
+              if (e.target.checked) setError('');
+            }}
+            className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-colors cursor-pointer shrink-0"
+          />
+          <span className="text-[12px] text-slate-600 leading-snug">
+            I certify that I am at least <strong className="text-slate-900">14 years old</strong> and agree to BeginFin's{' '}
+            <a 
+              href="/terms" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-indigo-600 font-semibold underline underline-offset-2 hover:text-indigo-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Terms of Use
+            </a>
+            {' '}and{' '}
+            <a 
+              href="/privacy" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-indigo-600 font-semibold underline underline-offset-2 hover:text-indigo-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Privacy Policy
+            </a>.
+          </span>
+        </label>
+      </div>
+
       {/* Google SSO on Top */}
       <button 
         type="button"
-        onClick={onGoogleLogin}
+        onClick={handleGoogleClick}
         className="w-full py-4 bg-white border border-slate-200 rounded-[1.5rem] font-bold text-slate-800 hover:border-[#7F7FFA] hover:bg-slate-50 hover:shadow-md transition-all flex items-center justify-center gap-3 shadow-xs active:scale-[0.98] text-base mb-6 group cursor-pointer"
       >
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 transition-transform group-hover:scale-110" alt="Google" referrerPolicy="no-referrer" />
@@ -775,6 +826,8 @@ const App: React.FC = () => {
           email: user.email,
           completedModules: initialModules,
           role: 'student', // Default to student
+          agreedToTerms: true,
+          agreedToTermsAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString()
         }, { merge: true }).then(() => {
           try { localStorage.removeItem('beginfin-progress') } catch(e) {};
@@ -1022,15 +1075,11 @@ const App: React.FC = () => {
   };
 
   const saveProgress = useCallback(async (updatedModules: string[]) => {
-    if (user) {
-      const userDocRef = doc(db, 'users', user.uid);
+    if (!user) {
       try {
-        await setDoc(userDocRef, {
-          completedModules: updatedModules,
-          lastUpdated: new Date().toISOString()
-        }, { merge: true });
-      } catch (err) {
-        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
+        localStorage.setItem('beginfin-progress', JSON.stringify(updatedModules));
+      } catch (e) {
+        console.warn("Error saving guest progress to localStorage:", e);
       }
     }
   }, [user]);

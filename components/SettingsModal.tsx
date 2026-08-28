@@ -131,13 +131,16 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
         batch.update(d.ref, { studentIds });
       });
 
-      // 3. Delete all credentials/certificates owned by the user
-      const credentialsRef = collection(db, 'credentials');
-      const qCreds = query(credentialsRef, where('userId', '==', uid));
-      const credsSnap = await getDocs(qCreds);
-      credsSnap.docs.forEach(d => batch.delete(d.ref));
+      // 3. Clean up certifier requests for this user
+      const certifierRequestsRef = collection(db, 'certifierRequests');
+      const qCertifier = query(certifierRequestsRef, where('userId', '==', uid));
+      const certifierSnap = await getDocs(qCertifier);
+      certifierSnap.docs.forEach(cd => batch.delete(cd.ref));
 
-      // 4. Delete alerts created by this user
+      // 4. Credentials are server-managed
+      // Note: User credentials records are secured with server-only write rules
+
+      // 5. Delete alerts created by this user
       const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', uid)));
       if (!userDoc.empty) {
         const uData = userDoc.docs[0].data();

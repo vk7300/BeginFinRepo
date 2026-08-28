@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, BookOpen, GraduationCap, ArrowRight, RotateCcw, XCircle, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, Check } from 'lucide-react';
+import { ArrowLeft, BookOpen, GraduationCap, ArrowRight, RotateCcw, XCircle, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, Loader2 } from 'lucide-react';
 import { getModuleIcon } from './CurriculumView';
-import { Module } from '../data/courseData';
+import { Module, QuizQuestion } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
 
-import { db, collection, addDoc, serverTimestamp, query, where, getDocs } from '../firebase';
+import { db, collection, addDoc, serverTimestamp } from '../firebase';
 import { User } from '../firebase';
 
 interface Props {
@@ -19,6 +19,13 @@ interface Props {
   onStepChange?: (step: 'content' | 'quiz') => void;
 }
 
+interface ServerGradingResult {
+  questionIdx: number;
+  selectedIdx: number;
+  isCorrect: boolean;
+  correctIndex: number;
+}
+
 export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, language, isFullScreenLockEnabled, userRole, user, classId, onStepChange }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -28,7 +35,10 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
   const t = uiTranslations[language];
   const moduleData = module.translations[language] || module.translations.en;
 
-  const [customQuestions, setCustomQuestions] = useState<any[]>([]);
+  const [serverQuestions, setServerQuestions] = useState<{
+    quiz: QuizQuestion[];
+    quizAlternative: QuizQuestion[];
+  } | null>(null);
 
   useEffect(() => {
     if (onStepChange) {
@@ -36,184 +46,143 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
     }
   }, [step, onStepChange]);
 
-  // Load published custom questions from Firestore
+  // Fetch stripped questions from server API
   useEffect(() => {
     let active = true;
-    const fetchCustomQuestions = async () => {
+    const fetchQuestions = async () => {
       try {
-        const q = query(
-          collection(db, 'questions'),
-          where('moduleId', '==', module.id),
-          where('isPublished', '==', true)
-        );
-        const snap = await getDocs(q);
-        if (!active) return;
-        
-        const list = snap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as any[];
-        
-        // Filter by active language. If none for active language, fallback to English ('en')
-        const langFiltered = list.filter(item => item.language === language);
-        const finalQuestions = langFiltered.length > 0 
-          ? langFiltered 
-          : list.filter(item => item.language === 'en' || !item.language);
-          
-        // Limit to maximum of 4 live questions per module
-        setCustomQuestions(finalQuestions.slice(0, 4));
+        const res = await fetch(`/api/questions/${module.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (active && data) {
+            setServerQuestions({
+              quiz: data.quiz || [],
+              quizAlternative: data.quizAlternative || []
+            });
+          }
+        }
       } catch (err) {
-        console.error("Error loading custom questions:", err);
+        console.error("Error loading server questions:", err);
       }
     };
 
-    fetchCustomQuestions();
+    fetchQuestions();
     return () => {
       active = false;
     };
-  }, [module.id, language]);
+  }, [module.id]);
 
   const [quizVersion, setQuizVersion] = useState<'standard' | 'alternative'>('standard');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [finishedQuiz, setFinishedQuiz] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [userAnswers, setUserAnswers] = useState<{questionIdx: number, selectedIdx: number, isCorrect: boolean}[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [userAnswers, setUserAnswers] = useState<{ questionIdx: number; selectedIdx: number }[]>([]);
+  const [gradingResults, setGradingResults] = useState<ServerGradingResult[]>([]);
   const [showReview, setShowReview] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
 
   const activeQuiz = useMemo(() => {
-    if (customQuestions.length > 0) {
-      return customQuestions;
+    if (serverQuestions) {
+      if (quizVersion === 'alternative' && serverQuestions.quizAlternative && serverQuestions.quizAlternative.length > 0) {
+        return serverQuestions.quizAlternative;
+      }
+      if (serverQuestions.quiz && serverQuestions.quiz.length > 0) {
+        return serverQuestions.quiz;
+      }
     }
     if (quizVersion === 'alternative' && moduleData.quizAlternative && moduleData.quizAlternative.length > 0) {
       return moduleData.quizAlternative;
     }
-    return moduleData.quiz;
-  }, [quizVersion, moduleData, customQuestions]);
+    return moduleData.quiz || [];
+  }, [quizVersion, serverQuestions, moduleData]);
 
   useEffect(() => {
-    const answered = userAnswers.find(a => a.questionIdx === currentQuestionIdx);
-    setShowFeedback(!!answered);
-  }, [currentQuestionIdx, userAnswers]);
-
-  // Auto-advance 3 seconds after feedback is shown
-  useEffect(() => {
-    if (step !== 'quiz' || finishedQuiz || !showFeedback) return;
-
-    const timer = setTimeout(() => {
-      if (currentQuestionIdx < activeQuiz.length - 1) {
-        setCurrentQuestionIdx(q => q + 1);
-      } else {
-        const finalScore = userAnswers.filter(a => a.isCorrect).length;
-        setScore(finalScore);
-        setFinishedQuiz(true);
+    if (step === 'quiz' && isFullScreenLockEnabled && userRole === 'student') {
+      // Request full screen safely on user interaction
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
       }
-    }, 3000);
+    }
 
-    return () => clearTimeout(timer);
-  }, [step, finishedQuiz, showFeedback, currentQuestionIdx, activeQuiz.length, userAnswers]);
-
-  useEffect(() => {
-      if (step === 'quiz' && isFullScreenLockEnabled && userRole === 'student') {
-          // Request full screen safely on user interaction
-          if (document.documentElement.requestFullscreen) {
-              document.documentElement.requestFullscreen().catch(() => {});
+    // Handle exit full screen
+    const handleFullscreenChange = async () => {
+      if (step === 'quiz' && isFullScreenLockEnabled && userRole === 'student' && !document.fullscreenElement && !finishedQuiz) {
+        // Report event to teacher
+        if (classId && user) {
+          try {
+            await addDoc(collection(db, 'classes', classId, 'alerts'), {
+              userId: user.uid,
+              userName: user.displayName || 'Anonymous',
+              type: 'fullscreen_exit',
+              moduleTitle: moduleData.title,
+              timestamp: serverTimestamp(),
+              message: 'Exited full screen mode during quiz.'
+            });
+          } catch (err) {
+            console.error('Error reporting alert:', err);
           }
+        }
       }
-      
-      // Handle exit full screen
-      const handleFullscreenChange = async () => {
-          if (step === 'quiz' && isFullScreenLockEnabled && userRole === 'student' && !document.fullscreenElement && !finishedQuiz) {
-              // Report event to teacher
-              if (classId && user) {
-                  try {
-                      await addDoc(collection(db, 'classes', classId, 'alerts'), {
-                          userId: user.uid,
-                          userName: user.displayName || 'Anonymous',
-                          type: 'fullscreen_exit',
-                          moduleTitle: moduleData.title,
-                          timestamp: serverTimestamp(),
-                          message: 'Exited full screen mode during quiz.'
-                      });
-                  } catch (err) {
-                      console.error('Error reporting alert:', err);
-                  }
-              }
-          }
-      };
-      
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      return () => {
-          document.removeEventListener('fullscreenchange', handleFullscreenChange);
-          // Exit full screen when leaving quiz or module
-          if (document.fullscreenElement && document.exitFullscreen) {
-              document.exitFullscreen().catch(() => {});
-          }
-      };
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
   }, [step, isFullScreenLockEnabled, userRole, finishedQuiz, classId, user, moduleData.title]);
 
   const contentSections = useMemo(() => {
     const sections: { title: string | null; paragraphs: string[] }[] = [];
     const lines = moduleData.content.split('\n').map(l => l.trim()).filter(l => l);
-    
+
     let currentSection: { title: string | null; paragraphs: string[] } = { title: null, paragraphs: [] };
-    
+
     lines.forEach(line => {
-      // Short lines ending in ':' are headings. Normal longer lines ending in ':' are treated as standard paragraphs.
       if (line.endsWith(':') && line.length < 45) {
         if (currentSection.paragraphs.length > 0 || currentSection.title) {
           if (currentSection.paragraphs.length > 0) {
             sections.push(currentSection);
           }
         }
-        // Slice off the trailing colon for a clean typography display
         currentSection = { title: line.slice(0, -1).trim(), paragraphs: [] };
       } else {
         currentSection.paragraphs.push(line);
       }
     });
-    
+
     if (currentSection.paragraphs.length > 0) {
       sections.push(currentSection);
     } else if (currentSection.title && sections.length > 0) {
-      // If there is a trailing title with no paragraphs, treat it as a bold takeaway inside the last section
       sections[sections.length - 1].paragraphs.push(currentSection.title);
     }
-    
+
     return sections.length > 0 ? sections : [{ title: null, paragraphs: [] }];
   }, [moduleData.content]);
 
-  const currentShuffledOptions = useMemo(() => {
+  const currentOptions = useMemo(() => {
     if (step !== 'quiz' || finishedQuiz || !activeQuiz[currentQuestionIdx]) return [];
     const question = activeQuiz[currentQuestionIdx];
-    const optionsWithIndices = question.options.map((text, originalIndex) => ({
+    return question.options.map((text, originalIndex) => ({
       text,
       originalIndex
     }));
-    
-    for (let i = optionsWithIndices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [optionsWithIndices[i], optionsWithIndices[j]] = [optionsWithIndices[j], optionsWithIndices[i]];
-    }
-    return optionsWithIndices;
   }, [activeQuiz, currentQuestionIdx, step, finishedQuiz]);
 
   const handleAnswer = (originalIndex: number) => {
-    if (isTransitioning || showFeedback) return;
+    if (isSubmitting) return;
 
-    // Check if we already answered this question to update it
-    const isCorrect = originalIndex === activeQuiz[currentQuestionIdx].correctIndex;
-    
     setUserAnswers(prev => {
       const existingIdx = prev.findIndex(a => a.questionIdx === currentQuestionIdx);
       const newAnswer = {
         questionIdx: currentQuestionIdx,
-        selectedIdx: originalIndex,
-        isCorrect
+        selectedIdx: originalIndex
       };
-      
+
       if (existingIdx >= 0) {
         const next = [...prev];
         next[existingIdx] = newAnswer;
@@ -221,18 +190,62 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
       }
       return [...prev, newAnswer];
     });
+  };
 
-    setShowFeedback(true);
+  const handleFinishQuiz = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      let idToken = '';
+      if (user) {
+        try {
+          idToken = await user.getIdToken();
+        } catch (tokenErr) {
+          console.warn("Could not retrieve Firebase ID token:", tokenErr);
+        }
+      }
+
+      const res = await fetch('/api/grade-quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        },
+        body: JSON.stringify({
+          moduleId: module.id,
+          quizVersion,
+          answers: userAnswers
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server grading failed with status ${res.status}`);
+      }
+
+      const gradeResult = await res.json();
+      setScore(gradeResult.score);
+      setGradingResults(gradeResult.results || []);
+      setFinishedQuiz(true);
+
+      if (gradeResult.passed) {
+        onComplete();
+      }
+    } catch (err: any) {
+      console.error("Grading submission error:", err);
+      setSubmitError(err.message || "Failed to submit quiz for server grading. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleNextQuestion = () => {
     if (currentQuestionIdx < activeQuiz.length - 1) {
       setCurrentQuestionIdx(q => q + 1);
     } else {
-      // Calculate final score before finishing
-      const finalScore = userAnswers.filter(a => a.isCorrect).length;
-      setScore(finalScore);
-      setFinishedQuiz(true);
+      handleFinishQuiz();
     }
   };
 
@@ -247,7 +260,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
       setCurrentSectionIdx(i => i + 1);
     } else {
       if (!activeQuiz || activeQuiz.length === 0) {
-        onComplete();
+        handleFinishQuiz();
       } else {
         setQuizVersion(Math.random() > 0.5 ? 'alternative' : 'standard');
         setStep('quiz');
@@ -267,7 +280,9 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
     setCurrentSectionIdx(0);
     setFinishedQuiz(false);
     setUserAnswers([]);
+    setGradingResults([]);
     setShowReview(false);
+    setSubmitError(null);
     setQuizVersion(Math.random() > 0.5 ? 'alternative' : 'standard');
     setStep('quiz');
   };
@@ -278,11 +293,13 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
     setCurrentSectionIdx(0);
     setFinishedQuiz(false);
     setUserAnswers([]);
+    setGradingResults([]);
     setShowReview(false);
+    setSubmitError(null);
     setStep('content');
   };
 
-  const isPerfectScore = score === activeQuiz.length;
+  const isPerfectScore = activeQuiz.length > 0 && score === activeQuiz.length;
 
   return (
     <div className="max-w-5xl mx-auto space-y-4 pb-12 px-3 sm:px-4 font-sans">
@@ -333,7 +350,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
       )}
 
       {step === 'quiz' ? (
-        /* Streamlined Quiz Container (Fits without scrolling on 1080p & iPad) */
+        /* Quiz Container */
         <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-md animate-in fade-in duration-300">
           {!finishedQuiz ? (
             <div key={`q-${currentQuestionIdx}`} className="space-y-4">
@@ -344,7 +361,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                     Question {currentQuestionIdx + 1} of {activeQuiz.length}
                   </span>
                   <span className="text-xs font-semibold text-slate-500">
-                    {Math.round(((currentQuestionIdx + 1) / activeQuiz.length) * 100)}% Completed
+                    {Math.round(((currentQuestionIdx + 1) / Math.max(activeQuiz.length, 1)) * 100)}% Completed
                   </span>
                 </div>
                 
@@ -352,42 +369,30 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                 <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                   <div 
                     className="bg-amber-500 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${((currentQuestionIdx + 1) / activeQuiz.length) * 100}%` }}
+                    style={{ width: `${((currentQuestionIdx + 1) / Math.max(activeQuiz.length, 1)) * 100}%` }}
                   />
                 </div>
 
-                {/* Question Prompt with increased readability */}
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 tracking-tight leading-snug pt-1">
-                  {activeQuiz[currentQuestionIdx].question}
-                </h3>
+                {/* Question Prompt */}
+                {activeQuiz[currentQuestionIdx] && (
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 tracking-tight leading-snug pt-1">
+                    {activeQuiz[currentQuestionIdx].question}
+                  </h3>
+                )}
               </div>
 
-              {/* 2x2 Options Grid on Tablet/Desktop for compact height */}
+              {/* Options Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1">
-                {currentShuffledOptions.map((option, i) => {
+                {currentOptions.map((option, i) => {
                   const answerObj = userAnswers.find(a => a.questionIdx === currentQuestionIdx);
                   const isSelected = answerObj?.selectedIdx === option.originalIndex;
-                  const isCorrectOption = option.originalIndex === activeQuiz[currentQuestionIdx].correctIndex;
                   
                   let btnStyle = 'border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-800 bg-white';
                   let badgeStyle = 'border-slate-300';
                   let dotStyle = 'bg-indigo-600 opacity-0 scale-50';
 
-                  if (showFeedback) {
-                    if (isCorrectOption) {
-                      btnStyle = 'border-emerald-500 bg-emerald-50/90 text-emerald-950 shadow-xs';
-                      badgeStyle = 'border-emerald-500 bg-emerald-500';
-                      dotStyle = 'bg-white scale-100 opacity-100';
-                    } else if (isSelected) {
-                      btnStyle = 'border-rose-400 bg-rose-50/90 text-rose-950 shadow-xs';
-                      badgeStyle = 'border-rose-400 bg-rose-400';
-                      dotStyle = 'bg-white scale-100 opacity-100';
-                    } else {
-                      btnStyle = 'border-slate-100 text-slate-400 opacity-50 cursor-not-allowed bg-slate-50/40';
-                      badgeStyle = 'border-slate-200 opacity-40';
-                    }
-                  } else if (isSelected) {
-                    btnStyle = 'border-[#7F7FFA] bg-indigo-50/60 text-indigo-950 shadow-xs';
+                  if (isSelected) {
+                    btnStyle = 'border-[#7F7FFA] bg-indigo-50/60 text-indigo-950 shadow-xs ring-2 ring-indigo-500/20';
                     badgeStyle = 'border-[#7F7FFA] bg-[#7F7FFA]';
                     dotStyle = 'bg-white scale-100 opacity-100';
                   }
@@ -397,74 +402,34 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                       key={`${currentQuestionIdx}-${i}`}
                       type="button"
                       onClick={() => handleAnswer(option.originalIndex)}
-                      disabled={showFeedback}
+                      disabled={isSubmitting}
                       className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 transition-all duration-200 outline-none flex items-center justify-between gap-2.5 group min-h-[58px] ${btnStyle}`}
                     >
                       <span className="text-xs sm:text-sm md:text-[15px] font-semibold leading-snug pr-2">
                         {option.text}
                       </span>
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${badgeStyle}`}>
-                        {showFeedback && isCorrectOption ? (
-                          <Check className="w-3 h-3 text-white stroke-[4px]" />
-                        ) : showFeedback && isSelected ? (
-                          <span className="text-white text-xs font-black leading-none">×</span>
-                        ) : (
-                          <div className={`w-2 h-2 rounded-full transition-all ${dotStyle}`} />
-                        )}
+                        <div className={`w-2 h-2 rounded-full transition-all ${dotStyle}`} />
                       </div>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Compact Inline Feedback Banner */}
-              {showFeedback && (
-                <div 
-                  role="status"
-                  aria-live="polite"
-                  className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 animate-in slide-in-from-top-1 duration-200 relative overflow-hidden ${
-                  userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.isCorrect 
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900' 
-                  : 'bg-rose-50 border-rose-200 text-rose-900'
-                }`}>
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                      userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.isCorrect 
-                      ? 'bg-emerald-100 text-emerald-700' 
-                      : 'bg-rose-100 text-rose-700'
-                    }`}>
-                      {userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.isCorrect ? (
-                        <CheckCircle className="w-3.5 h-3.5" />
-                      ) : (
-                        <XCircle className="w-3.5 h-3.5" />
-                      )}
-                    </div>
-                    <div className="min-w-0 text-xs sm:text-sm">
-                      <span className="font-bold mr-1.5">
-                        {userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.isCorrect ? 'Correct!' : 'Incorrect.'}
-                      </span>
-                      <span className="opacity-90">
-                        {userAnswers.find(a => a.questionIdx === currentQuestionIdx)?.isCorrect 
-                          ? `"${activeQuiz[currentQuestionIdx].options[activeQuiz[currentQuestionIdx].correctIndex]}" is the right answer.` 
-                          : `The correct answer is "${activeQuiz[currentQuestionIdx].options[activeQuiz[currentQuestionIdx].correctIndex]}".`
-                        }
-                      </span>
-                    </div>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-1 shrink-0 text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200/50">
-                    <span>Advancing in 3s</span>
-                    <ChevronRight className="w-3 h-3 text-[#7F7FFA]" />
-                  </div>
+              {submitError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{submitError}</span>
                 </div>
               )}
 
-              {/* Compact Quiz Navigation */}
+              {/* Quiz Navigation */}
               <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
                 <button 
                   onClick={handlePrevQuestion}
-                  disabled={currentQuestionIdx === 0}
+                  disabled={currentQuestionIdx === 0 || isSubmitting}
                   className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all ${
-                    currentQuestionIdx === 0 
+                    currentQuestionIdx === 0 || isSubmitting
                     ? 'bg-slate-50 text-slate-300 cursor-not-allowed border border-transparent' 
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
@@ -473,14 +438,18 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                 </button>
                 <button 
                   onClick={handleNextQuestion}
-                  disabled={!userAnswers.find(a => a.questionIdx === currentQuestionIdx)}
+                  disabled={!userAnswers.find(a => a.questionIdx === currentQuestionIdx) || isSubmitting}
                   className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs active:scale-[0.98] ${
-                    !userAnswers.find(a => a.questionIdx === currentQuestionIdx)
+                    !userAnswers.find(a => a.questionIdx === currentQuestionIdx) || isSubmitting
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                     : 'bg-[#7F7FFA] text-white hover:bg-indigo-700 shadow-indigo-500/20'
                   }`}
                 >
-                  {currentQuestionIdx < activeQuiz.length - 1 ? (
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Submitting & Grading...
+                    </>
+                  ) : currentQuestionIdx < activeQuiz.length - 1 ? (
                     <>
                       {t.nextQuestion} <ChevronRight className="w-4 h-4" />
                     </>
@@ -493,7 +462,7 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
               </div>
             </div>
           ) : (
-            /* Quiz Completion / Results View (Fits completely without scrolling) */
+            /* Quiz Completion / Results View */
             <div className="text-center space-y-4 animate-in zoom-in duration-300 py-2">
               {showReview ? (
                 <div className="text-left space-y-4">
@@ -507,19 +476,20 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                     </button>
                   </div>
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                    {userAnswers.filter(a => !a.isCorrect).map((answer, i) => {
-                      const question = activeQuiz[answer.questionIdx];
+                    {gradingResults.filter(a => !a.isCorrect).map((result, i) => {
+                      const question = activeQuiz[result.questionIdx];
+                      if (!question) return null;
                       return (
                         <div key={i} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                           <p className="font-bold text-xs sm:text-sm text-slate-900">{question.question}</p>
                           <div className="space-y-1 bg-white p-2.5 rounded-xl border border-slate-100 text-xs">
                             <p className="font-medium text-rose-600 flex items-start gap-1.5">
                               <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> 
-                              <span>Your Answer: {question.options[answer.selectedIdx]}</span>
+                              <span>Your Answer: {question.options[result.selectedIdx] || 'None'}</span>
                             </p>
                             <p className="font-medium text-emerald-700 flex items-start gap-1.5">
                               <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> 
-                              <span>Correct: {question.options[question.correctIndex]}</span>
+                              <span>Correct: {question.options[result.correctIndex]}</span>
                             </p>
                           </div>
                         </div>
@@ -575,12 +545,14 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                           <BookOpen className="w-3.5 h-3.5" /> {t.reviewUnit}
                         </button>
                       </div>
-                      <button 
-                        onClick={() => setShowReview(true)}
-                        className="w-full bg-slate-100 border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 text-xs"
-                      >
-                        Review Mistakes
-                      </button>
+                      {gradingResults.some(r => !r.isCorrect) && (
+                        <button 
+                          onClick={() => setShowReview(true)}
+                          className="w-full bg-slate-100 border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 text-xs"
+                        >
+                          Review Mistakes
+                        </button>
+                      )}
                     </div>
                   )}
                 </>
@@ -635,7 +607,6 @@ export const ModuleView: React.FC<Props> = ({ module, onComplete, onBack, langua
                 
                 <div className="space-y-3.5">
                   {contentSections[currentSectionIdx].paragraphs.map((rawPara, i) => {
-                    // Sanitize any accidental HTML tags
                     const para = rawPara.replace(/<[^>]*>/g, '').trim();
                     const isBullet = para.startsWith('•') || para.startsWith('-');
                     const cleanText = isBullet ? para.replace(/^[•\-]\s*/, '') : para;

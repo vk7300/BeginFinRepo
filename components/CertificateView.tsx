@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle, Globe, EyeOff } from 'lucide-react';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
-import { db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, doc, getDoc, setDoc, auth, handleFirestoreError, OperationType } from '../firebase';
 
 interface Props {
   userName: string;
@@ -59,35 +59,33 @@ export const CertificateView: React.FC<Props> = ({
     fetchCredential();
   }, [userId]);
 
-  // Auto-sync credential document when all modules completed and userName is set
+  // Auto-sync credential document via server endpoint when all modules completed and userName is set
   useEffect(() => {
     if (!userId || !userName || !allCompleted) return;
 
     const syncCredential = async () => {
       try {
-        const now = new Date();
-        const issueDate = now.toISOString().substring(0, 10);
-        const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
+        const idToken = await auth.currentUser?.getIdToken();
+        if (!idToken) return;
 
-        const credRef = doc(db, 'credentials', userId);
-        await setDoc(credRef, {
-          title: "Certificate of Financial Literacy Completion",
-          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
-          graduateName: userName,
-          issueDate,
-          expirationDate: expDate,
-          isPublic: isPublicVerification,
-          userId,
-          completedModules: completedIds,
-          updatedAt: now.toISOString()
-        }, { merge: true });
+        await fetch('/api/issue-certificate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({
+            graduateName: userName,
+            isPublic: isPublicVerification
+          })
+        });
       } catch (err) {
         console.warn('Auto credential sync notice:', err);
       }
     };
 
     syncCredential();
-  }, [userId, userName, allCompleted, completedIds, isPublicVerification]);
+  }, [userId, userName, allCompleted, isPublicVerification]);
 
   const requestDigitalCredential = () => {
     if (!allCompleted) {
@@ -120,26 +118,29 @@ export const CertificateView: React.FC<Props> = ({
     const nextStatus = !isPublicVerification;
     setIsTogglingPublic(true);
     try {
-      const now = new Date();
-      const issueDate = now.toISOString().substring(0, 10);
-      const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error("Authentication required");
 
-      const credRef = doc(db, 'credentials', userId);
-      await setDoc(credRef, {
-        title: "Certificate of Financial Literacy Completion",
-        serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
-        graduateName: userName || "BeginFin Student",
-        issueDate,
-        expirationDate: expDate,
-        isPublic: nextStatus,
-        userId,
-        completedModules: completedIds,
-        updatedAt: now.toISOString()
-      }, { merge: true });
+      const response = await fetch('/api/issue-certificate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          graduateName: userName || "BeginFin Student",
+          isPublic: nextStatus
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to update credential visibility");
+      }
 
       setIsPublicVerification(nextStatus);
     } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `credentials/${userId}`);
+      console.error('Error toggling credential visibility:', err);
     } finally {
       setIsTogglingPublic(false);
     }
@@ -161,22 +162,20 @@ export const CertificateView: React.FC<Props> = ({
           lastUpdated: new Date().toISOString()
         }, { merge: true });
 
-        const now = new Date();
-        const issueDate = now.toISOString().substring(0, 10);
-        const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
-
-        const credRef = doc(db, 'credentials', userId);
-        await setDoc(credRef, {
-          title: "Certificate of Financial Literacy Completion",
-          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
-          graduateName: finalName,
-          issueDate,
-          expirationDate: expDate,
-          isPublic: isPublicVerification,
-          userId,
-          completedModules: completedIds,
-          updatedAt: now.toISOString()
-        }, { merge: true });
+        const idToken = await auth.currentUser?.getIdToken();
+        if (idToken && allCompleted) {
+          await fetch('/api/issue-certificate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+              graduateName: finalName,
+              isPublic: isPublicVerification
+            })
+          });
+        }
 
         setUserName(finalName);
         setIsNameSet(true);
