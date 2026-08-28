@@ -4,13 +4,10 @@ import path from "path";
 import fs from "fs";
 import { rateLimit } from "express-rate-limit";
 import cors from "cors";
-import { modules } from "./data/courseData.js";
-import answerKeys from "./server/answerKeys.json" assert { type: "json" };
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 dotenv.config();
 
@@ -22,7 +19,6 @@ const adminApp = getApps().length === 0
   : getApps()[0];
 
 const adminAuth = getAuth(adminApp);
-const adminDb = getFirestore(adminApp);
 
 let aiClient: GoogleGenAI | null = null;
 function getGenAI(): GoogleGenAI | null {
@@ -85,17 +81,12 @@ async function startServer() {
     'https://begin-fin.com',
     'https://www.begin-fin.com',
     'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://ais-dev-3pukbrm6cjmwehc3hl7xhd-20819416614.us-west2.run.app',
-    'https://ais-pre-3pukbrm6cjmwehc3hl7xhd-20819416614.us-west2.run.app'
+    'http://127.0.0.1:3000'
   ];
-  if (process.env.ALLOWED_ORIGINS) {
-    allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(','));
-  }
 
   app.use(cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app') || origin.endsWith('.web.app') || origin.endsWith('.firebaseapp.com')) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy'));
@@ -104,22 +95,6 @@ async function startServer() {
     credentials: true
   }));
   app.use(express.json());
-
-  // Helper function to verify Firebase auth token
-  const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Missing or invalid authorization token" });
-    }
-    const token = authHeader.split("Bearer ")[1];
-    try {
-      (req as any).user = await adminAuth.verifyIdToken(token);
-      next();
-    } catch (err) {
-      return res.status(401).json({ error: "Unauthorized request" });
-    }
-  };
-
 
   // Rate limiting: 100 requests per 15 minutes per IP
   const limiter = rateLimit({
@@ -136,238 +111,6 @@ async function startServer() {
     next();
   });
 
-  // API endpoint to get questions without correctIndex
-  app.get("/api/questions/:moduleId", requireAuth, async (req, res) => {
-    try {
-      const { moduleId } = req.params;
-      const snapshot = await adminDb.collection('questions')
-        .where('moduleId', '==', moduleId)
-        .where('isPublished', '==', true)
-        .get();
-        
-      const questions = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          moduleId: data.moduleId,
-          language: data.language,
-          question: data.question,
-          options: data.options,
-          // Exclude correctIndex
-        };
-      });
-      
-      return res.json(questions);
-    } catch (error) {
-      console.error("Error fetching questions:", error);
-      return res.status(500).json({ error: "Failed to fetch questions" });
-    }
-  });
-
-  // API endpoint to complete a module (for static modules without a database quiz)
-  app.post("/api/complete-module", requireAuth, async (req, res) => {
-    try {
-      const { moduleId } = req.body;
-      const uid = (req as any).user.uid;
-
-      if (!moduleId || typeof moduleId !== 'string') {
-        return res.status(400).json({ error: "Valid moduleId is required" });
-      }
-
-      const targetModule = modules.find((m: any) => m.id === moduleId);
-      if (!targetModule) {
-        return res.status(400).json({ error: "Invalid module ID." });
-      }
-
-      const userDoc = await adminDb.collection("users").doc(uid).get();
-      const userData = userDoc.data();
-      if (userData?.completedModules?.includes(moduleId)) {
-        return res.json({ success: true, message: "Already completed." });
-      }
-
-      const questionsSnap = await adminDb.collection('questions')
-        .where('moduleId', '==', moduleId)
-        .where('isPublished', '==', true)
-        .limit(1)
-        .get();
-
-      const hasCustomQuiz = !questionsSnap.empty;
-      
-      // Determine if it has standard quiz by checking answerKeys
-      const hasStandardQuiz = !!(answerKeys as any)[moduleId];
-
-      if (hasCustomQuiz || hasStandardQuiz) {
-        return res.status(403).json({ error: "This module requires passing a quiz. Use /api/grade-quiz instead." });
-      }
-
-      await adminDb.collection('users').doc(uid).update({
-        completedModules: FieldValue.arrayUnion(moduleId)
-      });
-      
-      return res.json({ success: true });
-    } catch (error) {
-      console.error("Error completing module:", error);
-      return res.status(500).json({ error: "Failed to complete module" });
-    }
-  });
-  // API endpoint to grade a quiz
-  app.post("/api/grade-quiz", requireAuth, async (req, res) => {
-    try {
-      const { moduleId, answers, language = 'en' } = req.body; 
-      const uid = (req as any).user.uid;
-      
-      const targetModule = modules.find((m: any) => m.id === moduleId);
-      if (!targetModule) {
-        return res.status(400).json({ error: "Invalid module ID." });
-      }
-      
-      const snapshot = await adminDb.collection('questions')
-        .where('moduleId', '==', moduleId)
-        .where('isPublished', '==', true)
-        .get();
-        
-      let correctCount = 0;
-      let totalCount = 0;
-      const results: Record<string, { correct: boolean; correctIndex?: number }> = {};
-      
-      if (!snapshot.empty) {
-        totalCount = snapshot.docs.length;
-        snapshot.docs.forEach((doc: any) => {
-          const qData = doc.data();
-          const selectedIndex = answers[doc.id];
-          const isCorrect = selectedIndex === qData.correctIndex;
-          results[doc.id] = { correct: isCorrect, correctIndex: qData.correctIndex };
-          if (isCorrect) correctCount++;
-        });
-      } else if ((answerKeys as any)[moduleId] && (answerKeys as any)[moduleId][language]) {
-        const correctAnswers = (answerKeys as any)[moduleId][language];
-        totalCount = correctAnswers.length;
-        correctAnswers.forEach((correctIndex: number, index: number) => {
-          const selectedIndex = answers[index.toString()];
-          const isCorrect = selectedIndex === correctIndex;
-          results[index.toString()] = { correct: isCorrect, correctIndex };
-          if (isCorrect) correctCount++;
-        });
-      } else {
-        return res.status(400).json({ error: "This module has no quiz." });
-      }
-      
-      const score = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
-      const passed = score >= 80; 
-      
-      if (passed) {
-        await adminDb.collection('users').doc(uid).update({
-          completedModules: FieldValue.arrayUnion(moduleId)
-        });
-      }
-      
-      return res.json({
-        passed,
-        score,
-        results,
-        correctCount,
-        totalCount
-      });
-    } catch (error) {
-      console.error("Error grading quiz:", error);
-      return res.status(500).json({ error: "Failed to grade quiz" });
-    }
-  });
-
-  // API endpoint to issue a certificate securely
-  app.post("/api/issue-certificate", requireAuth, async (req, res) => {
-    try {
-      const { graduateName } = req.body;
-      const uid = (req as any).user.uid;
-      
-      const userDoc = await adminDb.collection('users').doc(uid).get();
-      const userData = userDoc.data();
-      
-      if (!userData || !userData.completedModules || userData.completedModules.length < 8) {
-        return res.status(403).json({ error: "All 8 modules must be completed to earn a certificate." });
-      }
-      
-      const now = new Date();
-      const issueDate = now.toISOString().substring(0, 10);
-      const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
-      const finalName = (graduateName || "BeginFin Student").substring(0, 80);
-
-      // Save user's name if they typed one
-      if (graduateName) {
-        await adminDb.collection('users').doc(uid).set({
-          displayName: finalName,
-          lastUpdated: new Date().toISOString()
-        }, { merge: true });
-      }
-
-      const credRef = adminDb.collection('credentials').doc(uid);
-      const credentialData = {
-        title: "Certificate of Financial Literacy Completion",
-        serialNumber: `BF-${uid.substring(0, 8).toUpperCase()}`,
-        graduateName: finalName,
-        issueDate,
-        expirationDate: expDate,
-        userId: uid,
-        modulesCompleted: userData.completedModules.length,
-        issuedAt: new Date().toISOString()
-      };
-
-      await credRef.set(credentialData);
-      
-      return res.json({ success: true, credential: credentialData });
-    } catch (error) {
-      console.error("Error issuing certificate:", error);
-      return res.status(500).json({ error: "Failed to issue certificate" });
-    }
-  });
-
-  // API endpoint to join a class
-  app.post("/api/join-class", requireAuth, async (req, res) => {
-    try {
-      const { joinCode, displayName } = req.body;
-      const uid = (req as any).user.uid;
-      
-      if (!joinCode || typeof joinCode !== 'string' || joinCode.length !== 6) {
-        return res.status(400).json({ error: "Invalid join code." });
-      }
-      
-      const classRef = adminDb.collection('classes').doc(joinCode.toUpperCase());
-      const classDoc = await classRef.get();
-      
-      if (!classDoc.exists) {
-        return res.status(404).json({ error: "Class not found." });
-      }
-      
-      const classData = classDoc.data()!;
-      
-      // Add student to class
-      await classRef.update({
-        studentIds: FieldValue.arrayUnion(uid)
-      });
-      
-      // Update student profile
-      const userUpdate: any = {
-        classId: classDoc.id,
-        teacherId: classData.teacherId,
-        joinCode: joinCode.toUpperCase()
-      };
-      if (displayName) {
-        userUpdate.displayName = sanitizeHeader(displayName).substring(0, 80);
-      }
-      
-      await adminDb.collection('users').doc(uid).set(userUpdate, { merge: true });
-      
-      return res.json({ 
-        success: true, 
-        className: classData.className,
-        classId: classDoc.id,
-        teacherId: classData.teacherId
-      });
-    } catch (error: any) {
-      console.error("Error joining class:", error);
-      return res.status(500).json({ error: "Failed to join class." });
-    }
-  });
   // Serve public/dist assets directly with precise mime-types to avoid SPA index.html fallback
   app.get('/favicon.ico', (req, res) => {
     res.redirect('https://i.postimg.cc/qvTKKNQJ/New-Begin-Fin-Logo(White-BG).png');
@@ -606,43 +349,19 @@ BeginFin Curriculum Reference:
 
   app.post("/api/request-certifier-credential", certifierLimiter, async (req, res) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Missing or invalid authorization token" });
-      }
-      const token = authHeader.split("Bearer ")[1];
-      let decodedToken;
-      try {
-        decodedToken = await adminAuth.verifyIdToken(token);
-      } catch (err) {
-        return res.status(401).json({ error: "Unauthorized request" });
-      }
+      const { name, email, serialNumber, consent, userId } = req.body;
 
-      const { name, serialNumber, consent } = req.body;
-
-      if (consent !== true) {
-        return res.status(400).json({ error: "Explicit consent is required." });
-      }
-
-      if (!decodedToken.email) {
-        return res.status(400).json({ error: "Authenticated account must have a verified email address to request a digital credential." });
-      }
-      
-      const verifiedEmail = decodedToken.email;
-      const verifiedUserId = decodedToken.uid;
-      const verifiedName = decodedToken.name || name;
-
-      if (!verifiedName) {
-        return res.status(400).json({ error: "Full name is required." });
+      if (!name || !email || consent !== true) {
+        return res.status(400).json({ error: "Full name, email, and explicit consent are required." });
       }
 
       // Safe sanitized logging without writing student PII to stdout
       console.log(`[Certifier] Digital credential request processed at ${new Date().toISOString()}`);
 
-      const cleanName = sanitizeHeader(verifiedName).substring(0, 100);
-      const cleanEmail = sanitizeHeader(verifiedEmail).substring(0, 100);
+      const cleanName = sanitizeHeader(name).substring(0, 100);
+      const cleanEmail = sanitizeHeader(email).substring(0, 100);
       const cleanSerial = sanitizeHeader(serialNumber || 'N/A').substring(0, 50);
-      const cleanUserId = sanitizeHeader(verifiedUserId || 'N/A').substring(0, 60);
+      const cleanUserId = sanitizeHeader(userId || 'N/A').substring(0, 60);
 
       const safeNameHtml = escapeHtml(cleanName);
       const safeEmailHtml = escapeHtml(cleanEmail);
@@ -739,56 +458,6 @@ Please process this request in Certifier.io.`,
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
-  
-  app.delete("/api/delete-account", requireAuth, async (req, res) => {
-    try {
-      const uid = (req as any).user.uid;
-      
-      const batch = adminDb.batch();
-      
-      // 1. Delete user document
-      batch.delete(adminDb.collection('users').doc(uid));
-      
-      // 2. Clean up classes and student associations
-      const classesRef = adminDb.collection('classes');
-      
-      const teacherSnap = await classesRef.where('teacherId', '==', uid).get();
-      for (const d of teacherSnap.docs) {
-        batch.delete(d.ref);
-        const alertsSnap = await adminDb.collection('classes').doc(d.id).collection('alerts').get();
-        alertsSnap.docs.forEach((ad: any) => batch.delete(ad.ref));
-      }
-      
-      const studentSnap = await classesRef.where('studentIds', 'array-contains', uid).get();
-      studentSnap.docs.forEach((d: any) => {
-        const studentIds = (d.data().studentIds || []).filter((id: string) => id !== uid);
-        batch.update(d.ref, { studentIds });
-      });
-      
-      // 3. Delete all credentials
-      const credsSnap = await adminDb.collection('credentials').where('userId', '==', uid).get();
-      credsSnap.docs.forEach((d: any) => batch.delete(d.ref));
-      
-      // 4. Delete alerts created by this user
-      const userDoc = await adminDb.collection('users').doc(uid).get();
-      if (userDoc.exists) {
-        const uData = userDoc.data();
-        if (uData?.classId) {
-          const userAlertsSnap = await adminDb.collection('classes').doc(uData.classId).collection('alerts').where('userId', '==', uid).get();
-          userAlertsSnap.docs.forEach((ad: any) => batch.delete(ad.ref));
-        }
-      }
-      
-      await batch.commit();
-      await adminAuth.deleteUser(uid);
-      
-      return res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      return res.status(500).json({ error: "Failed to delete account" });
-    }
-  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

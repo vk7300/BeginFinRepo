@@ -56,8 +56,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.email_verified == true && (
-        request.auth.token.email in ['kv303157@gmail.com', 'kruzksmith@gmail.com', 'vishnukakarla108@gmail.com']
+      return isAuthenticated() && (
+        request.auth.token.get('admin', false) == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
       );
     }
 
@@ -79,9 +81,6 @@ service cloud.firestore {
              data.completedModules is list &&
              (!('classId' in data) || data.classId is string || data.classId == null) &&
              (!('teacherId' in data) || data.teacherId is string || data.teacherId == null) &&
-             (!('joinCode' in data) || data.joinCode is string || data.joinCode == null) &&
-             (!('agreedToTerms' in data) || data.agreedToTerms is bool) &&
-             (!('agreedToTermsAt' in data) || data.agreedToTermsAt is string) &&
              (!('creditScoreMaster' in data) || data.creditScoreMaster is bool) &&
              (!('highCreditScore' in data) || data.highCreditScore is int || data.highCreditScore is float);
     }
@@ -102,10 +101,6 @@ service cloud.firestore {
              data.issueDate is string && data.issueDate.size() == 10 &&
              data.expirationDate is string && data.expirationDate.size() == 10 &&
              (!('isPublic' in data) || data.isPublic is bool) &&
-             (!('completedModules' in data) || (
-               data.completedModules is list && 
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.completedModules.hasAll(data.completedModules)
-             )) &&
              (!('userId' in data) || (data.userId is string && (data.userId == request.auth.uid || isAdmin())));
     }
 
@@ -131,21 +126,10 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.teacherId == request.auth.uid);
-      allow list: if isOwner(userId) || isAdmin();
-      allow list: if isAuthenticated() && resource.data.teacherId == request.auth.uid;
+      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid);
       allow create: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && uidUnchanged();
       allow update: if (isOwner(userId) && uidNotModified() && isValidUser(request.resource.data) && 
-                       (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher']) &&
-                       (!('completedModules' in request.resource.data.diff(resource.data).affectedKeys())) &&
-                       (
-                         !('classId' in request.resource.data.diff(resource.data).affectedKeys()) ||
-                         request.resource.data.classId == null ||
-                         (
-                           'joinCode' in request.resource.data &&
-                           get(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.joinCode == request.resource.data.joinCode
-                         )
-                       )
+                       (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher'] || (request.resource.data.role == 'admin' && resource.data.get('role', '') == 'admin'))
                       ) || 
                    isAdmin() ||
                    (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid && 
@@ -156,14 +140,24 @@ service cloud.firestore {
     }
 
     match /classes/{classId} {
-      // Block arbitrary class scraping: get/listing only allowed if user is the teacher or a student in the class
-      allow get: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == classId);
-      allow list: if isAuthenticated() && resource.data.teacherId == request.auth.uid;
-      
+      // Anyone authenticated can read specific class info (needed for joining)
+      allow get: if isAuthenticated();
+      // Block arbitrary class scraping: listing only allowed if user is the teacher or a student in the class
+      allow list: if isAuthenticated() && (resource.data.teacherId == request.auth.uid || (resource.data.studentIds is list && request.auth.uid in resource.data.studentIds));
       // Only teachers can create classes
       allow create: if isTeacher() && isValidClass(request.resource.data);
       // Only the class teacher can update or delete the class
-      allow update, delete: if isClassTeacher(classId);
+      // OR students removing themselves from studentIds list during account deletion/leaving
+      allow update: if isClassTeacher(classId) || (
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentIds']) &&
+        request.resource.data.studentIds is list &&
+        (
+          (request.auth.uid in request.resource.data.studentIds && !(resource.data.get('studentIds', []) is list && request.auth.uid in resource.data.studentIds)) ||
+          (!(request.auth.uid in request.resource.data.studentIds) && resource.data.get('studentIds', []) is list && request.auth.uid in resource.data.studentIds)
+        )
+      );
+      allow delete: if isClassTeacher(classId);
 
       match /alerts/{alertId} {
         // Teachers can read and delete alerts for their own classes
@@ -180,14 +174,16 @@ service cloud.firestore {
     }
 
     match /credentials/{credentialId} {
-      // Direct verification requires authenticated owner/admin
-      allow get: if isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin());
+      // Direct verification requires opt-in isPublic == true OR authenticated owner/admin
+      allow get: if (resource.data.get('isPublic', false) == true) || 
+                   (isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin()));
       allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      // Only the owner can create their credential record, must supply matching userId
-      allow create: if false;
-      // Updates and deletions must go through the server
-      allow update: if false;
-      allow delete: if false;
+      // Only the owner can create their credential record
+      allow create: if isAuthenticated() && (!('userId' in request.resource.data) || request.auth.uid == request.resource.data.userId) && isValidCredential(request.resource.data);
+      // Only the owner can update their credential
+      allow update: if isAuthenticated() && (!('userId' in resource.data) || isOwner(resource.data.userId)) && isValidCredential(request.resource.data);
+      // Only the owner can delete their credential
+      allow delete: if isAuthenticated() && (!('userId' in resource.data) || isOwner(resource.data.userId));
     }
 
     match /articles/{articleId} {
@@ -217,17 +213,16 @@ service cloud.firestore {
                data.updatedAt is string;
       }
 
-      // Questions (with correctIndex) must only be accessed directly by admins. 
-      // Students fetch via API which strips the correctIndex.
-      allow read: if isAdmin();
+      // Public can read questions
+      allow read: if true;
       // Only Admin can write/delete questions
       allow create, update: if isAdmin() && isValidQuestion(request.resource.data);
       allow delete: if isAdmin();
     }
 
     match /certifierRequests/{requestId} {
-      allow create: if isAuthenticated() && isValidCertifierRequest(request.resource.data) && 
-                     (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid);
+      allow create: if isValidCertifierRequest(request.resource.data) && 
+                     (!('userId' in request.resource.data) || (isAuthenticated() && request.resource.data.userId == request.auth.uid));
       allow read: if isAdmin() || (isAuthenticated() && resource.data.get('userId', '') == request.auth.uid);
       allow update, delete: if isAdmin();
     }

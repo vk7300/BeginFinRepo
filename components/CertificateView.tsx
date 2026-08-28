@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle, Globe, EyeOff } from 'lucide-react';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
-import { db, auth, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
 
 interface Props {
   userName: string;
@@ -31,7 +31,8 @@ export const CertificateView: React.FC<Props> = ({
   const [isNameSet, setIsNameSet] = useState(!!userName);
   const [showIncompleteNotice, setShowIncompleteNotice] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [isPublicVerification, setIsPublicVerification] = useState(true);
+  const [isTogglingPublic, setIsTogglingPublic] = useState(false);
   const certificateRef = useRef<HTMLDivElement>(null);
 
   const requiredModules = useMemo(() => modules.filter(m => !m.isOptional), []);
@@ -47,7 +48,9 @@ export const CertificateView: React.FC<Props> = ({
         const credSnap = await getDoc(credRef);
         if (credSnap.exists()) {
           const data = credSnap.data();
-          
+          if (typeof data.isPublic === 'boolean') {
+            setIsPublicVerification(data.isPublic);
+          }
         }
       } catch (err) {
         console.warn('Could not fetch existing credential:', err);
@@ -66,28 +69,25 @@ export const CertificateView: React.FC<Props> = ({
         const issueDate = now.toISOString().substring(0, 10);
         const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
 
-        
-      try {
-        const idToken = await auth.currentUser?.getIdToken();
-        await fetch('/api/issue-certificate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
-          },
-          body: JSON.stringify({ graduateName: userName })
-        });
-      } catch (err) {
-        console.error("Failed to sync credential", err);
-      }
-
+        const credRef = doc(db, 'credentials', userId);
+        await setDoc(credRef, {
+          title: "Certificate of Financial Literacy Completion",
+          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
+          graduateName: userName,
+          issueDate,
+          expirationDate: expDate,
+          isPublic: isPublicVerification,
+          userId,
+          completedModules: completedIds,
+          updatedAt: now.toISOString()
+        }, { merge: true });
       } catch (err) {
         console.warn('Auto credential sync notice:', err);
       }
     };
 
     syncCredential();
-  }, [userId, userName, allCompleted, completedIds, /* removed */]);
+  }, [userId, userName, allCompleted, completedIds, isPublicVerification]);
 
   const requestDigitalCredential = () => {
     if (!allCompleted) {
@@ -115,7 +115,35 @@ export const CertificateView: React.FC<Props> = ({
     month: 'long', day: 'numeric', year: 'numeric' 
   }), []);
 
-  ;
+  const handleTogglePublic = async () => {
+    if (!userId || isTogglingPublic) return;
+    const nextStatus = !isPublicVerification;
+    setIsTogglingPublic(true);
+    try {
+      const now = new Date();
+      const issueDate = now.toISOString().substring(0, 10);
+      const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
+
+      const credRef = doc(db, 'credentials', userId);
+      await setDoc(credRef, {
+        title: "Certificate of Financial Literacy Completion",
+        serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
+        graduateName: userName || "BeginFin Student",
+        issueDate,
+        expirationDate: expDate,
+        isPublic: nextStatus,
+        userId,
+        completedModules: completedIds,
+        updatedAt: now.toISOString()
+      }, { merge: true });
+
+      setIsPublicVerification(nextStatus);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `credentials/${userId}`);
+    } finally {
+      setIsTogglingPublic(false);
+    }
+  };
 
   const handleSetName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,21 +165,18 @@ export const CertificateView: React.FC<Props> = ({
         const issueDate = now.toISOString().substring(0, 10);
         const expDate = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate()).toISOString().substring(0, 10);
 
-        
-      try {
-        const idToken = await auth.currentUser?.getIdToken();
-        await fetch('/api/issue-certificate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
-          },
-          body: JSON.stringify({ graduateName: userName })
-        });
-      } catch (err) {
-        console.error("Failed to sync credential", err);
-      }
-
+        const credRef = doc(db, 'credentials', userId);
+        await setDoc(credRef, {
+          title: "Certificate of Financial Literacy Completion",
+          serialNumber: `BF-${userId.substring(0, 8).toUpperCase()}`,
+          graduateName: finalName,
+          issueDate,
+          expirationDate: expDate,
+          isPublic: isPublicVerification,
+          userId,
+          completedModules: completedIds,
+          updatedAt: now.toISOString()
+        }, { merge: true });
 
         setUserName(finalName);
         setIsNameSet(true);
@@ -427,7 +452,28 @@ export const CertificateView: React.FC<Props> = ({
               <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
               Your certificate is verified and complete! You can download your official PDF copy.
             </p>
-            
+            {userId && (
+              <div className="pt-1 flex items-center justify-center gap-2 text-xs">
+                <button
+                  onClick={handleTogglePublic}
+                  disabled={isTogglingPublic}
+                  aria-label={isPublicVerification ? "Disable public verification" : "Enable public verification"}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all border text-slate-700 hover:bg-white bg-slate-50 border-slate-200 cursor-pointer disabled:opacity-60"
+                >
+                  {isPublicVerification ? (
+                    <>
+                      <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Public Verification Link: <strong className="text-emerald-700">Enabled</strong></span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Public Verification Link: <strong className="text-slate-600">Private Only</strong></span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         ) : null}
 

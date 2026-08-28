@@ -3,7 +3,7 @@ import { CheckCircle2, ChevronRight, Trophy, Lock, FileBadge, Share2, Users, Arr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Module } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
-import { db, doc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, handleFirestoreError, OperationType, getDoc } from '../firebase';
+import { db, doc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, handleFirestoreError, OperationType } from '../firebase';
 
 import { User } from '../firebase';
 
@@ -96,66 +96,52 @@ export const Dashboard: React.FC<Props> = ({
     setIsJoining(true);
     setJoinFeedback({ status: 'idle', message: '' });
     if (triggerLoading) triggerLoading("Joining class...", 2500);
-
-    if (!user.displayName || user.displayName === 'Learner' || user.displayName === 'Anonymous') {
-      setIsAskingName({ 
-        classId: joinCode.toUpperCase(), 
-        teacherId: '',
-        className: 'the class'
-      });
-      setTempName(user.displayName || '');
-      setIsJoining(false);
-      return;
-    }
-
-    await submitJoinClass(user.displayName);
-  };
-
-  const submitJoinClass = async (displayNameToUse: string) => {
     try {
-      const token = await user!.getIdToken();
-      const response = await fetch('/api/join-class', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          joinCode: joinCode.toUpperCase(),
-          displayName: displayNameToUse
-        })
-      });
+      const classesRef = collection(db, 'classes');
+      const q = query(classesRef, where('joinCode', '==', joinCode.toUpperCase()));
+      const querySnapshot = await getDocs(q);
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          setJoinFeedback({ 
-            status: 'not_found', 
-            message: `Couldn't Find Class: No active class found with code "${joinCode.toUpperCase()}". Check the code with your teacher.` 
-          });
-        } else {
-          setJoinFeedback({ status: 'error', message: data.error || 'Failed to join class.' });
-        }
+      if (querySnapshot.empty) {
+        setJoinFeedback({ 
+          status: 'not_found', 
+          message: `Couldn't Find Class: No active class found with code "${joinCode.toUpperCase()}". Check the code with your teacher.` 
+        });
         setIsJoining(false);
         return;
       }
       
-      setJoinFeedback({ 
-        status: 'joined', 
-        message: `Joined ${data.className || 'Class'}!`, 
-        className: data.className 
-      });
-      setIsAskingName(null);
-      setTempName('');
-      setTimeout(() => {
-        setShowJoinInput(false);
-        setJoinFeedback({ status: 'idle', message: '' });
-        setJoinCode('');
-      }, 1800);
+      const classDoc = querySnapshot.docs[0];
+      const classData = classDoc.data();
+      
+      if (user) {
+        // If user doesn't have a display name, or we want to confirm it for the class
+        if (!user.displayName || user.displayName === 'Learner' || user.displayName === 'Anonymous') {
+          setIsAskingName({ 
+            classId: classDoc.id, 
+            teacherId: classData.teacherId,
+            className: classData.className
+          });
+          setTempName(user.displayName || '');
+        } else {
+          await setDoc(doc(db, 'users', user.uid), {
+            classId: classDoc.id,
+            teacherId: classData.teacherId
+          }, { merge: true });
+          setJoinFeedback({ 
+            status: 'joined', 
+            message: `Joined ${classData.className || 'Class'}!`, 
+            className: classData.className 
+          });
+          setTimeout(() => {
+            setShowJoinInput(false);
+            setJoinFeedback({ status: 'idle', message: '' });
+            setJoinCode('');
+          }, 1800);
+        }
+      }
     } catch (err) {
-      console.error('Failed to join class API call:', err);
-      setJoinFeedback({ status: 'error', message: 'Network error. Please try again.' });
+      handleFirestoreError(err, OperationType.GET, 'classes');
+      setJoinFeedback({ status: 'error', message: 'Failed to join class. Please try again.' });
     } finally {
       setIsJoining(false);
     }
@@ -182,9 +168,33 @@ export const Dashboard: React.FC<Props> = ({
   const handleConfirmName = async () => {
     if (!user || !isAskingName || !tempName.trim()) return;
     setIsJoining(true);
-    const cleaned = tempName.trim().replace(/<\/?[^>]+(>|$)/g, "");
-    const finalName = cleaned.substring(0, 80);
-    await submitJoinClass(finalName);
+    try {
+      // Sanitize input: Character limit (80 max) and clean up HTML tags to prevent XSS/Payload injection
+      const cleaned = tempName.trim().replace(/<\/?[^>]+(>|$)/g, "");
+      const finalName = cleaned.substring(0, 80);
+      await setDoc(doc(db, 'users', user.uid), {
+        displayName: finalName,
+        classId: isAskingName.classId,
+        teacherId: isAskingName.teacherId
+      }, { merge: true });
+      setJoinFeedback({ 
+        status: 'joined', 
+        message: `Joined ${isAskingName.className || 'Class'}!`, 
+        className: isAskingName.className 
+      });
+      setIsAskingName(null);
+      setTempName('');
+      setTimeout(() => {
+        setShowJoinInput(false);
+        setJoinFeedback({ status: 'idle', message: '' });
+        setJoinCode('');
+      }, 1800);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
+      setJoinFeedback({ status: 'error', message: 'Failed to save name. Please try again.' });
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   const requiredCompletedCount = completedIds.filter(id => requiredModules.some(m => m.id === id)).length;

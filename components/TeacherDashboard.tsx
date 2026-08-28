@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Plus, Copy, CheckCircle2, BookOpen, Trophy, Loader2, Search, ArrowRight, User as UserIcon, Trash2, ChevronDown, ChevronUp, AlertCircle, FileText, Download, Zap, Calendar, X, Lock, Unlock, Bell, Award, MessageSquare, Share2, GraduationCap, Send, RefreshCw, Link as LinkIcon, ExternalLink, Check, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { db, collection, query, where, getDocs, addDoc, doc, onSnapshot, setDoc, deleteDoc, writeBatch, handleFirestoreError, OperationType, updateDoc, getDoc } from '../firebase';
+import { db, collection, query, where, getDocs, addDoc, doc, onSnapshot, setDoc, deleteDoc, writeBatch, handleFirestoreError, OperationType, updateDoc } from '../firebase';
 import { modules } from '../data/courseData';
 import { User as FirebaseUser } from 'firebase/auth';
 import { ClassReportPDF } from './ClassReportPDF';
@@ -95,7 +95,6 @@ export const TeacherDashboard: React.FC<{
   // Form fields for Coursework
   const [courseworkTitle, setCourseworkTitle] = useState('');
   const [courseworkDesc, setCourseworkDesc] = useState('');
-  const [agreedToAgeLimit, setAgreedToAgeLimit] = useState(false);
   const [courseworkModuleId, setCourseworkModuleId] = useState('');
   const [courseworkPoints, setCourseworkPoints] = useState(100);
   const [courseworkDueDate, setCourseworkDueDate] = useState('');
@@ -180,11 +179,6 @@ export const TeacherDashboard: React.FC<{
       return onSnapshot(q, (snapshot) => {
         const classAlerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AlertData));
         setAlerts(prev => ({ ...prev, [cls.id]: classAlerts }));
-      }, (err) => {
-        // Ignore permission-denied errors that occur when a class is deleted while the listener is still active
-        if (!err.message.includes('insufficient permissions')) {
-          console.error('TeacherDashboard Alerts Snapshot Error:', err);
-        }
       });
     });
 
@@ -228,13 +222,7 @@ export const TeacherDashboard: React.FC<{
     try {
       if (triggerLoading) triggerLoading(`Importing "${course.name}" from Google Classroom...`, 2500);
       let joinCode = generateJoinCode();
-      let classRef = doc(db, 'classes', joinCode);
-      let classSnap = await getDoc(classRef);
-      while(classSnap.exists()) {
-        joinCode = generateJoinCode();
-        classRef = doc(db, 'classes', joinCode);
-        classSnap = await getDoc(classRef);
-      }
+      const classRef = doc(collection(db, 'classes'));
       
       await setDoc(classRef, {
         classId: classRef.id,
@@ -444,14 +432,22 @@ export const TeacherDashboard: React.FC<{
       }
       
       let joinCode = generateJoinCode();
-      let classRef = doc(db, 'classes', joinCode);
-      let classSnap = await getDoc(classRef);
-      while(classSnap.exists()) {
-        joinCode = generateJoinCode();
-        classRef = doc(db, 'classes', joinCode);
-        classSnap = await getDoc(classRef);
+      
+      // Check for uniqueness
+      let isUnique = false;
+      let attempts = 0;
+      while (!isUnique && attempts < 5) {
+        const q = query(collection(db, 'classes'), where('joinCode', '==', joinCode));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          isUnique = true;
+        } else {
+          joinCode = generateJoinCode();
+          attempts++;
+        }
       }
 
+      const classRef = doc(collection(db, 'classes'));
       await setDoc(classRef, {
         classId: classRef.id,
         className: finalClassName,
@@ -492,7 +488,7 @@ export const TeacherDashboard: React.FC<{
       
       // 1. Find all students in this class and remove them
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('classId', '==', classId), where('teacherId', '==', user.uid));
+      const q = query(usersRef, where('classId', '==', classId));
       const querySnapshot = await getDocs(q);
       
       const batch = writeBatch(db);
@@ -1333,43 +1329,28 @@ export const TeacherDashboard: React.FC<{
                   </button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      id="teacher-age-agree" 
-                      checked={agreedToAgeLimit}
-                      onChange={(e) => setAgreedToAgeLimit(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-                    />
-                    <label htmlFor="teacher-age-agree" className="text-xs text-amber-900 font-medium leading-tight">
-                      I confirm that the students in this section are in 9th grade or above (minimum age 14).
-                    </label>
-                  </div>
-                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                    {classroomCourses.map((c) => (
-                      <div
-                        key={c.id}
-                        className="p-4 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 hover:border-indigo-200 rounded-2xl flex justify-between items-center transition-all group"
-                      >
-                        <div>
-                          <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                            {c.name}
-                          </h4>
-                          <p className="text-xs text-slate-500 font-medium">
-                            {c.section ? `Section: ${c.section} • ` : ''}Room: {c.room || 'N/A'}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleImportClassroomCourse(c)}
-                          disabled={!agreedToAgeLimit}
-                          className="px-4 py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Link & Import
-                        </button>
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {classroomCourses.map((c) => (
+                    <div
+                      key={c.id}
+                      className="p-4 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 hover:border-indigo-200 rounded-2xl flex justify-between items-center transition-all group"
+                    >
+                      <div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                          {c.name}
+                        </h4>
+                        <p className="text-xs text-slate-500 font-medium">
+                          {c.section ? `Section: ${c.section} • ` : ''}Room: {c.room || 'N/A'}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <button
+                        onClick={() => handleImportClassroomCourse(c)}
+                        className="px-4 py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 shadow-sm transition-all"
+                      >
+                        Link & Import
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </motion.div>

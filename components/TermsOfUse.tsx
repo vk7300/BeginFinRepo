@@ -43,10 +43,9 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">1. ACCEPTANCE OF TERMS, MINOR USAGE & TARGET AUDIENCE</h4>
+              <h4 className="font-bold text-slate-900">1. ACCEPTANCE OF TERMS, MINOR USAGE & OPEN SOURCE CURRICULUM</h4>
               <p>BeginFin (the "Platform") is a free educational platform founded in December 2025 in Temple, Texas as a student-led initiative by Vishnu Kakarla and Kruz Smith. By accessing begin-fin.com or its application portal at begin-fin.com/app, you agree to be bound by these Terms of Use and our Privacy Policy. The curriculum is open-source and free to use for non-commercial educational purposes.</p>
-              <p><strong>Target Audience & Minimum Age:</strong> The Platform is intended for a high school audience in the United States and up. The minimum age to create an account is 14 years. By creating an account, you represent that you are at least 14 years of age.</p>
-              <p><strong>Minors Under 18:</strong> If the participant or user is under 18 years of age (but at least 14), a parent or legal guardian must review and agree to these Terms and provide permission before the participant creates an account or requests digital credentials, unless accessing the Platform through an authorized school program where institutional consent applies.</p>
+              <p><strong>Minors Under 18:</strong> If the participant or user is under 18 years of age, a parent or legal guardian must review and agree to these Terms and provide permission before the participant creates an account or requests digital credentials, unless accessing the Platform through an authorized school program where institutional consent applies.</p>
             </section>
 
             <section className="space-y-4">
@@ -63,7 +62,7 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
               <h4 className="font-bold text-slate-900">3. EDUCATIONAL CONTENT, SIMULATORS & INTERACTIVE TOOLS</h4>
               <p>BeginFin provides structured personal finance learning modules, interactive tools, and visual calculators designed for educational exploration:</p>
               <ul className="list-disc ml-6 space-y-2">
-                <li><strong>Core Learning Units:</strong> Eight foundational modules covering Personal Finance Fundamentals, Job Finance & USA Taxes, Investing Basics, Debt & Credit Mastery, Retirement Planning, Filing Taxes Roadmap, Insurance & Risk Management, and Consumer Rights & Philanthropy.</li>
+                <li><strong>Core Learning Units:</strong> Six foundational modules covering Personal Finance Fundamentals, Income & Taxes, Banking & Budgeting, Credit & Debt, Investing & Wealth Building, and Risk Management & Insurance.</li>
                 <li><strong>Interactive Simulators:</strong> The Entry Salary & Living Cost Simulator, Credit Score Sandbox, and Interactive Tax Roadmap utilize generalized economic estimates, standard national average tax rates, and hypothetical scenarios for illustrative purposes. They do not constitute career counseling, loan underwriting, tax return preparation, or formal credit advisory services.</li>
                 <li><strong>Local Computation:</strong> Financial calculations performed within interactive simulators occur locally within your browser. BeginFin does not collect, sell, or monetize user-entered hypothetical financial amounts.</li>
               </ul>

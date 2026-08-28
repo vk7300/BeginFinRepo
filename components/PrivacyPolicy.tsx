@@ -43,9 +43,8 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">1. INTRODUCTION, SCOPE & TARGET AUDIENCE</h4>
+              <h4 className="font-bold text-slate-900">1. INTRODUCTION, SCOPE & FOUNDATIONAL STATUS</h4>
               <p>BeginFin ("we," "us," or "our") is a 100% free educational platform founded in December 2025 in Temple, Texas by high school co-founders Vishnu Kakarla and Kruz Smith. BeginFin operates as a student-led Open Educational Resource (OER) with zero revenue, zero external monetization, and is not a registered 501(c)(3) non-profit entity or financial advisory firm. The curriculum is open-source and free to use for non-commercial educational purposes. This Privacy Policy explains our data collection, handling, and security practices across begin-fin.com and its application portal.</p>
-              <p><strong>Target Audience & Minimum Age:</strong> The Platform is intended for a high school audience in the United States and up. The minimum age to create an account is 14 years. We do not knowingly collect personal information from children under 14.</p>
             </section>
 
             <section className="space-y-4">

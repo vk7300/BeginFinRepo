@@ -11,7 +11,7 @@ import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
 
 // List of strictly authorized admin emails
-const AUTHORIZED_ADMIN_EMAILS = ['kv303157@gmail.com', 'kruzksmith@gmail.com', 'vishnukakarla108@gmail.com'];
+const AUTHORIZED_ADMIN_EMAILS = ['kv303157@gmail.com', 'kruzssmith@gmail.com', 'vishnukakarla108@gmail.com'];
 
 // Map of language codes to friendly names
 const languageNames: Record<string, string> = {

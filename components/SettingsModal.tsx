@@ -100,26 +100,63 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
 
   const performAccountDeletion = async () => {
     setIsDeletingAccount(true);
-    setError(null);
     try {
-      const idToken = await user!.getIdToken();
-      const res = await fetch('/api/delete-account', {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${idToken}` }
-      });
+      const uid = user.uid;
+      const batch = writeBatch(db);
       
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to delete account");
+      // 1. Delete user document
+      batch.delete(doc(db, 'users', uid));
+      
+      // 2. Clean up classes and student associations
+      const classesRef = collection(db, 'classes');
+      const qTeacher = query(classesRef, where('teacherId', '==', uid));
+      const qStudent = query(classesRef, where('studentIds', 'array-contains', uid));
+      
+      const [teacherSnap, studentSnap] = await Promise.all([
+        getDocs(qTeacher),
+        getDocs(qStudent)
+      ]);
+
+      // If teacher: delete all classes they own
+      for (const d of teacherSnap.docs) {
+        batch.delete(d.ref);
+        const alertsRef = collection(db, 'classes', d.id, 'alerts');
+        const alertsSnap = await getDocs(alertsRef);
+        alertsSnap.docs.forEach(ad => batch.delete(ad.ref));
       }
-      
+
+      // If student: remove from all classes
+      studentSnap.docs.forEach(d => {
+        const studentIds = (d.data().studentIds || []).filter((id: string) => id !== uid);
+        batch.update(d.ref, { studentIds });
+      });
+
+      // 3. Delete all credentials/certificates owned by the user
+      const credentialsRef = collection(db, 'credentials');
+      const qCreds = query(credentialsRef, where('userId', '==', uid));
+      const credsSnap = await getDocs(qCreds);
+      credsSnap.docs.forEach(d => batch.delete(d.ref));
+
+      // 4. Delete alerts created by this user
+      const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', uid)));
+      if (!userDoc.empty) {
+        const uData = userDoc.docs[0].data();
+        if (uData.classId) {
+          const userAlertsRef = collection(db, 'classes', uData.classId, 'alerts');
+          const userAlertsSnap = await getDocs(query(userAlertsRef, where('userId', '==', uid)));
+          userAlertsSnap.docs.forEach(ad => batch.delete(ad.ref));
+        }
+      }
+
+      await batch.commit();
+      await deleteUser(auth.currentUser!);
       onClose();
       window.location.reload();
     } catch (err: any) {
-      if (err.message && err.message.includes('requires-recent-login')) {
+      if (err.code === 'auth/requires-recent-login') {
         setShowReauthModal('delete');
       } else {
-        setError(err.message || 'Failed to delete account');
+        setError(err.message);
       }
       setIsDeletingAccount(false);
     }
