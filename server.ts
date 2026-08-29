@@ -62,12 +62,11 @@ async function startServer() {
   // Security Headers Middleware
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     
-    // Content-Security-Policy scoped to Firebase, Gemini, Google Fonts, and self
+    // Content-Security-Policy scoped to Firebase, Gemini, Google Fonts, AI Studio, and self
     const cspDirectives = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net",
@@ -75,8 +74,8 @@ async function startServer() {
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com",
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://generativelanguage.googleapis.com https://accounts.google.com https://www.google.com https://www.recaptcha.net wss: ws:",
-      "frame-src 'self' https://accounts.google.com https://www.google.com https://www.recaptcha.net https://docs.google.com",
-      "frame-ancestors 'self'",
+      "frame-src 'self' https://accounts.google.com https://www.google.com https://www.recaptcha.net https://docs.google.com https://*.google.com https://ai.studio https://*.run.app",
+      "frame-ancestors 'self' https://ai.studio https://*.ai.studio https://*.google.com https://*.googleusercontent.com https://*.run.app",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'"
@@ -97,12 +96,13 @@ async function startServer() {
     next();
   });
 
-  // Strict CORS configuration with explicit origin allowlist
+  // CORS configuration supporting production domains, local development, and Google AI Studio previews
   const explicitAllowedOrigins = new Set([
     'https://begin-fin.com',
     'https://www.begin-fin.com',
     'https://beginfin.web.app',
     'https://beginfin.firebaseapp.com',
+    'https://ai.studio',
     'http://localhost:3000',
     'http://127.0.0.1:3000'
   ]);
@@ -113,7 +113,14 @@ async function startServer() {
 
   app.use(cors({
     origin: (origin, callback) => {
-      if (!origin || explicitAllowedOrigins.has(origin)) {
+      if (!origin || 
+          explicitAllowedOrigins.has(origin) ||
+          origin.endsWith('.run.app') ||
+          origin.includes('ai.studio') ||
+          origin.endsWith('.google.com') ||
+          origin.endsWith('.googleusercontent.com') ||
+          origin.startsWith('http://localhost:') ||
+          origin.startsWith('http://127.0.0.1:')) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy'));
@@ -431,6 +438,21 @@ BeginFin Curriculum Reference:
     }
   });
 
+  // In-memory sliding window rate limiter for quiz grading attempts (keyed by verifiedUid:moduleId)
+  const quizGradingAttempts = new Map<string, { count: number; firstAttemptAt: number }>();
+  const QUIZ_WINDOW_MS = 60 * 60 * 1000; // 1 hour sliding window
+  const MAX_QUIZ_ATTEMPTS_PER_WINDOW = 12; // 12 attempts per module per hour
+
+  // Periodic cleanup of stale quiz attempt entries every 15 minutes
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of quizGradingAttempts.entries()) {
+      if (now - record.firstAttemptAt > QUIZ_WINDOW_MS) {
+        quizGradingAttempts.delete(key);
+      }
+    }
+  }, 15 * 60 * 1000);
+
   // Authenticated quiz grading endpoint
   app.post("/api/grade-quiz", async (req, res) => {
     try {
@@ -459,6 +481,27 @@ BeginFin Curriculum Reference:
 
       if (!moduleId || !Array.isArray(answers)) {
         return res.status(400).json({ error: "moduleId and answers array are required." });
+      }
+
+      // Enforce per-user per-module attempt rate limiting to prevent answer-key enumeration
+      const rateLimitKey = `${verifiedUid}:${moduleId}`;
+      const now = Date.now();
+      const existingAttempt = quizGradingAttempts.get(rateLimitKey);
+
+      if (existingAttempt) {
+        if (now - existingAttempt.firstAttemptAt < QUIZ_WINDOW_MS) {
+          if (existingAttempt.count >= MAX_QUIZ_ATTEMPTS_PER_WINDOW) {
+            const minutesRemaining = Math.ceil((QUIZ_WINDOW_MS - (now - existingAttempt.firstAttemptAt)) / 60000);
+            return res.status(429).json({
+              error: `Attempt limit reached for this module. Please review the lesson material and try again in ${minutesRemaining} minutes.`
+            });
+          }
+          existingAttempt.count += 1;
+        } else {
+          quizGradingAttempts.set(rateLimitKey, { count: 1, firstAttemptAt: now });
+        }
+      } else {
+        quizGradingAttempts.set(rateLimitKey, { count: 1, firstAttemptAt: now });
       }
 
       const gradeResult = gradeQuizAnswers(moduleId, quizVersion, answers);
@@ -801,6 +844,110 @@ Please process this request in Certifier.io.`,
     } catch (error: any) {
       console.error("Error processing certifier credential request:", error?.message || 'internal error');
       return res.status(500).json({ error: "Failed to submit request. Please try again." });
+    }
+  });
+
+  // Public system status endpoint
+  app.get("/api/status", async (req, res) => {
+    try {
+      const statusDoc = await adminDb.collection("system").doc("status").get();
+      if (statusDoc.exists) {
+        return res.json({ success: true, data: statusDoc.data() });
+      }
+
+      // Default baseline status
+      const defaultStatus = {
+        overall: "Operational",
+        lastUpdated: new Date().toISOString(),
+        customMessage: "",
+        customMessageTitle: "",
+        customMessageType: "info",
+        services: {
+          googleSso: {
+            name: "Google SSO",
+            status: "Operational",
+            description: "Google Identity Services, One Tap, and OAuth 2.0 token resolution."
+          },
+          emailPhoneAuth: {
+            name: "Email/Phone Sign-In",
+            status: "Operational",
+            description: "Email/password authentication and SMS verification pathways."
+          },
+          modules: {
+            name: "Modules",
+            status: "Operational",
+            description: "Interactive course curriculum, calculators, quizzes, and learning engines."
+          },
+          teacherFeatures: {
+            name: "Teacher Features",
+            status: "Operational",
+            description: "Classrooms, live sync alerts, gradebook exports, and Google Classroom sync."
+          },
+          certificateDownload: {
+            name: "Certificate Download",
+            status: "Operational",
+            description: "Verifiable PDF certificate rendering and Certifier.io credential delivery."
+          }
+        },
+        incidents: []
+      };
+
+      return res.json({ success: true, data: defaultStatus });
+    } catch (err: any) {
+      console.error("Error retrieving status:", err?.message || err);
+      return res.status(500).json({ error: "Failed to retrieve status" });
+    }
+  });
+
+  // Admin status update endpoint
+  app.post("/api/status/update", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Authentication required to update status." });
+      }
+
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      const decodedToken = await adminAuth.verifyIdToken(idToken);
+      if (!decodedToken?.uid) {
+        return res.status(401).json({ error: "Invalid session token." });
+      }
+
+      // Check if user is admin via token claims, email, or Firestore role
+      let isAdmin = decodedToken.admin === true || decodedToken.role === 'admin';
+      if (!isAdmin && (decodedToken.email === 'vishnukakarla108@gmail.com' || decodedToken.email === 'kruz@begin-fin.com')) {
+        isAdmin = true;
+      }
+      if (!isAdmin) {
+        const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+        if (userDoc.exists && userDoc.data()?.role === 'admin') {
+          isAdmin = true;
+        }
+      }
+
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Administrator authorization required to update system status." });
+      }
+
+      const { services, customMessage, customMessageTitle, customMessageType, overall, incidents } = req.body;
+      const updatePayload: any = {
+        lastUpdated: new Date().toISOString(),
+        updatedBy: decodedToken.email || decodedToken.uid
+      };
+
+      if (services) updatePayload.services = services;
+      if (typeof customMessage === 'string') updatePayload.customMessage = customMessage.trim();
+      if (typeof customMessageTitle === 'string') updatePayload.customMessageTitle = customMessageTitle.trim();
+      if (typeof customMessageType === 'string') updatePayload.customMessageType = customMessageType.trim();
+      if (typeof overall === 'string') updatePayload.overall = overall;
+      if (Array.isArray(incidents)) updatePayload.incidents = incidents;
+
+      await adminDb.collection("system").doc("status").set(updatePayload, { merge: true });
+
+      return res.json({ success: true, message: "System status updated successfully.", data: updatePayload });
+    } catch (err: any) {
+      console.error("Error updating system status:", err?.message || err);
+      return res.status(500).json({ error: "Failed to update system status." });
     }
   });
 

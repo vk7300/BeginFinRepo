@@ -65,6 +65,14 @@ export const Footer: React.FC<FooterProps> = ({
           {onViewAbout && <span onClick={onViewAbout} className="hover:text-white transition-colors cursor-pointer">About</span>}
           <span onClick={onOpenGuide} className="hover:text-white transition-colors cursor-pointer">Quick Guide</span>
           <Link 
+            to="/status" 
+            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
+            className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            System Status
+          </Link>
+          <Link 
             to="/claudemd" 
             onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
             className="hover:text-white transition-colors cursor-pointer"

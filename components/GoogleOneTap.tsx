@@ -177,7 +177,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
         </div>
 
         <h3 className="text-xl font-bold text-[#3C3C3C] mb-2">
-          Confirm Age & Agreement
+          Welcome to BeginFin
         </h3>
         
         <p className="text-sm text-slate-600 mb-6 leading-relaxed">

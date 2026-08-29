@@ -240,5 +240,12 @@ service cloud.firestore {
       // Backend / Firebase Admin SDK only for rate limiting
       allow read, write: if false;
     }
+
+    match /system/{docId} {
+      // Public read for system status and platform health information
+      allow read: if true;
+      // Only administrators can create or update platform health and status notices
+      allow write: if isAdmin();
+    }
   }
 }

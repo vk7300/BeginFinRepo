@@ -31,6 +31,7 @@ import { ToolsView } from './components/ToolsView';
 import { Footer } from './components/Footer';
 import { BradleyChatbot } from './components/BradleyChatbot';
 import { GoogleOneTap } from './components/GoogleOneTap';
+import { StatusView } from './components/StatusView';
 
 const orderedModules = [
   modules.find(m => m.id === 'm1'),
@@ -44,7 +45,7 @@ const orderedModules = [
   modules.find(m => m.id === 'm9')
 ].filter((m): m is Module => !!m);
 
-export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'claudemd' | 'tools';
+export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'claudemd' | 'tools' | 'status';
 
 enum OperationType {
   CREATE = 'create',
@@ -656,6 +657,8 @@ const App: React.FC = () => {
       setCurrentView('tools');
     } else if (path === '/claudemd' || path === '/claudemd.md' || path === '/claude' || path.startsWith('/claudemd/')) {
       setCurrentView('claudemd');
+    } else if (path === '/status' || path.startsWith('/status')) {
+      setCurrentView('status');
     } else if (path === '/crud-qms' || path.startsWith('/crud-qms')) {
       setCurrentView('crud-qms');
     } else if (path === '/') {
@@ -663,7 +666,7 @@ const App: React.FC = () => {
       setCurrentView('welcome');
     } else if (path === '/app' || path.startsWith('/app/')) {
       setHasStarted(true);
-      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'resources' || currentView === 'tools') {
+      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'resources' || currentView === 'tools' || currentView === 'status') {
         if (user) {
           if (!userRole) {
             setCurrentView('onboarding');
@@ -972,8 +975,21 @@ const App: React.FC = () => {
       // ignore
     }
 
+    // Race popup against an 8.5s timeout to prevent hanging when popup-opener communication is blocked by storage partitioning
+    const POPUP_TIMEOUT_MS = 8500;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        const timeoutErr: any = new Error("Google popup sign-in timed out. Falling back to redirect.");
+        timeoutErr.code = 'auth/popup-timeout';
+        reject(timeoutErr);
+      }, POPUP_TIMEOUT_MS);
+    });
+
     try {
-      await signInWithPopup(auth, googleProvider);
+      await Promise.race([
+        signInWithPopup(auth, googleProvider),
+        timeoutPromise
+      ]);
       setShowLoginModal(false);
       if (currentView === 'welcome') {
         handleStart(true);
@@ -983,10 +999,15 @@ const App: React.FC = () => {
         return;
       }
       
-      console.error("Google sign-in error:", error);
+      console.warn("Google sign-in popup note:", error?.message || error);
 
-      // If popup was blocked or prevented by browser/iframe restrictions, attempt redirect fallback
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+      // If popup timed out, was blocked, or prevented by browser/iframe/partitioning restrictions, attempt redirect fallback
+      if (
+        error.code === 'auth/popup-timeout' ||
+        error.code === 'auth/popup-blocked' ||
+        error.code === 'auth/cancelled-popup-request' ||
+        error.code === 'auth/network-request-failed'
+      ) {
         try {
           await signInWithRedirect(auth, googleProvider);
           return;
@@ -1600,6 +1621,35 @@ const App: React.FC = () => {
                       initialTool={location.pathname.includes('credit') ? 'credit' : 'wage'}
                     />
                   </div>
+                </main>
+                <Footer 
+                  onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
+                  onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
+                  onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
+                  onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
+                  onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+                />
+              </div>
+            </motion.div>
+          ) : currentView === 'status' ? (
+            <motion.div
+              key={currentView}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={pageVariants}
+              transition={pageTransition}
+              className="flex-1 flex flex-col"
+            >
+              <div className="flex-1 flex flex-col">
+                <main className="flex-1">
+                  <StatusView 
+                    user={user}
+                    onBackToApp={() => {
+                      navigate('/');
+                      setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
+                    }}
+                  />
                 </main>
                 <Footer 
                   onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
