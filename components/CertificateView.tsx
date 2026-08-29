@@ -31,7 +31,7 @@ export const CertificateView: React.FC<Props> = ({
   const [isNameSet, setIsNameSet] = useState(!!userName);
   const [showIncompleteNotice, setShowIncompleteNotice] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isPublicVerification, setIsPublicVerification] = useState(true);
+  const [isPublicVerification, setIsPublicVerification] = useState(false);
   const [isTogglingPublic, setIsTogglingPublic] = useState(false);
   const certificateRef = useRef<HTMLDivElement>(null);
 

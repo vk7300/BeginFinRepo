@@ -3,7 +3,7 @@ import { CheckCircle2, ChevronRight, Trophy, Lock, FileBadge, Share2, Users, Arr
 import { motion, AnimatePresence } from 'framer-motion';
 import { Module } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
-import { db, doc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, doc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, handleFirestoreError, OperationType, auth } from '../firebase';
 
 import { User } from '../firebase';
 
@@ -97,51 +97,58 @@ export const Dashboard: React.FC<Props> = ({
     setJoinFeedback({ status: 'idle', message: '' });
     if (triggerLoading) triggerLoading("Joining class...", 2500);
     try {
-      const classesRef = collection(db, 'classes');
-      const q = query(classesRef, where('joinCode', '==', joinCode.toUpperCase()));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        setJoinFeedback({ 
-          status: 'not_found', 
-          message: `Couldn't Find Class: No active class found with code "${joinCode.toUpperCase()}". Check the code with your teacher.` 
+      if (!user.displayName || user.displayName === 'Learner' || user.displayName === 'Anonymous') {
+        setIsAskingName({ 
+          classId: 'pending', 
+          teacherId: '',
+          className: 'Class'
         });
+        setTempName(user.displayName || '');
         setIsJoining(false);
         return;
       }
-      
-      const classDoc = querySnapshot.docs[0];
-      const classData = classDoc.data();
-      
-      if (user) {
-        // If user doesn't have a display name, or we want to confirm it for the class
-        if (!user.displayName || user.displayName === 'Learner' || user.displayName === 'Anonymous') {
-          setIsAskingName({ 
-            classId: classDoc.id, 
-            teacherId: classData.teacherId,
-            className: classData.className
-          });
-          setTempName(user.displayName || '');
-        } else {
-          await setDoc(doc(db, 'users', user.uid), {
-            classId: classDoc.id,
-            teacherId: classData.teacherId
-          }, { merge: true });
+
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error("Authentication required");
+
+      const response = await fetch('/api/join-class', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          joinCode: joinCode.trim().toUpperCase(),
+          displayName: user.displayName || undefined
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        if (response.status === 404) {
           setJoinFeedback({ 
-            status: 'joined', 
-            message: `Joined ${classData.className || 'Class'}!`, 
-            className: classData.className 
+            status: 'not_found', 
+            message: errData.error || `Couldn't Find Class: No active class found with code "${joinCode.toUpperCase()}". Check the code with your teacher.` 
           });
-          setTimeout(() => {
-            setShowJoinInput(false);
-            setJoinFeedback({ status: 'idle', message: '' });
-            setJoinCode('');
-          }, 1800);
+          return;
         }
+        throw new Error(errData.error || 'Failed to join class.');
       }
-    } catch (err) {
-      handleFirestoreError(err, OperationType.GET, 'classes');
-      setJoinFeedback({ status: 'error', message: 'Failed to join class. Please try again.' });
+
+      const result = await response.json();
+      setJoinFeedback({ 
+        status: 'joined', 
+        message: result.message || `Joined ${result.className || 'Class'}!`, 
+        className: result.className 
+      });
+      setTimeout(() => {
+        setShowJoinInput(false);
+        setJoinFeedback({ status: 'idle', message: '' });
+        setJoinCode('');
+      }, 1800);
+    } catch (err: any) {
+      console.error("Error joining class:", err);
+      setJoinFeedback({ status: 'error', message: err?.message || 'Failed to join class. Please try again.' });
     } finally {
       setIsJoining(false);
     }
@@ -166,21 +173,34 @@ export const Dashboard: React.FC<Props> = ({
   };
 
   const handleConfirmName = async () => {
-    if (!user || !isAskingName || !tempName.trim()) return;
+    if (!user || !tempName.trim() || !joinCode.trim()) return;
     setIsJoining(true);
     try {
-      // Sanitize input: Character limit (80 max) and clean up HTML tags to prevent XSS/Payload injection
-      const cleaned = tempName.trim().replace(/<\/?[^>]+(>|$)/g, "");
-      const finalName = cleaned.substring(0, 80);
-      await setDoc(doc(db, 'users', user.uid), {
-        displayName: finalName,
-        classId: isAskingName.classId,
-        teacherId: isAskingName.teacherId
-      }, { merge: true });
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error("Authentication required");
+
+      const response = await fetch('/api/join-class', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          joinCode: joinCode.trim().toUpperCase(),
+          displayName: tempName.trim()
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to join class with provided name.');
+      }
+
+      const result = await response.json();
       setJoinFeedback({ 
         status: 'joined', 
-        message: `Joined ${isAskingName.className || 'Class'}!`, 
-        className: isAskingName.className 
+        message: result.message || `Joined ${result.className || 'Class'}!`, 
+        className: result.className 
       });
       setIsAskingName(null);
       setTempName('');
@@ -189,9 +209,9 @@ export const Dashboard: React.FC<Props> = ({
         setJoinFeedback({ status: 'idle', message: '' });
         setJoinCode('');
       }, 1800);
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
-      setJoinFeedback({ status: 'error', message: 'Failed to save name. Please try again.' });
+    } catch (err: any) {
+      console.error("Error saving name and joining class:", err);
+      setJoinFeedback({ status: 'error', message: err?.message || 'Failed to save name. Please try again.' });
     } finally {
       setIsJoining(false);
     }

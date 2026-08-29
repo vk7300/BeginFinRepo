@@ -45,7 +45,7 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
             <section className="space-y-4">
               <h4 className="font-bold text-slate-900">1. ACCEPTANCE OF TERMS, MINIMUM AGE REQUIREMENT (14+) & OPEN SOURCE CURRICULUM</h4>
               <p>BeginFin (the "Platform") is a free educational platform founded in December 2025 in Temple, Texas as a student-led initiative by Vishnu Kakarla and Kruz Smith. By accessing begin-fin.com or its application portal at begin-fin.com/app, you agree to be bound by these Terms of Use and our Privacy Policy. The curriculum is open-source and free to use for non-commercial educational purposes.</p>
-              <p><strong>Minimum Age Requirement (14+):</strong> You must be at least 14 years of age to register for an account, access personalized features, or use the Platform. By creating an account or signing in, you certify and warrant that you are at least 14 years old. If you are between 14 and 17 years of age, your parent or legal guardian must review and agree to these Terms on your behalf before you create an account, unless you are participating through an authorized school or classroom program where institutional consent applies.</p>
+              <p><strong>Minimum Age Requirement (14+):</strong> You must be at least 14 years of age to register for an account, access personalized features, or use the Platform. By creating an account or signing in, you certify and warrant that you are at least 14 years old.</p>
             </section>
 
             <section className="space-y-4">
@@ -85,7 +85,7 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
               <p>BeginFin offers course completion recognition subject to the following criteria:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Standard Course Certificate:</strong> Upon earning 100% completion across all course units, users can generate and download a personalized PDF Certificate of Completion rendered directly in the browser. Certificates include unique completion identifiers and watermark validation.</li>
-                <li><strong>Optional Verifiable Credentials (Certifier.io):</strong> Users who choose to request a third-party digital verifiable credential authorize BeginFin to transmit their name and email address to Certifier.io solely for badge generation. Minors between 14 and 17 years of age require parental or legal guardian consent before submitting credential requests.</li>
+                <li><strong>Optional Verifiable Credentials (Certifier.io):</strong> Users who choose to request a third-party digital verifiable credential authorize BeginFin to transmit their name and email address to Certifier.io solely for badge generation.</li>
                 <li><strong>Academic Integrity:</strong> Certificates are issued on the condition that all coursework and assessments were completed honestly by the named individual. BeginFin reserves the right to invalidate or revoke credentials obtained through fraudulent means or false representation.</li>
               </ul>
             </section>

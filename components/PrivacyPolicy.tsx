@@ -126,7 +126,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
 
             <section className="space-y-4">
               <h4 className="font-bold text-[#3C3C3C]">7. DATA SECURITY & RETENTION</h4>
-              <p>We maintain technical and administrative safeguards to protect your personal data, including TLS 1.3 encryption for data in transit, AES-256 encryption at rest within Firestore, and strict access controls. Data is retained during the active life of the user account. Accounts inactive for more than 24 consecutive months are scheduled for automatic deletion or anonymization.</p>
+              <p>We maintain technical and administrative safeguards to protect your personal data, including TLS 1.3 encryption for data in transit, AES-256 encryption at rest within Firestore, and strict access controls. Data is retained during the active life of the user account.</p>
             </section>
 
             <section className="space-y-4">

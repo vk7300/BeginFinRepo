@@ -5,7 +5,7 @@ import {
   Settings, HelpCircle, Save, ToggleLeft, ToggleRight, X, Eye, EyeOff, Globe,
   Upload, FileText, Check, Loader2, ShieldCheck, Award, Clock, Mail, Copy, Search, Filter, Download
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { db, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, auth, googleProvider, signInWithRedirect, signOut } from '../firebase';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
@@ -247,19 +247,37 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
     handleParseRows(rows);
   };
 
+  const parseExcelBuffer = async (buffer: ArrayBuffer) => {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return [];
+    const jsonRows: any[][] = [];
+    worksheet.eachRow((row) => {
+      const rowValues = (row.values as any[]) || [];
+      // row.values is 1-indexed in ExcelJS
+      const cleaned = rowValues.slice(1).map(val => {
+        if (val && typeof val === 'object') {
+          if ('text' in val) return (val as any).text;
+          if ('result' in val) return (val as any).result;
+        }
+        return val != null ? String(val) : '';
+      });
+      jsonRows.push(cleaned);
+    });
+    return jsonRows;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
     setBulkFile(file);
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
-        const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const jsonRows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+        const buffer = evt.target?.result as ArrayBuffer;
+        const jsonRows = await parseExcelBuffer(buffer);
         handleParseRows(jsonRows);
       } catch (err: any) {
         console.error(err);
@@ -272,13 +290,10 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
   const reparseFile = () => {
     if (!bulkFile) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
-        const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const jsonRows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+        const buffer = evt.target?.result as ArrayBuffer;
+        const jsonRows = await parseExcelBuffer(buffer);
         handleParseRows(jsonRows);
       } catch (err: any) {
         console.error(err);
@@ -513,27 +528,51 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
     }
   };
 
-  const handleExportRequestsToExcel = () => {
+  const handleExportRequestsToExcel = async () => {
     if (certifierRequests.length === 0) {
       showToast('error', 'No requests available to export.');
       return;
     }
-    const exportData = certifierRequests.map((r, i) => ({
-      'No.': i + 1,
-      'Graduate Name': r.graduateName,
-      'Email': r.email,
-      'Certificate Serial #': r.serialNumber,
-      'Status': r.status.toUpperCase(),
-      'Consent Granted': r.consent ? 'YES' : 'NO',
-      'User ID': r.userId,
-      'Requested At': new Date(r.requestedAt).toLocaleString()
-    }));
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Certifier Requests');
+      worksheet.columns = [
+        { header: 'No.', key: 'no', width: 8 },
+        { header: 'Graduate Name', key: 'graduateName', width: 25 },
+        { header: 'Email', key: 'email', width: 30 },
+        { header: 'Certificate Serial #', key: 'serialNumber', width: 25 },
+        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Consent Granted', key: 'consent', width: 18 },
+        { header: 'User ID', key: 'userId', width: 32 },
+        { header: 'Requested At', key: 'requestedAt', width: 25 }
+      ];
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Certifier Requests');
-    XLSX.writeFile(workbook, `Certifier_Requests_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    showToast('success', 'Certifier requests exported to Excel!');
+      certifierRequests.forEach((r, i) => {
+        worksheet.addRow({
+          no: i + 1,
+          graduateName: r.graduateName,
+          email: r.email,
+          serialNumber: r.serialNumber,
+          status: r.status.toUpperCase(),
+          consent: r.consent ? 'YES' : 'NO',
+          userId: r.userId,
+          requestedAt: new Date(r.requestedAt).toLocaleString()
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Certifier_Requests_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('success', 'Certifier requests exported to Excel!');
+    } catch (err: any) {
+      console.error(err);
+      showToast('error', 'Failed to export to Excel: ' + err.message);
+    }
   };
 
   const handleCopyEmail = (id: string, email: string) => {

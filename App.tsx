@@ -167,8 +167,8 @@ const ConfirmModal: React.FC<{ onCancel: () => void; onConfirm: () => void }> = 
 
 const LoginModalContent: React.FC<{ 
   onClose: () => void; 
-  onGoogleLogin: () => Promise<void>;
-  onEmailAuth: (email: string, pass: string, isSignUp: boolean) => Promise<void>;
+  onGoogleLogin: (agreedToTerms: boolean) => Promise<void>;
+  onEmailAuth: (email: string, pass: string, isSignUp: boolean, agreedToTerms: boolean) => Promise<void>;
 }> = ({ onClose, onGoogleLogin, onEmailAuth }) => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -238,18 +238,6 @@ const LoginModalContent: React.FC<{
     return cleaned;
   };
 
-  const checkRateLimit = async () => {
-    try {
-      const response = await fetch('/api/auth/track-attempt', { method: 'POST' });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Too many attempts");
-      }
-    } catch (err: any) {
-      throw err;
-    }
-  };
-
   const setupRecaptcha = () => {
     if (!(window as any).recaptchaVerifier) {
       (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
@@ -285,7 +273,7 @@ const LoginModalContent: React.FC<{
     setError('');
     setIsGoogleLoading(true);
     try {
-      await onGoogleLogin();
+      await onGoogleLogin(agreedToTerms);
     } catch (err: any) {
       if (err?.code !== 'auth/popup-closed-by-user') {
         setError(mapAuthError(err));
@@ -309,13 +297,11 @@ const LoginModalContent: React.FC<{
     const isPhone = /^\+[1-9]\d{1,14}$/.test(cleanedPhone);
 
     try {
-      await checkRateLimit();
-      
       if (isEmail) {
         if (!emailOrPhone || !password) {
           throw new Error("Please enter both your email address and password.");
         }
-        await onEmailAuth(emailOrPhone, password, isSignUpChoice);
+        await onEmailAuth(emailOrPhone, password, isSignUpChoice, agreedToTerms);
         onClose();
       } else if (isPhone) {
         if (!cleanedPhone.startsWith('+1')) {
@@ -626,6 +612,7 @@ const App: React.FC = () => {
   const [showSwitchRoleModal, setShowSwitchRoleModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showMobileDashboardNav, setShowMobileDashboardNav] = useState(false);
+  const userAgreedConsentRef = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -855,14 +842,15 @@ const App: React.FC = () => {
           } catch(e) {}
         }
         
-        // Create user doc
+        // Create user doc with actual user consent
+        const consentGranted = userAgreedConsentRef.current;
         setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
           completedModules: initialModules,
           role: 'student', // Default to student
-          agreedToTerms: true,
-          agreedToTermsAt: new Date().toISOString(),
+          agreedToTerms: consentGranted,
+          agreedToTermsAt: consentGranted ? new Date().toISOString() : null,
           lastUpdated: new Date().toISOString()
         }, { merge: true }).then(() => {
           try { localStorage.removeItem('beginfin-progress') } catch(e) {};
@@ -973,7 +961,10 @@ const App: React.FC = () => {
     setShowLoginModal(true);
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (agreed?: boolean) => {
+    if (typeof agreed === 'boolean') {
+      userAgreedConsentRef.current = agreed;
+    }
     // 1. Cancel any active Google One Tap prompt to prevent concurrent GIS collisions
     try {
       window.google?.accounts?.id?.cancel();
@@ -1010,7 +1001,10 @@ const App: React.FC = () => {
     }
   };
 
-  const handleEmailAuth = async (email: string, pass: string, isSignUp: boolean) => {
+  const handleEmailAuth = async (email: string, pass: string, isSignUp: boolean, agreed?: boolean) => {
+    if (typeof agreed === 'boolean') {
+      userAgreedConsentRef.current = agreed;
+    }
     try {
       if (isSignUp) {
         // User clicked "Create an Account"

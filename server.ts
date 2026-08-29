@@ -76,6 +76,7 @@ async function startServer() {
       "img-src 'self' data: blob: https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com",
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://generativelanguage.googleapis.com https://accounts.google.com https://www.google.com https://www.recaptcha.net wss: ws:",
       "frame-src 'self' https://accounts.google.com https://www.google.com https://www.recaptcha.net https://docs.google.com",
+      "frame-ancestors 'self'",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'"
@@ -270,6 +271,10 @@ BeginFin Curriculum Reference:
 
       if (!message || typeof message !== "string" || !message.trim()) {
         return res.status(400).json({ error: "Message is required." });
+      }
+
+      if (message.length > 1000) {
+        return res.status(400).json({ error: "Message exceeds maximum length of 1000 characters." });
       }
 
       // 2. Enforce 5 messages per calendar day limit per registered user via Firestore with expiry
@@ -591,15 +596,83 @@ BeginFin Curriculum Reference:
     }
   });
 
-  // Example API route for tracking auth attempts (as requested)
-  const authLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    limit: 5, // 5 attempts per hour
-    message: { error: "Too many authentication attempts. Please try again in an hour." }
-  });
+  // Class join endpoint: authenticates student with verifyIdToken, verifies 6-char joinCode against classes,
+  // adds student UID to class's studentIds array, and sets student's classId/teacherId.
+  app.post("/api/join-class", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Authentication required to join a class." });
+      }
 
-  app.post("/api/auth/track-attempt", authLimiter, (req, res) => {
-    res.json({ status: "ok", message: "Attempt tracked" });
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      if (!idToken) {
+        return res.status(401).json({ error: "Authentication token missing." });
+      }
+
+      let verifiedUid: string;
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        if (!decodedToken || !decodedToken.uid) {
+          throw new Error("Invalid token payload");
+        }
+        verifiedUid = decodedToken.uid;
+      } catch (authErr: any) {
+        return res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
+      }
+
+      const { joinCode, displayName } = req.body;
+      if (!joinCode || typeof joinCode !== 'string' || joinCode.trim().length !== 6) {
+        return res.status(400).json({ error: "A valid 6-character join code is required." });
+      }
+
+      const cleanJoinCode = joinCode.trim().toUpperCase();
+      const classesQuery = await adminDb.collection("classes")
+        .where("joinCode", "==", cleanJoinCode)
+        .limit(1)
+        .get();
+
+      if (classesQuery.empty) {
+        return res.status(404).json({ error: `No active class found with code "${cleanJoinCode}". Please check the code with your teacher.` });
+      }
+
+      const classDoc = classesQuery.docs[0];
+      const classData = classDoc.data();
+      const classId = classDoc.id;
+      const teacherId = classData.teacherId;
+      const className = classData.className || "Class";
+
+      // Add student UID to class studentIds array via Admin SDK
+      const currentStudentIds: string[] = Array.isArray(classData.studentIds) ? classData.studentIds : [];
+      if (!currentStudentIds.includes(verifiedUid)) {
+        await adminDb.collection("classes").doc(classId).update({
+          studentIds: [...currentStudentIds, verifiedUid]
+        });
+      }
+
+      // Update student user doc with classId and teacherId
+      const userUpdate: any = {
+        classId,
+        teacherId,
+        lastUpdated: new Date().toISOString()
+      };
+      if (displayName && typeof displayName === 'string' && displayName.trim()) {
+        userUpdate.displayName = sanitizeHeader(displayName).replace(/<\/?[^>]+(>|$)/g, "").substring(0, 80);
+      }
+
+      await adminDb.collection("users").doc(verifiedUid).set(userUpdate, { merge: true });
+
+      return res.json({
+        success: true,
+        classId,
+        className,
+        teacherId,
+        message: `Successfully joined ${className}!`
+      });
+    } catch (err: any) {
+      console.error("Error joining class:", err?.message || err);
+      return res.status(500).json({ error: "Failed to join class. Please try again." });
+    }
   });
 
   // API endpoint for Certifier.io credential requests
@@ -611,19 +684,64 @@ BeginFin Curriculum Reference:
 
   app.post("/api/request-certifier-credential", certifierLimiter, async (req, res) => {
     try {
-      const { name, email, serialNumber, consent, userId } = req.body;
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Authentication required to request a verifiable credential." });
+      }
 
-      if (!name || !email || consent !== true) {
-        return res.status(400).json({ error: "Full name, email, and explicit consent are required." });
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      if (!idToken) {
+        return res.status(401).json({ error: "Authentication token missing." });
+      }
+
+      let verifiedUid: string;
+      let tokenEmail: string | undefined;
+      let tokenName: string | undefined;
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        if (!decodedToken || !decodedToken.uid) {
+          throw new Error("Invalid token payload");
+        }
+        verifiedUid = decodedToken.uid;
+        tokenEmail = decodedToken.email;
+        tokenName = decodedToken.name;
+      } catch (authErr: any) {
+        return res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
+      }
+
+      const { name, email, serialNumber, consent } = req.body;
+
+      if (consent !== true) {
+        return res.status(400).json({ error: "Explicit consent is required to request a digital credential." });
+      }
+
+      const effectiveName = (tokenName || name || "").trim();
+      const effectiveEmail = (tokenEmail || email || "").trim();
+
+      if (!effectiveName || !effectiveEmail) {
+        return res.status(400).json({ error: "Full name and email are required." });
       }
 
       // Safe sanitized logging without writing student PII to stdout
       console.log(`[Certifier] Digital credential request processed at ${new Date().toISOString()}`);
 
-      const cleanName = sanitizeHeader(name).substring(0, 100);
-      const cleanEmail = sanitizeHeader(email).substring(0, 100);
+      const cleanName = sanitizeHeader(effectiveName).substring(0, 100);
+      const cleanEmail = sanitizeHeader(effectiveEmail).substring(0, 100);
       const cleanSerial = sanitizeHeader(serialNumber || 'N/A').substring(0, 50);
-      const cleanUserId = sanitizeHeader(userId || 'N/A').substring(0, 60);
+      const cleanUserId = verifiedUid;
+
+      // Save certifier request to Firestore
+      const now = new Date().toISOString();
+      await adminDb.collection("certifierRequests").add({
+        userId: cleanUserId,
+        name: cleanName,
+        email: cleanEmail,
+        serialNumber: cleanSerial,
+        consent: true,
+        status: "pending",
+        createdAt: now,
+        requestedAt: now
+      });
 
       const safeNameHtml = escapeHtml(cleanName);
       const safeEmailHtml = escapeHtml(cleanEmail);
@@ -643,9 +761,11 @@ BeginFin Curriculum Reference:
           },
         });
 
+        const recipientEmail = process.env.SMTP_TO || "vishnukakarla108@gmail.com";
+
         await transporter.sendMail({
           from: process.env.SMTP_FROM || `"BeginFin Platform" <${process.env.SMTP_USER}>`,
-          to: "vishnukakarla108@gmail.com",
+          to: recipientEmail,
           subject: `[Certifier.io Request] Digital Credential for ${cleanName}`,
           text: `A new digital credential request for Certifier.io has been submitted:
 

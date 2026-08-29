@@ -408,12 +408,12 @@ export const TeacherDashboard: React.FC<{
   };
 
   const generateJoinCode = () => {
-    // Math.random toString(36) can be shorter than expected if it ends in 0s
-    // substring(2, 8) is 6 characters. Let's make it more robust.
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid ambiguous chars
+    const randomArray = new Uint8Array(6);
+    crypto.getRandomValues(randomArray);
     let result = '';
     for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      result += chars[randomArray[i] % chars.length];
     }
     return result;
   };

@@ -2,15 +2,25 @@ import { auth } from '../firebase';
 import { GoogleAuthProvider, signInWithPopup, getRedirectResult, User } from 'firebase/auth';
 
 // Google Classroom API Scopes
-export const CLASSROOM_SCOPES = [
+export const CLASSROOM_READ_SCOPES = [
   'https://www.googleapis.com/auth/classroom.courses.readonly',
   'https://www.googleapis.com/auth/classroom.rosters.readonly',
+];
+
+export const CLASSROOM_WRITE_SCOPES = [
   'https://www.googleapis.com/auth/classroom.coursework.students',
   'https://www.googleapis.com/auth/classroom.announcements',
 ];
 
-// In-memory token cache (never stored in localStorage)
+export const CLASSROOM_SCOPES = [
+  ...CLASSROOM_READ_SCOPES,
+  ...CLASSROOM_WRITE_SCOPES
+];
+
+// In-memory token cache with short expiration TTL (15 minutes)
 let cachedAccessToken: string | null = null;
+let cachedTokenExpiresAt: number = 0;
+const TOKEN_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes max lifetime
 
 export interface ClassroomCourse {
   id: string;
@@ -51,25 +61,31 @@ export interface AnnouncementPayload {
 }
 
 export const googleClassroomService = {
-  // Retrieve in-memory cached token
+  // Retrieve in-memory cached token (valid for up to 15 minutes)
   getAccessToken: (): string | null => {
+    if (cachedAccessToken && Date.now() > cachedTokenExpiresAt) {
+      cachedAccessToken = null;
+      cachedTokenExpiresAt = 0;
+    }
     return cachedAccessToken;
   },
 
   // Set cached token manually if obtained through another auth flow
-  setAccessToken: (token: string | null) => {
+  setAccessToken: (token: string | null, ttlMs: number = TOKEN_CACHE_TTL_MS) => {
     cachedAccessToken = token;
+    cachedTokenExpiresAt = token ? Date.now() + ttlMs : 0;
   },
 
   // Clear in-memory token on logout
   clearAccessToken: () => {
     cachedAccessToken = null;
+    cachedTokenExpiresAt = 0;
   },
 
-  // Connect Google Classroom via Popup flow
+  // Connect Google Classroom via Popup flow requesting only READ scopes initially
   connectGoogleClassroom: async (): Promise<{ user: User; accessToken: string }> => {
     const provider = new GoogleAuthProvider();
-    CLASSROOM_SCOPES.forEach((scope) => provider.addScope(scope));
+    CLASSROOM_READ_SCOPES.forEach((scope) => provider.addScope(scope));
 
     try {
       const result = await signInWithPopup(auth, provider);
@@ -79,9 +95,31 @@ export const googleClassroomService = {
       }
 
       cachedAccessToken = credential.accessToken;
+      cachedTokenExpiresAt = Date.now() + TOKEN_CACHE_TTL_MS;
       return { user: result.user, accessToken: cachedAccessToken };
     } catch (error: any) {
       console.error('Error connecting Google Classroom:', error);
+      throw error;
+    }
+  },
+
+  // Incremental authorization for write scopes (coursework / announcements)
+  requestWriteAccess: async (): Promise<string> => {
+    const provider = new GoogleAuthProvider();
+    CLASSROOM_WRITE_SCOPES.forEach((scope) => provider.addScope(scope));
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (!credential?.accessToken) {
+        throw new Error('Failed to obtain write authorization for Google Classroom.');
+      }
+
+      cachedAccessToken = credential.accessToken;
+      cachedTokenExpiresAt = Date.now() + TOKEN_CACHE_TTL_MS;
+      return cachedAccessToken;
+    } catch (error: any) {
+      console.error('Error requesting Google Classroom write scopes:', error);
       throw error;
     }
   },
