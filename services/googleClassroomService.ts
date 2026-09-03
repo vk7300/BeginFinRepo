@@ -86,6 +86,7 @@ export const googleClassroomService = {
   connectGoogleClassroom: async (): Promise<{ user: User; accessToken: string }> => {
     const provider = new GoogleAuthProvider();
     CLASSROOM_READ_SCOPES.forEach((scope) => provider.addScope(scope));
+    provider.setCustomParameters({ prompt: 'consent select_account' });
 
     try {
       const result = await signInWithPopup(auth, provider);
@@ -107,6 +108,7 @@ export const googleClassroomService = {
   requestWriteAccess: async (): Promise<string> => {
     const provider = new GoogleAuthProvider();
     CLASSROOM_WRITE_SCOPES.forEach((scope) => provider.addScope(scope));
+    provider.setCustomParameters({ prompt: 'consent select_account' });
 
     try {
       const result = await signInWithPopup(auth, provider);

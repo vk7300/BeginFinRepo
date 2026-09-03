@@ -10,7 +10,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
     window.scrollTo(0, 0);
   }, []);
 
-  const currentDate = "August 20, 2026";
+  const currentDate = "August 30, 2026";
 
   return (
     <div className="min-h-screen bg-[#F4F8FA] py-12 px-4 sm:px-6 font-sans">
@@ -33,18 +33,23 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </div>
 
             <section className="space-y-4">
-              <h4 className="font-bold uppercase tracking-tight text-[#3C3C3C]">DISCLAIMER: EDUCATIONAL ONLY</h4>
-              <div className="bg-[#F4F8FA] p-6 rounded-2xl border-2 border-[#7F7FFA]/20 flex gap-4">
+              <h4 className="font-bold uppercase tracking-tight text-[#3C3C3C]">DISCLAIMER: EDUCATIONAL ONLY & STUDENT-LED INITIATIVE</h4>
+              <div className="bg-[#F4F8FA] p-6 rounded-2xl border-2 border-[#7F7FFA]/20 flex flex-col sm:flex-row gap-4">
                 <AlertTriangle className="w-8 h-8 text-[#7F7FFA] shrink-0 mt-0.5" />
-                <p className="text-[#3C3C3C] font-bold italic leading-relaxed">
-                  BeginFin is an open-access educational platform and student-led initiative founded in Temple, Texas. WE DO NOT PROVIDE INDIVIDUALIZED FINANCIAL, INVESTMENT, LEGAL, OR TAX ADVICE. Learners should consult qualified professionals regarding their specific circumstances.
-                </p>
+                <div className="space-y-2">
+                  <p className="text-[#3C3C3C] font-bold italic leading-relaxed">
+                    BeginFin is an open-access educational platform and student-led initiative founded in Temple, Texas. WE DO NOT PROVIDE INDIVIDUALIZED FINANCIAL, INVESTMENT, LEGAL, OR TAX ADVICE. Learners should consult qualified professionals regarding their specific circumstances.
+                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    <strong>Student-Led Resource Notice:</strong> BeginFin is developed and maintained by high school students with limited resources. While we strive to maintain high-quality educational materials, our website content, learning modules, Bradley AI tutor, Model Context Protocol (MCP) server, and simulators may contain unintentional inaccuracies. Please report any issues or errors to <strong>support@begin-fin.com</strong>.
+                  </p>
+                </div>
               </div>
             </section>
 
             <section className="space-y-4">
               <h4 className="font-bold text-[#3C3C3C]">1. INTRODUCTION, SCOPE & FOUNDATIONAL STATUS</h4>
-              <p>BeginFin ("we," "us," or "our") is a 100% free educational platform founded in December 2025 in Temple, Texas by high school co-founders Vishnu Kakarla and Kruz Smith. BeginFin operates as a student-led Open Educational Resource (OER) with zero revenue, zero external monetization, and is not a registered 501(c)(3) non-profit entity or financial advisory firm. The curriculum is open-source and free to use for non-commercial educational purposes. This Privacy Policy explains our data collection, handling, and security practices across begin-fin.com and its application portal.</p>
+              <p>BeginFin ("we," "us," or "our") is a 100% free educational platform founded in December 2025 in Temple, Texas by high school co-founders Vishnu Kakarla and Kruz Smith. BeginFin operates as a student-led Open Educational Resource (OER) with zero revenue, zero external monetization, and is not a registered 501(c)(3) non-profit entity or financial advisory firm. The curriculum is open-source and free to use for non-commercial educational purposes. This Privacy Policy explains our data collection, handling, and security practices across begin-fin.com, its application portal, and its Model Context Protocol (MCP) server.</p>
             </section>
 
             <section className="space-y-4">
@@ -105,18 +110,19 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
 
             <section className="space-y-4">
               <h4 className="font-bold text-[#3C3C3C]">5. CLIENT-SIDE SIMULATORS & FINANCIAL PRIVACY</h4>
-              <p>BeginFin features interactive financial modeling tools, including the Entry Salary & Living Cost Simulator, Credit Score Sandbox, and Interactive Tax Roadmap:</p>
+              <p>BeginFin features interactive financial modeling tools, including the Wage and Living Cost Simulator (available at <code>begin-fin.com/tools</code>):</p>
               <ul className="list-disc ml-6 space-y-2 text-xs font-medium text-slate-700">
-                <li><strong>Local Execution:</strong> All numerical inputs, simulated wages, hypothetical budgets, and credit adjustments are computed entirely on your device within the browser.</li>
+                <li><strong>Local Execution:</strong> All numerical inputs, simulated wages, living cost adjustments, and tax calculations are computed entirely on your device within the browser.</li>
                 <li><strong>No Storage of Private Financial Inputs:</strong> We do not log, transmit, or store hypothetical budgets or personal financial figures entered into interactive simulators.</li>
               </ul>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">6. THIRD-PARTY SERVICES & INTEGRATIONS</h4>
+              <h4 className="font-bold text-[#3C3C3C]">6. THIRD-PARTY SERVICES, AI & MODEL CONTEXT PROTOCOL (MCP)</h4>
               <p>Data sharing is strictly limited to services required to deliver core application functionality. We do not sell or monetize personal data:</p>
               <ul className="list-disc ml-6 space-y-2 mb-4">
                 <li><strong>Cloud Infrastructure & Authentication:</strong> Google Cloud Platform, Firebase (Firestore database and Firebase Authentication), and Google Identity Services provide secure hosting, real-time database synchronization, and encrypted user authentication.</li>
+                <li><strong>Model Context Protocol (MCP) Server (Zero User Data Transferred):</strong> BeginFin provides an open Model Context Protocol (MCP) server (at <code>https://begin-fin.com/mcp</code> and <code>https://begin-fin.com/sse</code>) allowing AI tools (like Claude and Cursor) to read BeginFin's open curriculum metadata, lesson outlines, and simulator documentation. <strong>No learner profiles, user identities, student data, or personal records are ever transmitted or accessible via the MCP server.</strong></li>
                 <li><strong>Bradley AI Educational Assistant (Powered by Google Gemini®):</strong> When authenticated users ask educational questions to Bradley, queries are sent to Google's Gemini API for response generation. Chat sessions are subject to Google's Privacy Policy. Interactions are rate-limited to 5 messages per user per day. BeginFin does not persist, inspect, or sell private chat logs on its application servers.</li>
                 <li><strong>Google Classroom API:</strong> For teachers connecting their classes, BeginFin uses Google Classroom API scopes exclusively to import student rosters, create assignments, and publish course announcements.</li>
                 <li><strong>Optional Verifiable Credentials (Certifier.io):</strong> If a user requests a third-party verifiable digital credential, we share their name and email with Certifier.io solely to generate the credential.</li>

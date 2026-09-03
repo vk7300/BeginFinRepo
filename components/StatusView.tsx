@@ -16,10 +16,15 @@ import {
   Save, 
   X, 
   Layers,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck,
+  Lock,
+  Edit3,
+  User as UserIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db, doc, onSnapshot, setDoc, auth, User } from '../firebase';
+import { db, doc, onSnapshot, setDoc, auth, onAuthStateChanged, User } from '../firebase';
+import { DEFAULT_ADMIN_EMAILS, isEmailAdmin, checkIsAdmin } from '../config/adminConfig';
 
 export type ServiceStatus = 'Operational' | 'Issues Observed' | 'Not Operational';
 
@@ -112,17 +117,35 @@ const DEFAULT_STATUS_DATA: SystemStatusData = {
 interface StatusViewProps {
   user: User | null;
   onBackToApp: () => void;
+  onOpenLogin?: () => void;
 }
 
-export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => {
+export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpenLogin }) => {
   const [statusData, setStatusData] = useState<SystemStatusData>(DEFAULT_STATUS_DATA);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [activeUser, setActiveUser] = useState<User | null>(user || auth.currentUser);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return isEmailAdmin(user?.email || auth.currentUser?.email);
+  });
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Sync active user state with auth listeners
+  useEffect(() => {
+    if (user) {
+      setActiveUser(user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setActiveUser(u);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Admin form state
   const [editServices, setEditServices] = useState(DEFAULT_STATUS_DATA.services);
@@ -142,20 +165,19 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
 
   // Verify Admin Privileges
   useEffect(() => {
-    if (!user) {
+    if (!activeUser) {
       setIsAdmin(false);
       return;
     }
 
-    const checkAdminStatus = async () => {
-      // Check hardcoded founders
-      if (user.email === 'vishnukakarla108@gmail.com' || user.email === 'kruz@begin-fin.com') {
-        setIsAdmin(true);
-        return;
-      }
+    if (isEmailAdmin(activeUser.email)) {
+      setIsAdmin(true);
+      return;
+    }
 
+    const checkAdminStatus = async () => {
       try {
-        const tokenRes = await user.getIdTokenResult?.();
+        const tokenRes = await activeUser.getIdTokenResult?.(true);
         if (tokenRes?.claims?.admin === true || tokenRes?.claims?.role === 'admin') {
           setIsAdmin(true);
           return;
@@ -165,18 +187,24 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
       }
 
       // Check Firestore user doc
-      const userRef = doc(db, 'users', user.uid);
-      const unsub = onSnapshot(userRef, (docSnap) => {
-        if (docSnap.exists() && docSnap.data()?.role === 'admin') {
-          setIsAdmin(true);
-        }
-      }, () => {});
-
-      return () => unsub();
+      try {
+        const userRef = doc(db, 'users', activeUser.uid);
+        const unsub = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data?.role === 'admin' || data?.isAdmin === true) {
+              setIsAdmin(true);
+            }
+          }
+        }, () => {});
+        return () => unsub();
+      } catch (e) {
+        console.warn("Firestore admin check error:", e);
+      }
     };
 
     checkAdminStatus();
-  }, [user]);
+  }, [activeUser]);
 
   // Realtime Firestore Listener for Status
   useEffect(() => {
@@ -453,33 +481,66 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Refresh Button */}
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
               title="Refresh status"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#7F7FFA]' : 'text-slate-500'}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              <span className="hidden md:inline">Refresh</span>
             </button>
 
-            {/* Admin Controls Trigger */}
-            {isAdmin && (
+            {/* Admin Controls Trigger (when authenticated as Admin) */}
+            {isAdmin ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleOpenAdminModal}
+                  id="admin-status-controls-btn"
+                  className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-[#7F7FFA] text-white text-xs font-bold hover:bg-[#7F7FFA]/90 shadow-md shadow-[#7F7FFA]/20 transition-all active:scale-95 cursor-pointer ring-2 ring-[#7F7FFA]/30"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Admin Controls</span>
+                </button>
+              </div>
+            ) : activeUser ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-medium border border-slate-200 truncate max-w-[150px]">
+                  <UserIcon className="w-3 h-3 text-slate-400" />
+                  <span className="truncate">{activeUser.email || 'User'}</span>
+                </span>
+                {onOpenLogin && (
+                  <button
+                    onClick={onOpenLogin}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200/80 transition-colors"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Admin Login</span>
+                  </button>
+                )}
+              </div>
+            ) : (
               <button
-                onClick={handleOpenAdminModal}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7F7FFA] text-white text-xs font-bold hover:bg-[#7F7FFA]/90 shadow-md shadow-[#7F7FFA]/20 transition-all active:scale-95 cursor-pointer"
+                onClick={() => {
+                  if (onOpenLogin) {
+                    onOpenLogin();
+                  } else {
+                    onBackToApp();
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
               >
-                <Sliders className="w-3.5 h-3.5" />
-                <span>Admin Controls</span>
+                <Lock className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                <span>Admin Sign In</span>
               </button>
             )}
 
             {/* Back to BeginFin Button */}
             <button
               onClick={onBackToApp}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-2xs active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-2xs active:scale-95 cursor-pointer"
             >
               <span>Launch App</span>
               <ExternalLink className="w-3 h-3" />
@@ -490,19 +551,21 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
 
       {/* Admin Floating Banner (if Admin) */}
       {isAdmin && (
-        <div className="bg-[#7F7FFA] text-white px-4 py-2.5 text-xs font-medium border-b border-[#7F7FFA]/30">
+        <div className="bg-gradient-to-r from-[#7F7FFA] to-indigo-600 text-white px-4 py-2.5 text-xs font-medium border-b border-[#7F7FFA]/30 shadow-2xs">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-white/20 font-bold uppercase tracking-wider text-[10px]">
-                Admin Session
+              <span className="px-2 py-0.5 rounded bg-white/20 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> Admin Mode
               </span>
-              <span>You have administrative authorization to update service statuses and notices.</span>
+              <span>
+                Signed in as <strong className="underline">{activeUser?.email}</strong>. You have authorization to manage live service health & notices.
+              </span>
             </div>
             <button
               onClick={handleOpenAdminModal}
-              className="underline underline-offset-4 hover:text-white/80 font-bold shrink-0 cursor-pointer"
+              className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white font-bold text-xs transition-colors shrink-0 cursor-pointer flex items-center gap-1"
             >
-              Edit Status Dashboard &rarr;
+              <Edit3 className="w-3 h-3" /> Edit Statuses &rarr;
             </button>
           </div>
         </div>
@@ -529,8 +592,19 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
               </h1>
             </div>
 
-            <div className="text-xs text-slate-400 font-medium">
-              Updated: {formatDateTime(statusData.lastUpdated)}
+            <div className="flex items-center gap-3">
+              <div className="text-xs text-slate-400 font-medium">
+                Updated: {formatDateTime(statusData.lastUpdated)}
+              </div>
+              {isAdmin && (
+                <button
+                  onClick={handleOpenAdminModal}
+                  className="px-3 py-1.5 bg-[#7F7FFA]/10 hover:bg-[#7F7FFA]/20 text-[#7F7FFA] text-xs font-bold rounded-xl border border-[#7F7FFA]/30 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit System</span>
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -553,6 +627,15 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
                   {statusData.customMessage}
                 </p>
               </div>
+              {isAdmin && (
+                <button
+                  onClick={handleOpenAdminModal}
+                  className="p-2 rounded-xl text-slate-400 hover:text-[#7F7FFA] hover:bg-[#7F7FFA]/10 transition-colors"
+                  title="Edit notice"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </section>
         )}
@@ -563,13 +646,23 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
             <h2 className="text-lg font-bold text-[#3C3C3C] tracking-tight">
               View by Section
             </h2>
+            {isAdmin && (
+              <button
+                onClick={handleOpenAdminModal}
+                className="text-xs font-bold text-[#7F7FFA] hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit All Sections</span>
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(statusData.services).map(([key, service]) => (
               <div 
                 key={key} 
-                className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 hover:border-[#7F7FFA]/40 transition-all shadow-2xs flex flex-col justify-between group"
+                className={`bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 hover:border-[#7F7FFA]/40 transition-all shadow-2xs flex flex-col justify-between group ${isAdmin ? 'cursor-pointer hover:shadow-md' : ''}`}
+                onClick={isAdmin ? handleOpenAdminModal : undefined}
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -586,8 +679,20 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
                         </span>
                       </div>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
                       {getServiceStatusBadge(service.status)}
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAdminModal();
+                          }}
+                          className="p-1 rounded-lg text-slate-400 hover:text-[#7F7FFA] hover:bg-[#7F7FFA]/10 transition-colors"
+                          title={`Edit ${service.name} status`}
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -600,7 +705,10 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
 
             {/* Custom Category / Section Card (Admin Configurable) */}
             {statusData.customCategory && statusData.customCategory.enabled && (
-              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 hover:border-[#7F7FFA]/40 transition-all shadow-2xs flex flex-col justify-between group">
+              <div 
+                className={`bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 hover:border-[#7F7FFA]/40 transition-all shadow-2xs flex flex-col justify-between group ${isAdmin ? 'cursor-pointer hover:shadow-md' : ''}`}
+                onClick={isAdmin ? handleOpenAdminModal : undefined}
+              >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -616,8 +724,20 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
                         </span>
                       </div>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
                       {getServiceStatusBadge(statusData.customCategory.status)}
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAdminModal();
+                          }}
+                          className="p-1 rounded-lg text-slate-400 hover:text-[#7F7FFA] hover:bg-[#7F7FFA]/10 transition-colors"
+                          title="Edit custom section"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -890,6 +1010,35 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp }) => 
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Authorized Admin Accounts Information */}
+              <div className="space-y-3 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                    4. Authorized Administrator Accounts
+                  </h4>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                  <p className="text-slate-600 font-medium leading-relaxed">
+                    Users with the following email addresses or with <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-indigo-600 font-mono text-[11px]">role: "admin"</code> in Firestore have full administrative privileges across BeginFin:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {DEFAULT_ADMIN_EMAILS.map((admEmail) => (
+                      <span 
+                        key={admEmail}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-mono text-[11px] font-semibold shadow-2xs"
+                      >
+                        <UserIcon className="w-2.5 h-2.5 text-indigo-500" />
+                        {admEmail}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-400 pt-1">
+                    💡 To add or edit admin accounts, update <code className="font-mono text-slate-600">/config/adminConfig.ts</code> or assign <code className="font-mono text-slate-600">role: "admin"</code> on the user's Firestore document under <code className="font-mono text-slate-600">users/{'{uid}'}</code>.
+                  </p>
+                </div>
               </div>
 
               {/* Modal Actions */}

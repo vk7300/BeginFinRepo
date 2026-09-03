@@ -10,18 +10,35 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStrippedQuestionsForModule, gradeQuizAnswers } from "./server/quizAnswerKeys";
+import { 
+  MCP_SERVER_INFO, 
+  MCP_TOOLS, 
+  MCP_RESOURCES, 
+  MCP_PROMPTS, 
+  executeMcpTool, 
+  handleMcpJsonRpc,
+  handleMcpJsonRpcAsync,
+  handleMcpSseConnection,
+  handleMcpMessagePost,
+  handleMcpDirectPost,
+  handleMcpManifest
+} from "./server/mcpHandler";
+
+import firebaseConfigJson from "./firebase-applet-config.json";
 
 dotenv.config();
 
 // Initialize Firebase Admin SDK
 const adminApp = getApps().length === 0
   ? initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0085912328"
+      projectId: process.env.FIREBASE_PROJECT_ID || firebaseConfigJson.projectId || "gen-lang-client-0085912328"
     })
   : getApps()[0];
 
+const firestoreDbId = process.env.FIRESTORE_DATABASE_ID || (firebaseConfigJson as any).firestoreDatabaseId || "ai-studio-815a8484-ccb3-4aa6-90b6-77fad11b53ba";
+
 const adminAuth = getAuth(adminApp);
-const adminDb = getFirestore(adminApp);
+const adminDb = getFirestore(adminApp, firestoreDbId);
 
 let aiClient: GoogleGenAI | null = null;
 function getGenAI(): GoogleGenAI | null {
@@ -96,6 +113,29 @@ async function startServer() {
     next();
   });
 
+  // Universal CORS & Preflight handling for MCP endpoints (Claude, Cursor, Windsurf, remote AI connectors)
+  app.use((req, res, next) => {
+    const p = req.path.toLowerCase();
+    const isMcpPath = p.startsWith('/mcp') || 
+                      p.startsWith('/sse') || 
+                      p.startsWith('/api/mcp') || 
+                      p.startsWith('/messages') || 
+                      p.startsWith('/.well-known') ||
+                      p === '/beginfin-mcp-config.json' ||
+                      p === '/beginfin-lesson-planner.md';
+
+    if (isMcpPath) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD, PUT, DELETE');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      res.setHeader('Access-Control-Expose-Headers', '*');
+      if (req.method === 'OPTIONS') {
+        return res.status(204).end();
+      }
+    }
+    next();
+  });
+
   // CORS configuration supporting production domains, local development, and Google AI Studio previews
   const explicitAllowedOrigins = new Set([
     'https://begin-fin.com',
@@ -103,6 +143,7 @@ async function startServer() {
     'https://beginfin.web.app',
     'https://beginfin.firebaseapp.com',
     'https://ai.studio',
+    'https://claude.ai',
     'http://localhost:3000',
     'http://127.0.0.1:3000'
   ]);
@@ -117,25 +158,30 @@ async function startServer() {
           explicitAllowedOrigins.has(origin) ||
           origin.endsWith('.run.app') ||
           origin.includes('ai.studio') ||
+          origin.endsWith('.claude.ai') ||
+          origin.endsWith('.anthropic.com') ||
+          origin.endsWith('.cursor.com') ||
           origin.endsWith('.google.com') ||
           origin.endsWith('.googleusercontent.com') ||
           origin.startsWith('http://localhost:') ||
           origin.startsWith('http://127.0.0.1:')) {
         callback(null, true);
       } else {
-        callback(new Error('Blocked by CORS policy'));
+        // Permissive fallback so external MCP connectors are never dropped
+        callback(null, true);
       }
     },
     credentials: true
   }));
   app.use(express.json());
 
-  // Rate limiting: 100 requests per 15 minutes per IP
+  // Rate limiting: 100 requests per 15 minutes per IP (excluding MCP endpoints)
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 100,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
+    skip: (req) => req.path.startsWith('/api/mcp') || req.path.startsWith('/mcp'),
     message: { error: "Too many requests, please try again later." }
   });
 
@@ -201,6 +247,82 @@ async function startServer() {
     } else {
       res.sendStatus(404);
     }
+  });
+
+  // Model Context Protocol (MCP) Server Endpoints (https://begin-fin.com/mcp & https://begin-fin.com/sse)
+  // 1. Standard MCP SSE Stream Endpoints (GET /sse, GET /api/mcp/sse, GET /mcp/sse)
+  app.get(['/sse', '/api/mcp/sse', '/mcp/sse'], handleMcpSseConnection);
+
+  // 2. Standard MCP Session Messages Endpoint (POST /messages, POST /mcp/messages, POST /api/mcp/messages)
+  app.post(['/messages', '/mcp/messages', '/api/mcp/messages'], handleMcpMessagePost);
+
+  // 3. Direct JSON-RPC 2.0 MCP POST Handlers (POST /mcp, POST /api/mcp, POST /sse)
+  app.post(['/mcp', '/api/mcp', '/sse'], handleMcpDirectPost);
+
+  // 4. Smart GET Routing for /mcp and /api/mcp
+  app.get(['/mcp', '/api/mcp'], (req, res, next) => {
+    const isSse = req.headers.accept?.includes('text/event-stream') || req.query.sse === 'true' || req.query.transport === 'sse';
+    const isExplicitJson = req.headers.accept?.includes('application/json') || req.query.format === 'json' || req.path === '/api/mcp';
+    const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+    const isMcpClient = userAgent.includes('mcp') || userAgent.includes('claude') || userAgent.includes('cursor') || userAgent.includes('anthropic') || userAgent.includes('python-requests') || userAgent.includes('curl') || userAgent.includes('go-http-client');
+
+    if (isSse) {
+      return handleMcpSseConnection(req, res);
+    }
+
+    if (isExplicitJson) {
+      return handleMcpManifest(req, res);
+    }
+
+    // If request is from an MCP client or CLI tool requesting /mcp without text/html
+    if (isMcpClient && !req.headers.accept?.includes('text/html')) {
+      return handleMcpManifest(req, res);
+    }
+
+    // For standard web browsers visiting /mcp, hand off to React SPA router
+    next();
+  });
+
+  // 5. MCP Manifest Discovery (.well-known and manifest.json)
+  app.get(['/mcp/manifest.json', '/.well-known/mcp', '/.well-known/mcp.json', '/mcp.json', '/api/mcp/manifest'], handleMcpManifest);
+
+  // 6. REST Helper Endpoints for Frontend Interactive Playground
+  app.get('/api/mcp/tools', (req, res) => {
+    res.json({
+      serverInfo: MCP_SERVER_INFO,
+      tools: MCP_TOOLS,
+      resources: MCP_RESOURCES,
+      prompts: MCP_PROMPTS
+    });
+  });
+
+  app.post('/api/mcp/execute', async (req, res) => {
+    try {
+      const { toolName, args } = req.body || {};
+      if (!toolName) {
+        return res.status(400).json({ isError: true, content: [{ type: 'text', text: 'Missing required toolName' }] });
+      }
+      const result = await executeMcpTool(toolName, args || {});
+      return res.json(result);
+    } catch (err: any) {
+      return res.status(500).json({ isError: true, content: [{ type: 'text', text: err?.message || 'Error executing tool' }] });
+    }
+  });
+
+  app.get('/beginfin-mcp-config.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="claude_desktop_config.json"');
+    const host = req.get('host') || 'begin-fin.com';
+    const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+    const baseUrl = `${proto}://${host}`;
+
+    res.json({
+      mcpServers: {
+        "beginfin": {
+          "url": `${baseUrl}/sse`
+        }
+      }
+    });
   });
 
   // Daily Rate Limiting for Bradley AI Chatbot (Strict 5 messages per calendar day / 24h per registered user)
@@ -453,28 +575,24 @@ BeginFin Curriculum Reference:
     }
   }, 15 * 60 * 1000);
 
-  // Authenticated quiz grading endpoint
+  // Quiz grading endpoint (supports authenticated users with Firestore sync & guest mode grading)
   app.post("/api/grade-quiz", async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Authentication required to submit quiz for grading." });
-      }
+      let verifiedUid: string | null = null;
 
-      const idToken = authHeader.split("Bearer ")[1]?.trim();
-      if (!idToken) {
-        return res.status(401).json({ error: "Authentication token missing." });
-      }
-
-      let verifiedUid: string;
-      try {
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        if (!decodedToken || !decodedToken.uid) {
-          throw new Error("Invalid token payload");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const idToken = authHeader.split("Bearer ")[1]?.trim();
+        if (idToken) {
+          try {
+            const decodedToken = await adminAuth.verifyIdToken(idToken);
+            if (decodedToken && decodedToken.uid) {
+              verifiedUid = decodedToken.uid;
+            }
+          } catch (authErr: any) {
+            console.warn("Quiz grading with unverified or expired token, falling back to guest mode:", authErr?.message);
+          }
         }
-        verifiedUid = decodedToken.uid;
-      } catch (authErr: any) {
-        return res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
       }
 
       const { moduleId, quizVersion = "standard", answers } = req.body;
@@ -483,8 +601,9 @@ BeginFin Curriculum Reference:
         return res.status(400).json({ error: "moduleId and answers array are required." });
       }
 
-      // Enforce per-user per-module attempt rate limiting to prevent answer-key enumeration
-      const rateLimitKey = `${verifiedUid}:${moduleId}`;
+      // Enforce attempt rate limiting (keyed by user UID or client IP for guests) to prevent answer-key enumeration
+      const clientIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || "guest";
+      const rateLimitKey = verifiedUid ? `${verifiedUid}:${moduleId}` : `guest:${clientIp}:${moduleId}`;
       const now = Date.now();
       const existingAttempt = quizGradingAttempts.get(rateLimitKey);
 
@@ -511,8 +630,8 @@ BeginFin Curriculum Reference:
 
       let updatedCompletedModules: string[] = [];
 
-      // If passed, record module completion on the user profile via Admin SDK
-      if (gradeResult.passed) {
+      // If passed and user is authenticated, record module completion on the user profile via Admin SDK
+      if (gradeResult.passed && verifiedUid) {
         try {
           const userDocRef = adminDb.collection("users").doc(verifiedUid);
           const userDoc = await userDocRef.get();
@@ -913,9 +1032,22 @@ Please process this request in Certifier.io.`,
         return res.status(401).json({ error: "Invalid session token." });
       }
 
-      // Check if user is admin via token claims, email, or Firestore role
+      // Check if user is admin via token claims, email whitelist, or Firestore role
+      const envAdminEmails = process.env.ADMIN_EMAILS 
+        ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+        : [];
+      const ADMIN_EMAILS = [
+        'vishnukakarla108@gmail.com',
+        'kv303157@gmail.com',
+        'kruzksmith@gmail.com',
+        'kruz@begin-fin.com',
+        'vishnu@begin-fin.com',
+        'admin@begin-fin.com',
+        'kruzsmith@gmail.com',
+        ...envAdminEmails
+      ];
       let isAdmin = decodedToken.admin === true || decodedToken.role === 'admin';
-      if (!isAdmin && (decodedToken.email === 'vishnukakarla108@gmail.com' || decodedToken.email === 'kruz@begin-fin.com')) {
+      if (!isAdmin && decodedToken.email && ADMIN_EMAILS.includes(decodedToken.email.toLowerCase().trim())) {
         isAdmin = true;
       }
       if (!isAdmin) {
@@ -929,16 +1061,18 @@ Please process this request in Certifier.io.`,
         return res.status(403).json({ error: "Administrator authorization required to update system status." });
       }
 
-      const { services, customMessage, customMessageTitle, customMessageType, overall, incidents } = req.body;
+      const { services, customCategory, customMessage, customMessageTitle, customMessageType, showCustomMessage, overall, incidents } = req.body;
       const updatePayload: any = {
         lastUpdated: new Date().toISOString(),
         updatedBy: decodedToken.email || decodedToken.uid
       };
 
       if (services) updatePayload.services = services;
+      if (customCategory) updatePayload.customCategory = customCategory;
       if (typeof customMessage === 'string') updatePayload.customMessage = customMessage.trim();
       if (typeof customMessageTitle === 'string') updatePayload.customMessageTitle = customMessageTitle.trim();
       if (typeof customMessageType === 'string') updatePayload.customMessageType = customMessageType.trim();
+      if (typeof showCustomMessage === 'boolean') updatePayload.showCustomMessage = showCustomMessage;
       if (typeof overall === 'string') updatePayload.overall = overall;
       if (Array.isArray(incidents)) updatePayload.incidents = incidents;
 

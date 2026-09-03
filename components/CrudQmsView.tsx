@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { db, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, auth, googleProvider, signInWithRedirect, signOut } from '../firebase';
+import { DEFAULT_ADMIN_EMAILS, isEmailAdmin } from '../config/adminConfig';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
 
@@ -375,6 +376,12 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
   useEffect(() => {
     if (!user) {
       setIsAdmin(false);
+      setIsCheckingAdmin(false);
+      return;
+    }
+
+    if (isEmailAdmin(user.email)) {
+      setIsAdmin(true);
       setIsCheckingAdmin(false);
       return;
     }

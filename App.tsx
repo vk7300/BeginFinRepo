@@ -13,7 +13,7 @@ import { CurriculumView } from './components/CurriculumView';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { modules, Module } from './data/courseData';
 import { Language, languageNames, uiTranslations } from './data/uiTranslations';
-import { Globe, Mail, LogOut, User as UserIcon, BookOpen, AlertTriangle, Users, Zap, X, Loader2, ArrowLeft, ArrowRight, Bell, Trophy, CheckCircle2, Settings, Shield, MessageSquare, Phone, Repeat, Menu, Home, Newspaper, ShieldCheck, Instagram, Linkedin, Sparkles } from 'lucide-react';
+import { Globe, Mail, LogOut, User as UserIcon, BookOpen, AlertTriangle, Users, Zap, X, Loader2, ArrowLeft, ArrowRight, Bell, Trophy, CheckCircle2, Settings, Shield, MessageSquare, Phone, Repeat, Menu, Home, Newspaper, ShieldCheck, Instagram, Linkedin, Sparkles, ExternalLink } from 'lucide-react';
 import { auth, db, googleProvider, signInWithRedirect, getRedirectResult, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, collection, query, where, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, doc, getDoc, setDoc, onSnapshot } from './firebase';
 import { sendEmailVerification, GoogleAuthProvider } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,12 +26,13 @@ import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { CrudQmsView } from './components/CrudQmsView';
 import { ResourcesView } from './components/ResourcesView';
 import { AboutView } from './components/AboutView';
-import { ClaudeMdView } from './components/ClaudeMdView';
+import { McpServerView } from './components/McpServerView';
 import { ToolsView } from './components/ToolsView';
 import { Footer } from './components/Footer';
 import { BradleyChatbot } from './components/BradleyChatbot';
 import { GoogleOneTap } from './components/GoogleOneTap';
 import { StatusView } from './components/StatusView';
+import { triggerGoogleSignIn } from './services/googleAuthService';
 
 const orderedModules = [
   modules.find(m => m.id === 'm1'),
@@ -45,7 +46,7 @@ const orderedModules = [
   modules.find(m => m.id === 'm9')
 ].filter((m): m is Module => !!m);
 
-export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'claudemd' | 'tools' | 'status';
+export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'mcp' | 'tools' | 'status';
 
 enum OperationType {
   CREATE = 'create',
@@ -186,16 +187,20 @@ const LoginModalContent: React.FC<{
   const mapAuthError = (error: any) => {
     const code = error.code || error.message || '';
     if (code.includes('auth/unauthorized-domain')) {
-      return "This domain is not authorized in Firebase Authentication. Please add this domain to Firebase Console > Authentication > Settings > Authorized domains.";
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'this domain';
+      return `Domain "${host}" is not authorized in Firebase Authentication. Please add "${host}" to Firebase Console > Authentication > Settings > Authorized domains.`;
     }
     if (code.includes('auth/popup-blocked')) {
-      return "Pop-up was blocked by your browser. Please allow pop-ups for this site or try again.";
+      return "Pop-up was blocked by your browser. Please allow pop-ups for this site.";
+    }
+    if (code.includes('auth/popup-timeout')) {
+      return "Google Sign-In window took too long. Please try again or sign in with email.";
     }
     if (code.includes('auth/cancelled-popup-request')) {
-      return "Another sign-in window is already active.";
+      return "Another sign-in window is already active. Please finish or close that window.";
     }
     if (code.includes('auth/operation-not-allowed')) {
-      return "Google Sign-In is not enabled in Firebase Console. Please verify Authentication providers.";
+      return "Google Sign-In is not enabled in Firebase Console. Please enable Google under Authentication > Sign-in method.";
     }
     if (code.includes('reCAPTCHA has already been rendered') || code.includes('auth/reCAPTCHA-has-already-been-rendered')) {
       return "Security check is ready. Please try clicking the button again.";
@@ -431,10 +436,10 @@ const LoginModalContent: React.FC<{
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-medium"
+          className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-2.5 text-rose-700 text-sm font-medium"
         >
-          <AlertTriangle className="w-5 h-5 shrink-0" />
-          {error}
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
+          <div className="flex-1 text-xs leading-relaxed">{error}</div>
         </motion.div>
       )}
 
@@ -617,27 +622,6 @@ const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-
-  // Check for redirect result on load
-  useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result) {
-        // If it was a Google Classroom connection, it will have the classroom scopes
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        if (credential?.accessToken) {
-            import('./services/googleClassroomService').then(({ googleClassroomService }) => {
-                googleClassroomService.setAccessToken(credential.accessToken);
-                // The TeacherDashboard should ideally pick this up, or we can just let it be.
-            });
-        }
-        
-        // It's a login redirect
-        setHasStarted(true);
-      }
-    }).catch((error) => {
-      console.error("Redirect login failed", error);
-    });
-  }, []);
   useEffect(() => {
     const path = location.pathname;
     if (path === '/termsofuse') {
@@ -655,8 +639,8 @@ const App: React.FC = () => {
       setCurrentView('about');
     } else if (path === '/tools' || path.startsWith('/tools/') || path === '/simulator' || path === '/simulators') {
       setCurrentView('tools');
-    } else if (path === '/claudemd' || path === '/claudemd.md' || path === '/claude' || path.startsWith('/claudemd/')) {
-      setCurrentView('claudemd');
+    } else if (path === '/mcp' || path.startsWith('/mcp/') || path === '/mcp.json' || path === '/beginfin-mcp') {
+      setCurrentView('mcp');
     } else if (path === '/status' || path.startsWith('/status')) {
       setCurrentView('status');
     } else if (path === '/crud-qms' || path.startsWith('/crud-qms')) {
@@ -666,7 +650,7 @@ const App: React.FC = () => {
       setCurrentView('welcome');
     } else if (path === '/app' || path.startsWith('/app/')) {
       setHasStarted(true);
-      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'resources' || currentView === 'tools' || currentView === 'status') {
+      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'resources' || currentView === 'tools' || currentView === 'status' || currentView === 'mcp') {
         if (user) {
           if (!userRole) {
             setCurrentView('onboarding');
@@ -702,20 +686,96 @@ const App: React.FC = () => {
 
   const t = uiTranslations[language];
 
+  // Dynamically update the browser tab title according to the current section
+  useEffect(() => {
+    let sectionTitle = 'Home';
+
+    switch (currentView) {
+      case 'welcome':
+        sectionTitle = 'Home';
+        break;
+      case 'dashboard':
+        sectionTitle = userRole === 'teacher' && !isTeacherInStudentMode ? 'Teacher Dashboard' : 'Dashboard';
+        break;
+      case 'module':
+        if (activeModule) {
+          const modTitle = (activeModule.translations as any)[language]?.title || activeModule.translations.en.title;
+          sectionTitle = moduleStep === 'quiz' ? `Quiz: ${modTitle}` : modTitle;
+        } else {
+          sectionTitle = 'Module';
+        }
+        break;
+      case 'about':
+        sectionTitle = 'About';
+        break;
+      case 'tools':
+        sectionTitle = 'Tools';
+        break;
+      case 'status':
+        sectionTitle = 'Status';
+        break;
+      case 'curriculum':
+        sectionTitle = 'Curriculum';
+        break;
+      case 'resources':
+        sectionTitle = 'Resources';
+        break;
+      case 'tax-roadmap':
+        sectionTitle = 'Tax Roadmap';
+        break;
+      case 'certificate':
+        sectionTitle = 'Certificate';
+        break;
+      case 'crud-qms':
+        sectionTitle = 'QMS & Certifier';
+        break;
+      case 'mcp':
+        sectionTitle = 'MCP Server';
+        break;
+      case 'guide':
+        sectionTitle = 'Quick Start Guide';
+        break;
+      case 'onboarding':
+        sectionTitle = 'Join Class';
+        break;
+      case 'terms':
+        sectionTitle = 'Terms of Service';
+        break;
+      case 'privacy':
+        sectionTitle = 'Privacy Policy';
+        break;
+      case 'not-found':
+        sectionTitle = 'Page Not Found';
+        break;
+      default:
+        sectionTitle = 'Home';
+    }
+
+    document.title = `${sectionTitle} | BeginFin`;
+  }, [currentView, activeModule, moduleStep, language, userRole, isTeacherInStudentMode]);
+
   // Auth Listener and Redirect Handler
   useEffect(() => {
-    // Process any incoming redirect authentication (e.g., from signInWithRedirect fallback)
+    // Process any incoming redirect authentication (e.g., from signInWithRedirect fallback or Classroom link)
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) {
+          // If it was a Google Classroom connection, extract access token
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          if (credential?.accessToken) {
+            import('./services/googleClassroomService').then(({ googleClassroomService }) => {
+              googleClassroomService.setAccessToken(credential.accessToken);
+            });
+          }
           setShowLoginModal(false);
+          setHasStarted(true);
           if (currentView === 'welcome') {
             handleStart(true);
           }
         }
       })
       .catch((error) => {
-        console.error("Google redirect sign-in result error:", error);
+        console.warn("Google redirect sign-in result check:", error?.message || error);
       });
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -975,21 +1035,8 @@ const App: React.FC = () => {
       // ignore
     }
 
-    // Race popup against an 8.5s timeout to prevent hanging when popup-opener communication is blocked by storage partitioning
-    const POPUP_TIMEOUT_MS = 8500;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        const timeoutErr: any = new Error("Google popup sign-in timed out. Falling back to redirect.");
-        timeoutErr.code = 'auth/popup-timeout';
-        reject(timeoutErr);
-      }, POPUP_TIMEOUT_MS);
-    });
-
     try {
-      await Promise.race([
-        signInWithPopup(auth, googleProvider),
-        timeoutPromise
-      ]);
+      await triggerGoogleSignIn();
       setShowLoginModal(false);
       if (currentView === 'welcome') {
         handleStart(true);
@@ -999,15 +1046,15 @@ const App: React.FC = () => {
         return;
       }
       
-      console.warn("Google sign-in popup note:", error?.message || error);
+      console.warn("Google sign-in error note:", error?.message || error);
 
-      // If popup timed out, was blocked, or prevented by browser/iframe/partitioning restrictions, attempt redirect fallback
-      if (
-        error.code === 'auth/popup-timeout' ||
+      // If popup was blocked or interrupted, attempt redirect fallback IF top-level window
+      const isIframe = typeof window !== 'undefined' && window.self !== window.top;
+      if (!isIframe && (
         error.code === 'auth/popup-blocked' ||
         error.code === 'auth/cancelled-popup-request' ||
         error.code === 'auth/network-request-failed'
-      ) {
+      )) {
         try {
           await signInWithRedirect(auth, googleProvider);
           return;
@@ -1570,7 +1617,7 @@ const App: React.FC = () => {
                 />
               </div>
             </motion.div>
-          ) : currentView === 'claudemd' ? (
+          ) : currentView === 'mcp' ? (
             <motion.div
               key={currentView}
               initial="initial"
@@ -1582,10 +1629,14 @@ const App: React.FC = () => {
             >
               <div className="flex-1 flex flex-col">
                 <main className="flex-1">
-                  <ClaudeMdView 
+                  <McpServerView 
                     onBack={() => {
                       navigate('/');
                       setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
+                    }}
+                    onOpenTeacherDashboard={() => {
+                      navigate('/app');
+                      setCurrentView('dashboard');
                     }}
                   />
                 </main>
@@ -1645,6 +1696,7 @@ const App: React.FC = () => {
                 <main className="flex-1">
                   <StatusView 
                     user={user}
+                    onOpenLogin={() => setShowLoginModal(true)}
                     onBackToApp={() => {
                       navigate('/');
                       setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
@@ -2262,11 +2314,6 @@ const App: React.FC = () => {
                       )}
                       {((currentView as string) === 'about') && (
                         <AboutView
-                          onBack={() => setCurrentView('dashboard')}
-                        />
-                      )}
-                      {((currentView as string) === 'claudemd') && (
-                        <ClaudeMdView
                           onBack={() => setCurrentView('dashboard')}
                         />
                       )}

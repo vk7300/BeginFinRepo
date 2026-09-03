@@ -736,11 +736,11 @@ export const TeacherDashboard: React.FC<{
           </div>
           <div className="flex flex-wrap gap-3">
             <button 
-              onClick={() => navigate('/claudemd')} 
-              className="px-5 py-2.5 bg-[#d97757]/15 hover:bg-[#d97757]/25 text-[#d97757] border border-[#d97757]/30 font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm"
-              title="Integrate BeginFin with Claude AI"
+              onClick={() => navigate('/mcp')} 
+              className="px-5 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm"
+              title="Integrate BeginFin with Claude, Gemini, Cursor & MCP"
             >
-              <Sparkles className="w-4 h-4 text-[#d97757]" /> Claude Skill
+              <Sparkles className="w-4 h-4 text-indigo-400" /> AI Lesson Planner (MCP)
             </button>
             {onOpenGuide && (
               <button 
