@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, ArrowUp, RotateCcw, Sparkles, Shield, Check, Copy } from 'lucide-react';
+import { MessageSquare, X, ArrowUp, RotateCcw, Sparkles, Shield, Check, Copy, ExternalLink, Server } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 
 interface Message {
@@ -37,6 +38,7 @@ function cleanPlainText(text: string): string {
 }
 
 export const BradleyChatbot: React.FC<BradleyChatbotProps> = ({ user }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
@@ -121,7 +123,7 @@ export const BradleyChatbot: React.FC<BradleyChatbotProps> = ({ user }) => {
       const quotaMsg: Message = {
         id: Date.now().toString(),
         role: 'model',
-        text: "You have used your 5 daily questions with Bradley. Your quota will reset tomorrow. In the meantime, you can explore the BeginFin curriculum modules and resource library.",
+        text: "You have used your 5 daily questions with Bradley on the web app. Your quota resets tomorrow!\n\n💡 Tip: Want unlimited questions with zero daily limits? Connect Bradley directly to your AI tool via MCP: /bradley/mcp",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, quotaMsg]);
@@ -361,9 +363,26 @@ export const BradleyChatbot: React.FC<BradleyChatbotProps> = ({ user }) => {
             <div className="bg-slate-50/80 border-b border-black/[0.04] px-4 py-1.5 flex items-center justify-between text-[10px] text-slate-500 font-medium">
               <div className="flex items-center gap-1.5">
                 <Shield className="w-3 h-3 text-slate-400 shrink-0" />
-                <span>Educational clarify only • Not financial advice</span>
+                <span>Educational clarity only • Not financial advice</span>
               </div>
               <span className="text-[9px] text-slate-400">5/day quota</span>
+            </div>
+
+            {/* MCP Promotion Banner */}
+            <div 
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/bradley/mcp');
+              }}
+              className="bg-indigo-50/80 hover:bg-indigo-100/80 border-b border-indigo-100 px-4 py-1.5 flex items-center justify-between text-[10px] text-indigo-700 font-semibold cursor-pointer transition-colors"
+            >
+              <div className="flex items-center gap-1.5">
+                <Server className="w-3 h-3 text-[#7F7FFA] shrink-0" />
+                <span>Use Bradley directly in your AI tool</span>
+              </div>
+              <span className="flex items-center gap-0.5 text-[#7F7FFA] font-bold">
+                MCP <ExternalLink className="w-2.5 h-2.5" />
+              </span>
             </div>
 
             {/* Chat Body & Conversation Bubbles */}

@@ -1,5 +1,5 @@
 import { auth } from '../firebase';
-import { GoogleAuthProvider, signInWithPopup, getRedirectResult, User } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, User } from 'firebase/auth';
 
 // Google Classroom API Scopes
 export const CLASSROOM_READ_SCOPES = [

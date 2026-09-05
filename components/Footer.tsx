@@ -73,11 +73,18 @@ export const Footer: React.FC<FooterProps> = ({
             System Status
           </Link>
           <Link 
-            to="/mcp" 
+            to="/bradley/mcp" 
             onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
             className="hover:text-white transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span className="text-indigo-400 font-semibold">MCP</span> Server
+            Bradley MCP
+          </Link>
+          <Link 
+            to="/teacher/mcp" 
+            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
+            className="hover:text-white transition-colors cursor-pointer flex items-center gap-1"
+          >
+            Teacher MCP
           </Link>
           <Link 
             to="/termsofuse" 

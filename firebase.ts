@@ -9,12 +9,16 @@ import firebaseConfigJson from './firebase-applet-config.json';
 const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
   appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey || '',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
   firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseConfigJson as any).firestoreDatabaseId || 'ai-studio-815a8484-ccb3-4aa6-90b6-77fad11b53ba'
 };
+
+if (!firebaseConfig.apiKey && typeof window !== 'undefined') {
+  console.warn('[Firebase] Notice: VITE_FIREBASE_API_KEY is not defined. Please configure VITE_FIREBASE_API_KEY in your .env file or environment settings.');
+}
 
 // Initialize Firebase SDK
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);

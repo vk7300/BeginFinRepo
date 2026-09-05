@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowLeft, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
 interface Props {
   onBack: () => void;

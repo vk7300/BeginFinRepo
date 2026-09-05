@@ -46,6 +46,80 @@
     <meta property="twitter:image" content="https://begin-fin.com/logo.png">
     <meta property="twitter:image:alt" content="BeginFin Logo - Financial Literacy for All">
 
+    <!-- Structured Data (JSON-LD) for Search Engines & LLMs (Google, Gemini, Claude, AI Overviews) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "EducationalOrganization",
+          "@id": "https://begin-fin.com/#organization",
+          "name": "BeginFin",
+          "alternateName": "BeginFin Financial Literacy",
+          "url": "https://begin-fin.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://begin-fin.com/logo.png",
+            "caption": "BeginFin Logo"
+          },
+          "description": "BeginFin is a 100% free, open-access financial literacy platform and student-led Open Educational Resource (OER) founded in Temple, Texas. Providing comprehensive personal finance education, interactive wage and living cost simulations, and verifiable certifications.",
+          "slogan": "Financial literacy for all.",
+          "foundingDate": "2025-12",
+          "foundingLocation": {
+            "@type": "Place",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Temple",
+              "addressRegion": "TX",
+              "addressCountry": "US"
+            }
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Vishnu Kakarla",
+              "jobTitle": "Co-Founder",
+              "email": "vishnu@begin-fin.com",
+              "description": "Lake Belton High School student and 2026 Business Professionals of America (BPA) Personal Finance Nationals qualifier. Co-founded BeginFin in December 2025 to address financial education barriers observed across Canada, India, and the United States."
+            },
+            {
+              "@type": "Person",
+              "name": "Kruz Smith",
+              "jobTitle": "Co-Founder",
+              "email": "kruz@begin-fin.com",
+              "description": "Lake Belton High School student and 2025-2026 National Honor Society (NHS) chapter treasurer. Co-leads community outreach and interactive educational tools at BeginFin."
+            }
+          ],
+          "award": [
+            "Gubernatorial Commendation from Governor Greg Abbott (State of Texas)",
+            "Mayoral Proclamation from the City of Temple, Texas",
+            "Mayoral Proclamation from the City of Belton, Texas"
+          ],
+          "educationalCredentialAwarded": "Certificate of Financial Literacy",
+          "knowsAbout": [
+            "Personal Finance",
+            "Budgeting",
+            "Tax Filing",
+            "Investing Basics",
+            "Credit Scores and Debt Management",
+            "Retirement Planning",
+            "Health Insurance and Medical Billing",
+            "Consumer Rights"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://begin-fin.com/#website",
+          "url": "https://begin-fin.com",
+          "name": "BeginFin",
+          "publisher": {
+            "@id": "https://begin-fin.com/#organization"
+          }
+        }
+      ]
+    }
+    </script>
+
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F4F8FA; color: #3C3C3C; }
         .glass { background: rgba(244, 248, 250, 0.85); backdrop-filter: blur(10px); }

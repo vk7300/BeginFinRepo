@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /llms.txt
+
+# LLM & AI Discoverability File
+# Spec: https://llmstxt.org/
+# Authoritative facts, curriculum, and leadership of BeginFin for AI models and search systems
+# Location: https://begin-fin.com/llms.txt
+
+Sitemap: https://begin-fin.com/sitemap.xml

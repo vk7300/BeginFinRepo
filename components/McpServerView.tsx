@@ -3,62 +3,55 @@ import {
   ArrowLeft, 
   Check, 
   Copy, 
-  Download, 
-  ExternalLink, 
   GraduationCap, 
-  Server, 
   Sparkles, 
-  ShieldCheck, 
-  Zap, 
   BookOpen, 
   HelpCircle,
-  CheckCircle2,
-  Lock,
   ArrowRight,
-  ChevronRight,
-  AlertTriangle,
-  Mail,
-  Users,
-  Award,
-  Globe,
-  Sliders,
-  DollarSign
+  MessageSquare,
+  Calculator,
+  Compass,
+  Scale,
+  Calendar,
+  Layers,
+  FileText,
+  Percent,
+  CheckCircle2,
+  ShieldCheck
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Modal } from './Modal';
 
-interface McpServerViewProps {
+export interface McpServerViewProps {
   onBack: () => void;
   onOpenTeacherDashboard?: () => void;
+  mode?: 'student' | 'teacher';
+  onSwitchMode?: (newMode: 'student' | 'teacher') => void;
 }
 
-export const CLAUDE_DESKTOP_CONFIG_SNIPPET = `{
-  "mcpServers": {
-    "beginfin": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://begin-fin.com/sse"]
-    }
-  }
-}`;
+export const McpServerView: React.FC<McpServerViewProps> = ({ 
+  onBack, 
+  onOpenTeacherDashboard,
+  mode: propMode,
+  onSwitchMode
+}) => {
+  const location = useLocation();
+  const navigate = useNavigate();
 
-export const CURSOR_CONFIG_SNIPPET = `{
-  "mcpServers": {
-    "beginfin": {
-      "url": "https://begin-fin.com/sse"
-    }
-  }
-}`;
+  // Determine current mode from props or current pathname without merging
+  const isTeacherRoute = location.pathname.startsWith('/teacher');
+  const isTeacher = propMode ? propMode === 'teacher' : isTeacherRoute;
 
-export const McpServerView: React.FC<McpServerViewProps> = ({ onBack, onOpenTeacherDashboard }) => {
-  const [activeTab, setActiveTab] = useState<'connect' | 'capabilities' | 'curriculum' | 'faq'>('connect');
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+  const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
+  const [showSwitchModal, setShowSwitchModal] = useState<boolean>(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, []);
+  }, [isTeacher, location.pathname]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!sectionRef.current) return;
@@ -69,79 +62,83 @@ export const McpServerView: React.FC<McpServerViewProps> = ({ onBack, onOpenTeac
     });
   };
 
-  const SERVER_URL = 'https://begin-fin.com/mcp';
-  const SSE_URL = 'https://begin-fin.com/sse';
-
   const handleCopyText = (text: string, identifier: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSnippet(identifier);
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
 
-  const handleDownloadConfig = () => {
-    const config = `{
-  "mcpServers": {
-    "beginfin": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "${SSE_URL}"]
-    }
-  }
-}`;
-    const element = document.createElement('a');
-    const file = new Blob([config], { type: 'application/json' });
-    element.href = URL.createObjectURL(file);
-    element.download = 'claude_desktop_config.json';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const handleCopyPromptText = (text: string, identifier: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedPrompt(identifier);
+    setTimeout(() => setCopiedPrompt(null), 2500);
   };
+
+  const handleSwitchTarget = () => {
+    setShowSwitchModal(false);
+    if (isTeacher) {
+      if (onSwitchMode) onSwitchMode('student');
+      navigate('/bradley/mcp');
+    } else {
+      if (onSwitchMode) onSwitchMode('teacher');
+      navigate('/teacher/mcp');
+    }
+  };
+
+  const SERVER_URL = isTeacher ? 'https://begin-fin.com/teacher/mcp' : 'https://begin-fin.com/bradley/mcp';
+
+  // Sample copyable prompts for the connection card
+  const samplePrompt = isTeacher
+    ? 'Draft a 45-minute lesson plan on paycheck deductions, W-4 withholdings, and FICA taxes using BeginFin Unit 2.'
+    : 'I earn $20/hr working 35 hours a week. Can you break down my estimated payroll taxes and create a 50/30/20 budget for me?';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F8FA] text-[#3C3C3C] font-sans selection:bg-[#7F7FFA]/20 selection:text-[#7F7FFA]">
       <Helmet>
-        <title>BeginFin MCP Server: Connect AI to Financial Literacy Curriculum</title>
-        <meta name="description" content="Connect Claude, Cursor, or your AI workspace to BeginFin's National Standards-aligned personal finance curriculum via Model Context Protocol (MCP)." />
-        <meta property="og:title" content="BeginFin MCP Server - AI Curriculum Connection" />
-        <meta property="og:description" content="Empower your AI assistant with BeginFin's 9-unit financial literacy curriculum and Wage & Living Cost Simulator." />
+        <title>{isTeacher ? "Teacher MCP — Lesson Planning | BeginFin" : "Bradley MCP — Personal Finance AI Tutor | BeginFin"}</title>
+        <meta 
+          name="description" 
+          content={isTeacher 
+            ? "Connect your AI tool to BeginFin's National Standards-aligned personal finance curriculum, structured lesson plan generators, and simulator references." 
+            : "Connect your AI tool to Bradley, BeginFin's encouraging personal finance tutor. Ask questions, compute 50/30/20 budgets, and practice quizzes."
+          } 
+        />
+        <meta property="og:title" content={isTeacher ? "Teacher MCP — BeginFin" : "Bradley MCP — BeginFin"} />
+        <meta property="og:description" content={isTeacher ? "Lesson planning, now directly in your AI tools." : "Bradley, now directly in your AI tools."} />
       </Helmet>
 
-      {/* Glassmorphic Top Nav Header matching WelcomeScreen */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 py-3 shadow-xs">
+      {/* Top Navigation Header */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 py-3.5 shadow-xs">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
               onClick={onBack}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              className="p-2 rounded-xl text-slate-500 hover:text-[#3C3C3C] hover:bg-slate-100 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
             </button>
             <div className="h-4 w-px bg-slate-200" />
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 group">
               <img 
                 src="/logo.png" 
                 alt="BeginFin Logo" 
-                className="w-7 h-7 object-contain rounded-xl shadow-xs" 
+                className="w-7 h-7 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform" 
                 referrerPolicy="no-referrer"
               />
               <span className="font-extrabold text-[#3C3C3C] text-base tracking-tight">BeginFin</span>
               <span className="text-slate-300 font-light">/</span>
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] font-bold text-xs border border-[#7F7FFA]/20">
-                <Server className="w-3.5 h-3.5" />
-                <span>MCP Server</span>
-              </div>
-            </div>
+              <span className="text-xs font-bold text-[#7F7FFA] tracking-tight">
+                {isTeacher ? "Teacher MCP" : "Bradley MCP"}
+              </span>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              100% Free ($0 Cost)
-            </span>
-            {onOpenTeacherDashboard && (
+            {isTeacher && onOpenTeacherDashboard && (
               <button
                 onClick={onOpenTeacherDashboard}
-                className="flex px-3.5 py-1.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-full text-xs font-bold transition-all shadow-xs items-center gap-1.5 cursor-pointer active:scale-95"
+                className="px-4 py-2 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-full text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <GraduationCap className="w-3.5 h-3.5" />
                 <span>Teacher Dashboard</span>
@@ -152,16 +149,14 @@ export const McpServerView: React.FC<McpServerViewProps> = ({ onBack, onOpenTeac
       </header>
 
       <main className="flex-grow">
-        {/* Hero Section matching WelcomeScreen Hero Frame */}
+        {/* Hero Section matching WelcomeScreen hero design language */}
         <section className="relative bg-gradient-to-b from-[#2b2d35] via-[#1a1c22] to-[#101115] pt-10 pb-16 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
           
-          {/* Rounded-Corner Hero Box Container with Dynamic Tracking Glow */}
+          {/* Rounded-Corner Hero Box Container with Interactive Cursor Glow */}
           <div 
             ref={sectionRef}
             onMouseMove={handleMouseMove}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            className="relative w-full max-w-6xl rounded-[2.5rem] md:rounded-[3.2rem] bg-gradient-to-br from-[#3b437e] via-[#353c70] to-[#252a55] border border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.5)] overflow-hidden select-none cursor-default py-14 sm:py-18 px-6 sm:px-12 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-700"
+            className="relative w-full max-w-6xl rounded-[2.5rem] md:rounded-[3.2rem] bg-gradient-to-br from-[#3b437e] via-[#353c70] to-[#252a55] border border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.5)] overflow-hidden select-none cursor-default py-14 sm:py-20 px-6 sm:px-12 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-500"
           >
             {/* Dynamic Interactive Cursor Tracking Glow */}
             <div 
@@ -182,23 +177,30 @@ export const McpServerView: React.FC<McpServerViewProps> = ({ onBack, onOpenTeac
             {/* Hero Inner Content */}
             <div className="relative z-10 flex flex-col items-center justify-center max-w-4xl mx-auto space-y-6">
               
-              {/* Top Pill Badge matching WelcomeScreen */}
+              {/* Top Pill Badge */}
               <div className="inline-flex items-center gap-2 px-6 py-2 bg-[#F4F8FA] text-[#3C3C3C] border border-[#7F7FFA]/20 rounded-full font-bold text-xs sm:text-sm shadow-lg tracking-tight">
                 <Sparkles className="w-4 h-4 text-[#7F7FFA]" />
-                <span>Model Context Protocol (MCP)</span>
+                <span>{isTeacher ? "Classroom Lesson Planning" : "Personal Finance AI Tutor"}</span>
               </div>
 
-              {/* Main Headline styled in Inter */}
+              {/* Main Headline with italic accent (NO 'favorite' before 'AI tools') */}
               <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight text-center max-w-4xl">
-                BeginFin, <span className="italic font-normal">now in your favorite AI tools.</span>
+                {isTeacher ? (
+                  <>Lesson planning, <span className="italic font-normal">now directly in your AI tools.</span></>
+                ) : (
+                  <>Bradley, <span className="italic font-normal">now directly in your AI tools.</span></>
+                )}
               </h1>
 
-              {/* Subtitle */}
+              {/* Subtitle in plain, encouraging language */}
               <p className="text-sm sm:text-base text-slate-200/90 max-w-2xl mx-auto font-normal leading-relaxed">
-                Empower Claude, Cursor, or your AI workspace with BeginFin’s 9-unit National Standards-aligned curriculum and Wage & Living Cost Simulator.
+                {isTeacher 
+                  ? "Empower your AI tool with BeginFin's National Standards-aligned curriculum, structured lesson plan generators, and simulator references."
+                  : "Ask personal finance questions, calculate take-home pay, compute 50/30/20 budgets, and practice quizzes directly inside your AI tool."
+                }
               </p>
 
-              {/* Segmented Button Capsule for Endpoint Copying */}
+              {/* Segmented Button Capsule for Server URL Copying */}
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 w-full max-w-xl justify-center">
                 <div className="flex items-center bg-black/90 rounded-full p-1.5 shadow-2xl border border-white/15 w-full justify-between">
                   <div className="flex items-center gap-2 pl-4 text-left min-w-0">
@@ -210,437 +212,365 @@ export const McpServerView: React.FC<McpServerViewProps> = ({ onBack, onOpenTeac
                     className="px-5 py-2.5 bg-white text-black font-extrabold text-xs rounded-full hover:bg-slate-100 transition-all active:scale-95 shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer"
                   >
                     {copiedSnippet === 'hero-url' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedSnippet === 'hero-url' ? 'Copied!' : 'Copy Server URL'}</span>
+                    <span>{copiedSnippet === 'hero-url' ? 'Copied!' : 'Copy MCP URL'}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Terms Subtext */}
-              <p className="text-slate-300/80 text-xs font-medium tracking-tight pt-2">
-                100% Free Open Educational Resource • No API Keys Required • Zero User Data Transferred
+              {/* Subtle Helper Text */}
+              <p className="text-slate-300/80 text-xs font-medium tracking-tight">
+                Add this URL to your AI tool's MCP settings to connect.
               </p>
 
             </div>
           </div>
         </section>
 
-        {/* Bento Grid Content Section */}
-        <section className="pt-8 pb-20 bg-[#F4F8FA] border-t border-slate-200/60 relative z-20">
-          <div className="container mx-auto px-4 sm:px-6 max-w-6xl space-y-8">
-            
-            {/* Top Row Bento Stat Metrics (matching WelcomeScreen Bento Cards) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              
-              {/* Bento Metric 1: 100% Free / $0 Cost */}
-              <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 hover:shadow-[0_12px_35px_rgba(127,127,250,0.12)] transition-all duration-500 flex flex-col justify-between group">
-                <div className="space-y-3">
-                  <div className="w-11 h-11 bg-[#F4F8FA] rounded-xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
-                    <DollarSign className="w-5 h-5" />
+        {/* Approachable Bento Content Section */}
+        <section className="pt-10 pb-20 bg-[#F4F8FA] border-t border-slate-200/60 relative z-20">
+          <div className="container mx-auto px-4 sm:px-6 max-w-6xl space-y-10">
+
+            {/* Quick Connection Bento Card */}
+            <div className="bg-white p-7 sm:p-9 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-6">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
+                  How to connect to your AI tool
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Connect in three simple steps.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2.5 p-5 rounded-[1.75rem] bg-[#F4F8FA] border border-slate-200/60">
+                  <div className="w-8 h-8 rounded-xl bg-white text-[#7F7FFA] font-extrabold flex items-center justify-center text-sm shadow-xs border border-slate-200/60">
+                    1
                   </div>
-                  <div>
-                    <h3 className="text-3xl sm:text-4xl font-normal text-[#3C3C3C] tracking-tight">$0 Cost</h3>
-                    <p className="text-xs font-bold text-[#3C3C3C] mt-1">100% Free & Open Access</p>
-                    <p className="text-xs text-slate-500 mt-0.5 font-normal">Zero subscription, credits, or marginal cost</p>
-                  </div>
+                  <h3 className="text-base font-bold text-[#3C3C3C]">Open Integrations</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Open your AI tool's settings and look for the MCP or server connections section.
+                  </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Always Free
-                  </span>
+
+                <div className="space-y-2.5 p-5 rounded-[1.75rem] bg-[#F4F8FA] border border-slate-200/60">
+                  <div className="w-8 h-8 rounded-xl bg-white text-[#7F7FFA] font-extrabold flex items-center justify-center text-sm shadow-xs border border-slate-200/60">
+                    2
+                  </div>
+                  <h3 className="text-base font-bold text-[#3C3C3C]">Add BeginFin MCP URL</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Add a new server and paste <code className="font-mono text-[11px] text-[#7F7FFA] bg-white px-1.5 py-0.5 rounded border border-slate-200">{SERVER_URL}</code> as the server URL.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 p-5 rounded-[1.75rem] bg-[#F4F8FA] border border-slate-200/60">
+                  <div className="w-8 h-8 rounded-xl bg-white text-[#7F7FFA] font-extrabold flex items-center justify-center text-sm shadow-xs border border-slate-200/60">
+                    3
+                  </div>
+                  <h3 className="text-base font-bold text-[#3C3C3C]">Start Chatting</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {isTeacher 
+                      ? "Prompt your AI tool to draft lesson plans, outline pacing guides, or map standards." 
+                      : "Ask questions, compute wages, or practice quizzes right in your conversation."
+                    }
+                  </p>
                 </div>
               </div>
 
-              {/* Bento Metric 2: 9 Standards-Aligned Units */}
-              <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 hover:shadow-[0_12px_35px_rgba(127,127,250,0.12)] transition-all duration-500 flex flex-col justify-between group">
-                <div className="space-y-3">
-                  <div className="w-11 h-11 bg-[#F4F8FA] rounded-xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
-                    <BookOpen className="w-5 h-5" />
+              {/* Sample Prompt Capsule */}
+              <div className="pt-2">
+                <div className="bg-slate-900 text-slate-200 p-5 rounded-[1.75rem] border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7F7FFA]">Sample prompt to try</span>
+                    <p className="text-xs sm:text-sm text-white font-medium italic">
+                      "{samplePrompt}"
+                    </p>
                   </div>
-                  <div>
-                    <h3 className="text-3xl sm:text-4xl font-normal text-[#3C3C3C] tracking-tight">9 Units</h3>
-                    <p className="text-xs font-bold text-[#3C3C3C] mt-1">National Standards Aligned</p>
-                    <p className="text-xs text-slate-500 mt-0.5 font-normal">Mapped to CEE & Jump$tart frameworks</p>
-                  </div>
-                </div>
-                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-end">
-                  <CheckCircle2 className="w-4 h-4 text-[#7F7FFA]" />
-                </div>
-              </div>
-
-            </div>
-
-            {/* Section Switcher Tabs formatted as Segmented Capsule */}
-            <div className="flex justify-center">
-              <div className="bg-white rounded-full p-1.5 shadow-md border border-slate-200 flex flex-wrap gap-1">
-                {[
-                  { id: 'connect', label: 'Connect Assistant', icon: <Zap className="w-3.5 h-3.5" /> },
-                  { id: 'capabilities', label: 'AI Capabilities', icon: <Sparkles className="w-3.5 h-3.5" /> },
-                  { id: 'curriculum', label: 'Curriculum & Tools', icon: <BookOpen className="w-3.5 h-3.5" /> },
-                  { id: 'faq', label: 'Architecture & FAQ', icon: <HelpCircle className="w-3.5 h-3.5" /> }
-                ].map(tab => (
                   <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex items-center gap-1.5 px-4 sm:px-6 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
-                      activeTab === tab.id
-                        ? 'bg-[#7F7FFA] text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
+                    onClick={() => handleCopyPromptText(samplePrompt, 'sample-p')}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                   >
-                    {tab.icon}
-                    <span>{tab.label}</span>
+                    {copiedPrompt === 'sample-p' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedPrompt === 'sample-p' ? 'Copied' : 'Copy Prompt'}</span>
                   </button>
-                ))}
+                </div>
               </div>
             </div>
 
-            {/* TAB 1: CONNECT YOUR AI (BENTO GRID LAYOUT) */}
-            {activeTab === 'connect' && (
-              <div className="space-y-6">
-                
-                {/* 12-Column Main Connection Bento Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                  
-                  {/* Bento Card 1: Claude.ai Web Connector (col-span-7) */}
-                  <div className="lg:col-span-7 bg-white p-7 sm:p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between flex-wrap gap-2 pb-4 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 font-bold flex items-center justify-center text-lg border border-amber-200">
-                            ⚡
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-700">Web Browser Integration</span>
-                            <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">Claude.ai Web Connector</h3>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleCopyText(SERVER_URL, 'claude-web')}
-                          className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          {copiedSnippet === 'claude-web' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedSnippet === 'claude-web' ? 'Copied' : 'Copy Server URL'}</span>
-                        </button>
-                      </div>
+            {/* Capabilities Bento Grid */}
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
+                  {isTeacher ? "Teacher Capabilities" : "What Bradley can do for you"}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  {isTeacher 
+                    ? "Grounded in BeginFin's verified 9-unit personal finance curriculum and National Standards."
+                    : "Encouraging, judgment-free mentorship to build financial confidence in plain language."
+                  }
+                </p>
+              </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                        <div className="bg-[#F4F8FA] p-3.5 rounded-2xl border border-slate-200/60 space-y-1">
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">Step 1</span>
-                          <h4 className="text-xs font-bold text-[#3C3C3C]">Open Settings</h4>
-                          <p className="text-[11px] text-slate-500">In Claude.ai, open <strong>Settings &rarr; Integrations</strong>.</p>
-                        </div>
-                        <div className="bg-[#F4F8FA] p-3.5 rounded-2xl border border-slate-200/60 space-y-1">
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">Step 2</span>
-                          <h4 className="text-xs font-bold text-[#3C3C3C]">Add Server</h4>
-                          <p className="text-[11px] text-slate-500">Name: <strong>BeginFin</strong><br />Type: <strong>Streamable HTTP</strong></p>
-                        </div>
-                        <div className="bg-[#F4F8FA] p-3.5 rounded-2xl border border-slate-200/60 space-y-1">
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">Step 3</span>
-                          <h4 className="text-xs font-bold text-[#3C3C3C]">Paste URL</h4>
-                          <p className="text-[11px] font-mono text-[#7F7FFA] break-all">{SERVER_URL}</p>
-                        </div>
-                      </div>
+              {/* Student Capabilities (6 cards) */}
+              {!isTeacher && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">
+                      <MessageSquare className="w-5 h-5" />
                     </div>
-
-                    <div className="bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl p-4 flex items-center gap-3">
-                      <Sparkles className="w-5 h-5 text-[#7F7FFA] shrink-0" />
-                      <p className="text-xs text-[#3C3C3C] font-medium leading-relaxed">
-                        <strong>Example prompt:</strong> <em>"Plan a 45-minute lesson on take-home pay and tax deductions using BeginFin Unit 2."</em>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Bento Card 2: Claude Desktop Config (col-span-5) */}
-                  <div className="lg:col-span-5 bg-white p-7 sm:p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between space-y-5">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between flex-wrap gap-2 pb-4 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#7F7FFA] font-bold flex items-center justify-center text-lg border border-indigo-100">
-                            💻
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7F7FFA]">macOS & Windows</span>
-                            <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">Claude Desktop App</h3>
-                          </div>
-                        </div>
-                        <button
-                          onClick={handleDownloadConfig}
-                          className="px-3.5 py-1.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download config.json</span>
-                        </button>
-                      </div>
-
-                      <div className="relative">
-                        <pre className="bg-slate-950 text-indigo-200 text-xs font-mono p-4 rounded-2xl overflow-x-auto border border-slate-800 leading-relaxed">
-                          {CLAUDE_DESKTOP_CONFIG_SNIPPET}
-                        </pre>
-                        <button
-                          onClick={() => handleCopyText(CLAUDE_DESKTOP_CONFIG_SNIPPET, 'desktop-snippet')}
-                          className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold flex items-center gap-1 border border-slate-700 cursor-pointer"
-                        >
-                          {copiedSnippet === 'desktop-snippet' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedSnippet === 'desktop-snippet' ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-slate-500">
-                      Save in <code className="text-slate-700 font-mono">claude_desktop_config.json</code> and restart Claude.
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Ask Bradley</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Ask any money question. Bradley translates complex financial topics into relatable language without corporate jargon.
                     </p>
-                  </div>
-
-                  {/* Bento Card 3: Cursor & AI Workspaces (col-span-6) */}
-                  <div className="lg:col-span-6 bg-white p-7 sm:p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between space-y-4">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between flex-wrap gap-2 pb-4 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 font-bold flex items-center justify-center text-lg border border-purple-100">
-                            🛠️
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-700">Developer Tools</span>
-                            <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">Cursor & AI Code Editors</h3>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleCopyText(SSE_URL, 'cursor-url')}
-                          className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          {copiedSnippet === 'cursor-url' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedSnippet === 'cursor-url' ? 'Copied' : 'Copy SSE URL'}</span>
-                        </button>
-                      </div>
-
-                      <div className="space-y-2 text-xs text-slate-600">
-                        <p>In Cursor <strong>Settings &rarr; Features &rarr; MCP Servers</strong>, add a server with type <strong>SSE</strong> and URL:</p>
-                        <code className="block bg-[#F4F8FA] p-3 rounded-2xl text-xs font-mono text-purple-700 border border-slate-200 select-all">
-                          {SSE_URL}
-                        </code>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
-                      <span>Server-Sent Events (SSE) Protocol</span>
-                      <CheckCircle2 className="w-4 h-4 text-[#7F7FFA]" />
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "How do I start building credit safely as an 18-year-old?"
                     </div>
                   </div>
 
-                  {/* Bento Card 4: Wage and Living Cost Simulator (col-span-6) */}
-                  <div className="lg:col-span-6 bg-white p-7 sm:p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between space-y-4">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between flex-wrap gap-2 pb-4 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 font-bold flex items-center justify-center text-lg border border-emerald-100">
-                            📊
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700">Interactive Browser Tool</span>
-                            <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">Wage & Living Cost Simulator</h3>
-                          </div>
-                        </div>
-                        <a 
-                          href="https://begin-fin.com/tools" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="px-3.5 py-1.5 bg-[#7F7FFA]/10 text-[#7F7FFA] hover:bg-[#7F7FFA]/20 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors"
-                        >
-                          <span>Open Tool</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Calculates take-home pay, federal income taxes, FICA (Social Security & Medicare) withholdings, and balances real-world living expenses across career choices and metropolitan living costs.
-                      </p>
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <Calculator className="w-5 h-5" />
                     </div>
-
-                    <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
-                      <span className="text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">Unit 1 & 2 Aligned</span>
-                      <Sliders className="w-4 h-4 text-[#7F7FFA]" />
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Paycheck & Budget Math</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Calculates mandatory payroll taxes (FICA), net take-home pay, and generates a personalized 50/30/20 monthly budget breakdown.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Calculate my take-home pay on a $48,000 annual salary."
                     </div>
                   </div>
 
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                      <Compass className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Explain Concepts</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Deep-dive explanations of compound interest, FICO credit factors, emergency funds, and tax brackets with real-world scenarios.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Explain how compound interest works over 30 years."
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                      <Scale className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Compare Financial Options</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Objective side-by-side trade-offs between options like Roth vs Traditional IRA, or Debt Avalanche vs Debt Snowball.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Compare a High-Yield Savings Account with a CD."
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Curriculum Glossary</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Instant definitions for confusing terms like APY, FICA, deductible, out-of-pocket maximum, and index funds.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "What does FICA stand for on my paystub?"
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                      <Percent className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Quiz Practice</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Check your understanding with multiple-choice practice questions and clear educational explanations from all 9 units.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Give me a practice quiz question on credit scores."
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Teacher Capabilities (4 cards) */}
+              {isTeacher && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Structured Lesson Plans</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Generate structured 45–90 minute lesson plans complete with real-world hooks, student activities, and formative checks for understanding.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Create a 60-minute lesson on compound interest and index funds."
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <Calculator className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Wage & Living Cost Simulator</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      References take-home pay formulas, federal and state tax withholding calculations, and cost-of-living breakdowns with BeginFin tools.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Outline a classroom activity using the salary simulator."
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                      <Scale className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">National Standards Alignment</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Instantly map classroom units to the National Standards for Personal Finance Education (NSPFE) and Jump$tart Coalition benchmarks.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Which NSPFE standards align with Unit 4 on debt and credit?"
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#3C3C3C]">Custom Pacing Guides</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Build tailored multi-week course schedules for full-semester certifications, high school electives, or career readiness bootcamps.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
+                      "Generate a 9-week pacing guide covering all BeginFin modules."
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Approachable FAQ Section */}
+            <div className="space-y-4">
+              <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
+                Frequently Asked Questions
+              </h2>
+
+              <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
+                <div className="flex items-center gap-2 text-[#7F7FFA] font-bold text-sm">
+                  <HelpCircle className="w-4 h-4" />
+                  <span>How does this compare to chatting directly on BeginFin?</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  On the BeginFin website, Bradley has a 5-message daily quota to protect our community servers. By connecting the MCP server to your AI tool, you can ask unlimited questions and run calculations directly inside your own workflow.
+                </p>
+              </div>
+
+              <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
+                <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Is my personal or student data tracked?</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  No. The MCP server exchanges only educational data and calculations. BeginFin does not track, collect, or store your queries, numbers, or conversations. All calculations are completely stateless.
+                </p>
+              </div>
+
+              <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
+                <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Does Bradley give individualized investment or legal advice?</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  No. BeginFin provides objective financial education and explains foundational principles so learners can make informed decisions. We do not provide personalized stock picks, legal advice, or individualized tax preparation.
+                </p>
+              </div>
+            </div>
+
+            {/* Cross-Link Switcher Section at the End */}
+            <div className="pt-6 pb-4">
+              <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] text-center space-y-4 max-w-2xl mx-auto">
+                <div className="w-12 h-12 rounded-2xl bg-[#F4F8FA] text-[#7F7FFA] flex items-center justify-center mx-auto border border-[#7F7FFA]/20">
+                  {isTeacher ? <GraduationCap className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-bold text-[#3C3C3C]">
+                    {isTeacher ? "Looking for the student tutor?" : "Teaching personal finance in the classroom?"}
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    {isTeacher
+                      ? "Switch to our Bradley Student MCP for personal finance questions, budgeting calculations, and quiz practice."
+                      : "Switch to our Teacher MCP for structured lesson plans, pacing guides, and National Standards alignment."
+                    }
+                  </p>
                 </div>
 
-                {/* Student-Led Application & Inaccuracy Reporting Bento Notice */}
-                <div className="bg-white p-7 rounded-[2rem] border border-amber-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
-                      <AlertTriangle className="w-5 h-5" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-[#3C3C3C] text-sm">Student-Led Open Resource Notice</h4>
-                      <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
-                        BeginFin is an educational project created and maintained by high school students with limited resources. Our MCP server, website content, Bradley AI tutor, and simulators may contain unintentional inaccuracies.
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href="mailto:support@begin-fin.com?subject=BeginFin%20Inaccuracy%20Report"
-                    className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs font-bold flex items-center gap-2 transition-all shrink-0 shadow-xs cursor-pointer active:scale-95"
+                <div className="pt-2">
+                  <button
+                    onClick={() => setShowSwitchModal(true)}
+                    className="px-6 py-3 bg-[#F4F8FA] hover:bg-[#7F7FFA]/10 text-[#7F7FFA] border border-[#7F7FFA]/30 rounded-full text-xs font-extrabold transition-all shadow-xs hover:border-[#7F7FFA] flex items-center gap-2 mx-auto cursor-pointer active:scale-95"
                   >
-                    <Mail className="w-3.5 h-3.5 text-[#7F7FFA]" />
-                    <span>Report to support@begin-fin.com</span>
-                  </a>
+                    <span>
+                      {isTeacher 
+                        ? "Are you a student? View our student MCP instead." 
+                        : "Are you a teacher? View our teacher MCP instead."
+                      }
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-
               </div>
-            )}
-
-            {/* TAB 2: AI CAPABILITIES */}
-            {activeTab === 'capabilities' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold text-lg border border-indigo-100">
-                    🎓
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7F7FFA]">Instant Lesson Plans</span>
-                    <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">Structured Classroom Lesson Plans</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Generate structured 45–90 minute lesson plans with real-world hooks, student activities, and checks for understanding grounded in BeginFin units.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg border border-emerald-100">
-                    📊
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">Simulators & Math</span>
-                    <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">Wage & Living Cost Simulator</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Your AI assistant automatically references take-home pay, federal/state tax calculations, and cost-of-living breakdowns with direct links to begin-fin.com/tools.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg border border-amber-100">
-                    ⚖️
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600">Framework Alignment</span>
-                    <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">National Standards Alignment</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Instantly map lessons to the National Standards for Personal Finance Education (NSPFE) and Jump$tart Coalition benchmarks.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-500 space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-lg border border-purple-100">
-                    🗺️
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600">Syllabus & Calendars</span>
-                    <h3 className="text-xl font-normal text-[#3C3C3C] tracking-tight">Custom Pacing Guides</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Tailor multi-week course schedules for full semester certifications, high school bootcamps, or career readiness.
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB 3: CURRICULUM & TOOLS */}
-            {activeTab === 'curriculum' && (
-              <div className="space-y-6">
-                
-                {/* 9-Unit Curriculum Overview */}
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-6">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7F7FFA]">Core Modules</span>
-                    <h3 className="text-2xl font-normal text-[#3C3C3C] tracking-tight">BeginFin 9-Unit Curriculum</h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Comprehensive, 100% free curriculum vetted for National Standards alignment.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {[
-                      { num: 1, title: 'Personal Finance Fundamentals', desc: 'Bank accounts, budgeting, net worth, and 50/30/20 rule.' },
-                      { num: 2, title: 'Job Finance & USA Taxes', desc: 'Paychecks, gross vs net pay, W-2 vs W-4, and tax brackets.' },
-                      { num: 3, title: 'Investing Basics', desc: 'Stocks, bonds, index funds, ETFs, and compound interest.' },
-                      { num: 4, title: 'Debt & Credit Mastery', desc: 'FICO credit scores, APR, and Avalanche vs Snowball payoff.' },
-                      { num: 5, title: 'Retirement Planning & Taxes', desc: 'Traditional vs Roth 401(k) & IRA, employer matches.' },
-                      { num: 6, title: 'Filing Taxes Roadmap', desc: '5-step guide to filing a first US Federal Tax Return.' },
-                      { num: 7, title: 'Insurance & Risk Management', desc: 'Premiums, deductibles, liability, and emergency funds.' },
-                      { num: 8, title: 'Consumer Rights & Philanthropy', desc: 'Credit freezes, FCRA rights, identity protection, giving.' },
-                      { num: 9, title: 'Medical Finances', desc: 'Health plans, reading EOB bills, and the No Surprises Act.' }
-                    ].map((unit) => (
-                      <div key={unit.num} className="p-4 rounded-2xl border border-slate-200/70 bg-[#F4F8FA] space-y-1.5 hover:border-[#7F7FFA]/40 transition-colors">
-                        <span className="text-[10px] font-extrabold text-[#7F7FFA] bg-[#7F7FFA]/10 px-2 py-0.5 rounded-full border border-[#7F7FFA]/20">
-                          Unit {unit.num}
-                        </span>
-                        <h4 className="font-bold text-[#3C3C3C] text-xs pt-1">{unit.title}</h4>
-                        <p className="text-[11px] text-slate-500 leading-relaxed">{unit.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB 4: ARCHITECTURE & FAQ */}
-            {activeTab === 'faq' && (
-              <div className="space-y-4">
-                
-                <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 text-[#7F7FFA] font-bold text-sm">
-                    <HelpCircle className="w-4 h-4" />
-                    <span>How does the Model Context Protocol (MCP) work?</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Model Context Protocol (MCP) is an open standard that connects your AI assistant (like Claude or Cursor) directly to BeginFin's verified curriculum. Your AI can query unit outlines, learning objectives, and lesson plan templates in real time without hallucination.
-                  </p>
-                </div>
-
-                <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
-                    <DollarSign className="w-4 h-4" />
-                    <span>How much does the BeginFin MCP server cost?</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>$0 — Completely Free.</strong> The MCP server runs on BeginFin's open infrastructure with zero extra marginal cost. It does not use paid API keys, paid credits, or paid database queries. Connecting and using it with your AI assistant is 100% free.
-                  </p>
-                </div>
-
-                <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>What data is transferred over MCP?</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>Only curriculum and educational expertise.</strong> The server only exchanges public unit outlines, standards alignments, lesson plan templates, and simulator links. Zero student or user personal data is ever collected, tracked, or transferred.
-                  </p>
-                </div>
-
-                <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span>Are outputs guaranteed to be 100% accurate?</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    BeginFin is a high school student-led open educational resource built with limited resources. While our materials are vetted against national standards, AI responses and materials may contain unintentional inaccuracies. Please independently verify facts and report any issues to <strong>support@begin-fin.com</strong>.
-                  </p>
-                </div>
-
-              </div>
-            )}
+            </div>
 
           </div>
         </section>
       </main>
 
-      {/* Footer matching standard BeginFin footer */}
+      {/* Switcher Modal */}
+      <Modal
+        isOpen={showSwitchModal}
+        onClose={() => setShowSwitchModal(false)}
+        title={isTeacher ? "Switch to Student MCP" : "Switch to Teacher MCP"}
+        size="sm"
+      >
+        <div className="p-6 space-y-5 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center mx-auto border border-indigo-100">
+            {isTeacher ? <MessageSquare className="w-6 h-6" /> : <GraduationCap className="w-6 h-6" />}
+          </div>
+          <div className="space-y-2">
+            <h4 className="text-lg font-bold text-[#3C3C3C]">
+              {isTeacher 
+                ? "Are you a student? View our student MCP instead." 
+                : "Are you a teacher? View our teacher MCP instead."
+              }
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {isTeacher 
+                ? "Looking for Bradley, our personal finance AI tutor? You can connect Bradley directly to your AI tool to practice budgeting, calculate take-home pay, and master key financial concepts."
+                : "Teaching personal finance? Our Teacher MCP lets your AI tool generate classroom lesson plans, reference National Standards, and build course pacing guides."
+              }
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => setShowSwitchModal(false)}
+              className="px-4 py-2.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              Stay Here
+            </button>
+            <button
+              onClick={handleSwitchTarget}
+              className="px-6 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-full text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <span>{isTeacher ? "Go to Student MCP" : "Go to Teacher MCP"}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-8 px-6 text-center text-xs text-slate-400 space-y-2">
         <div className="flex items-center justify-center gap-4 text-xs font-semibold text-slate-600">
           <Link to="/termsofuse" className="hover:text-[#7F7FFA] transition-colors">Terms of Service</Link>
@@ -649,7 +579,7 @@ export const McpServerView: React.FC<McpServerViewProps> = ({ onBack, onOpenTeac
           <span>•</span>
           <a href="mailto:support@begin-fin.com" className="hover:text-[#7F7FFA] transition-colors">support@begin-fin.com</a>
         </div>
-        <p>© 2026 BeginFin. Student-led open educational resource. Founded in Temple, Texas.</p>
+        <p>© 2026 BeginFin. Open Educational Resource.</p>
       </footer>
     </div>
   );

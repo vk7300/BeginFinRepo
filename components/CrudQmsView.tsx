@@ -332,7 +332,7 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
       ).length;
 
       for (const q of validQuestions) {
-        const questionId = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const questionId = `q_${crypto.randomUUID()}`;
         
         let shouldPublish = false;
         if (bulkPublishImmediately && currentLiveCount < 4) {
@@ -792,7 +792,7 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
     setFormError(null);
 
     try {
-      const questionId = editingQuestion.id || `q_${Date.now()}`;
+      const questionId = editingQuestion.id || `q_${crypto.randomUUID()}`;
       const payload: CustomQuestion = {
         id: questionId,
         moduleId: moduleID,

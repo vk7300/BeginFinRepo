@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Mail, Trash2, Shield, AlertTriangle, Loader2, CheckCircle2, Lock, Phone } from 'lucide-react';
+import { X, Mail, Shield, AlertTriangle, Loader2, CheckCircle2, Lock, Phone } from 'lucide-react';
 import { auth, db, doc, updateDoc, collection, query, where, getDocs, writeBatch, googleProvider, signInWithRedirect } from '../firebase';
 import { deleteUser, updateEmail, reauthenticateWithCredential, EmailAuthProvider, reauthenticateWithPopup, verifyBeforeUpdateEmail } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';

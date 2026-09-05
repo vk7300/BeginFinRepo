@@ -10,11 +10,10 @@ import { ModuleView } from './components/ModuleView';
 import { TaxRoadmap } from './components/TaxRoadmap';
 import { CertificateView } from './components/CertificateView';
 import { CurriculumView } from './components/CurriculumView';
-import { LoadingOverlay } from './components/LoadingOverlay';
 import { modules, Module } from './data/courseData';
-import { Language, languageNames, uiTranslations } from './data/uiTranslations';
-import { Globe, Mail, LogOut, User as UserIcon, BookOpen, AlertTriangle, Users, Zap, X, Loader2, ArrowLeft, ArrowRight, Bell, Trophy, CheckCircle2, Settings, Shield, MessageSquare, Phone, Repeat, Menu, Home, Newspaper, ShieldCheck, Instagram, Linkedin, Sparkles, ExternalLink } from 'lucide-react';
-import { auth, db, googleProvider, signInWithRedirect, getRedirectResult, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, collection, query, where, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, doc, getDoc, setDoc, onSnapshot } from './firebase';
+import { Language, uiTranslations } from './data/uiTranslations';
+import { LogOut, User as UserIcon, BookOpen, AlertTriangle, Users, Zap, X, Loader2, Bell, Trophy, CheckCircle2, Settings, Phone, Repeat, Menu, Home, Sparkles, ExternalLink } from 'lucide-react';
+import { auth, db, googleProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, collection, query, where, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, doc, setDoc, onSnapshot } from './firebase';
 import { sendEmailVerification, GoogleAuthProvider } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SettingsModal } from './components/SettingsModal';
@@ -32,6 +31,7 @@ import { Footer } from './components/Footer';
 import { BradleyChatbot } from './components/BradleyChatbot';
 import { GoogleOneTap } from './components/GoogleOneTap';
 import { StatusView } from './components/StatusView';
+import { ModeSelectionView } from './components/ModeSelectionView';
 import { triggerGoogleSignIn } from './services/googleAuthService';
 
 const orderedModules = [
@@ -46,7 +46,7 @@ const orderedModules = [
   modules.find(m => m.id === 'm9')
 ].filter((m): m is Module => !!m);
 
-export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'mcp' | 'tools' | 'status';
+export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'mcp' | 'teacher-mcp' | 'bradley-mcp' | 'tools' | 'status';
 
 enum OperationType {
   CREATE = 'create',
@@ -550,31 +550,79 @@ const LoginModalContent: React.FC<{
 
 const SwitchRoleModalContent: React.FC<{ 
   onClose: () => void; 
-  onConfirm: () => void;
-  targetRole: 'student' | 'teacher';
-}> = ({ onClose, onConfirm, targetRole }) => {
+  onConfirm: (role: 'student' | 'teacher') => void;
+  currentRole: 'student' | 'teacher' | null;
+}> = ({ onClose, onConfirm, currentRole }) => {
   return (
-    <div className="text-center">
-      <div className={`w-20 h-20 ${targetRole === 'teacher' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'} rounded-3xl flex items-center justify-center mx-auto mb-6`}>
-        {targetRole === 'teacher' ? <Users className="w-10 h-10" /> : <BookOpen className="w-10 h-10" />}
+    <div className="py-2">
+      <div className="text-center mb-6">
+        <h3 className="text-2xl font-extrabold bg-gradient-to-r from-[#212457] via-[#4148A6] to-[#7176E5] bg-clip-text text-transparent mb-1">
+          Welcome to BeginFin
+        </h3>
+        <p className="text-slate-600 text-sm">
+          Choose a mode to get started (you can switch anytime).
+        </p>
       </div>
-      <p className="text-slate-500 font-medium mb-8 leading-relaxed">
-        {targetRole === 'teacher' 
-          ? "This will enable School Mode, allowing you to create classes and track student progress. You can switch back to Student Mode anytime."
-          : "This will switch you back to Student Mode. You will still keep your course progress."}
-      </p>
-      <div className="grid grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+        {/* Student Mode Card */}
+        <button
+          type="button"
+          onClick={() => onConfirm('student')}
+          className={`group bg-white border rounded-2xl p-5 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#7F7FFA]/40 active:scale-[0.99] ${
+            currentRole === 'student'
+              ? 'border-[#7F7FFA] ring-1 ring-[#7F7FFA] shadow-md bg-indigo-50/20'
+              : 'border-slate-200/90 hover:border-[#7F7FFA] hover:shadow-md'
+          }`}
+        >
+          <div>
+            <div className="w-11 h-11 rounded-xl bg-[#EEF0FD] border border-[#E0E4FB] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+              <BookOpen className="w-5 h-5 text-[#5358D4] stroke-[1.8]" />
+            </div>
+            <h4 className="text-base font-bold text-[#1E2022] mb-0.5">Student Mode</h4>
+            <p className="text-slate-500 text-xs leading-relaxed">Learn at your own pace.</p>
+          </div>
+          {currentRole === 'student' && (
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-[#7F7FFA] uppercase tracking-wider">
+              <span>Current</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7F7FFA]" />
+            </div>
+          )}
+        </button>
+
+        {/* Teacher Mode Card */}
+        <button
+          type="button"
+          onClick={() => onConfirm('teacher')}
+          className={`group bg-white border rounded-2xl p-5 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 active:scale-[0.99] ${
+            currentRole === 'teacher'
+              ? 'border-emerald-500 ring-1 ring-emerald-500 shadow-md bg-emerald-50/20'
+              : 'border-slate-200/90 hover:border-emerald-500 hover:shadow-md'
+          }`}
+        >
+          <div>
+            <div className="w-11 h-11 rounded-xl bg-[#E8F8F0] border border-[#D1F2E3] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+              <Users className="w-5 h-5 text-[#10B981] stroke-[1.8]" />
+            </div>
+            <h4 className="text-base font-bold text-[#1E2022] mb-0.5">Teacher Mode</h4>
+            <p className="text-slate-500 text-xs leading-relaxed">Teach at your own pace.</p>
+          </div>
+          {currentRole === 'teacher' && (
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+              <span>Current</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </div>
+          )}
+        </button>
+      </div>
+
+      <div className="mt-6 flex justify-end">
         <button 
+          type="button"
           onClick={onClose}
-          className="py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+          className="px-5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
         >
           Cancel
-        </button>
-        <button 
-          onClick={onConfirm}
-          className={`py-4 ${targetRole === 'teacher' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20`}
-        >
-          Confirm Switch
         </button>
       </div>
     </div>
@@ -639,18 +687,22 @@ const App: React.FC = () => {
       setCurrentView('about');
     } else if (path === '/tools' || path.startsWith('/tools/') || path === '/simulator' || path === '/simulators') {
       setCurrentView('tools');
-    } else if (path === '/mcp' || path.startsWith('/mcp/') || path === '/mcp.json' || path === '/beginfin-mcp') {
-      setCurrentView('mcp');
+    } else if (path === '/teacher/mcp' || path.startsWith('/teacher/mcp')) {
+      setCurrentView('teacher-mcp');
+    } else if (path === '/bradley/mcp' || path.startsWith('/bradley/mcp') || path === '/bradley' || path.startsWith('/bradley/') || path === '/mcp' || path.startsWith('/mcp/') || path === '/mcp.json' || path === '/beginfin-mcp') {
+      setCurrentView('bradley-mcp');
     } else if (path === '/status' || path.startsWith('/status')) {
       setCurrentView('status');
     } else if (path === '/crud-qms' || path.startsWith('/crud-qms')) {
       setCurrentView('crud-qms');
+    } else if (path === '/onboarding' || path === '/mode' || path === '/choose-mode' || path === '/select-mode') {
+      setCurrentView('onboarding');
     } else if (path === '/') {
       setHasStarted(false);
       setCurrentView('welcome');
     } else if (path === '/app' || path.startsWith('/app/')) {
       setHasStarted(true);
-      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'resources' || currentView === 'tools' || currentView === 'status' || currentView === 'mcp') {
+      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'resources' || currentView === 'tools' || currentView === 'status' || currentView === 'mcp' || currentView === 'teacher-mcp' || currentView === 'bradley-mcp') {
         if (user) {
           if (!userRole) {
             setCurrentView('onboarding');
@@ -729,14 +781,18 @@ const App: React.FC = () => {
       case 'crud-qms':
         sectionTitle = 'QMS & Certifier';
         break;
+      case 'teacher-mcp':
+        sectionTitle = 'Teacher MCP';
+        break;
+      case 'bradley-mcp':
       case 'mcp':
-        sectionTitle = 'MCP Server';
+        sectionTitle = 'Bradley MCP';
         break;
       case 'guide':
         sectionTitle = 'Quick Start Guide';
         break;
       case 'onboarding':
-        sectionTitle = 'Join Class';
+        sectionTitle = 'Choose Mode';
         break;
       case 'terms':
         sectionTitle = 'Terms of Service';
@@ -1136,18 +1192,25 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSwitchRole = async () => {
-    if (!user || !userRole) return;
-    const nextRole = userRole === 'student' ? 'teacher' : 'student';
+  const handleSwitchRole = async (targetRole?: 'student' | 'teacher') => {
+    const nextRole = targetRole || (userRole === 'student' ? 'teacher' : 'student');
+    if (userRole === nextRole && userRole !== null) {
+      setShowSwitchRoleModal(false);
+      return;
+    }
     
-    triggerPseudoLoading(`Switching to ${nextRole === 'teacher' ? 'Teacher' : 'Student'} Mode...`, 2500);
+    triggerPseudoLoading(`Switching to ${nextRole === 'teacher' ? 'Teacher' : 'Student'} Mode...`, 2000);
     
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, {
-        role: nextRole,
-        lastUpdated: new Date().toISOString()
-      }, { merge: true });
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, {
+          role: nextRole,
+          lastUpdated: new Date().toISOString()
+        }, { merge: true });
+      } else {
+        localStorage.setItem('beginfin-guest-role', nextRole);
+      }
       
       setUserRole(nextRole);
       if (nextRole === 'teacher') {
@@ -1157,7 +1220,13 @@ const App: React.FC = () => {
       setShowUserMenu(false);
       setCurrentView('dashboard');
     } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
+      if (user) {
+        handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
+      }
+      setUserRole(nextRole);
+      setShowSwitchRoleModal(false);
+      setShowUserMenu(false);
+      setCurrentView('dashboard');
     }
   };
 
@@ -1342,13 +1411,13 @@ const App: React.FC = () => {
         <Modal 
           isOpen={showSwitchRoleModal} 
           onClose={() => setShowSwitchRoleModal(false)} 
-          title={`Switch to ${userRole === 'student' ? 'Teacher' : 'Student'} Mode?`}
-          size="sm"
+          title="Mode Selection"
+          size="md"
         >
           <SwitchRoleModalContent
             onClose={() => setShowSwitchRoleModal(false)}
-            onConfirm={handleSwitchRole}
-            targetRole={userRole === 'student' ? 'teacher' : 'student'}
+            onConfirm={(role) => handleSwitchRole(role)}
+            currentRole={userRole}
           />
         </Modal>
 
@@ -1617,7 +1686,7 @@ const App: React.FC = () => {
                 />
               </div>
             </motion.div>
-          ) : currentView === 'mcp' ? (
+          ) : currentView === 'teacher-mcp' ? (
             <motion.div
               key={currentView}
               initial="initial"
@@ -1630,6 +1699,7 @@ const App: React.FC = () => {
               <div className="flex-1 flex flex-col">
                 <main className="flex-1">
                   <McpServerView 
+                    mode="teacher"
                     onBack={() => {
                       navigate('/');
                       setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
@@ -1637,6 +1707,51 @@ const App: React.FC = () => {
                     onOpenTeacherDashboard={() => {
                       navigate('/app');
                       setCurrentView('dashboard');
+                    }}
+                    onSwitchMode={(newMode) => {
+                      if (newMode === 'student') {
+                        navigate('/bradley/mcp');
+                        setCurrentView('bradley-mcp');
+                      }
+                    }}
+                  />
+                </main>
+                <Footer 
+                  onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
+                  onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
+                  onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
+                  onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
+                  onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+                />
+              </div>
+            </motion.div>
+          ) : (currentView === 'bradley-mcp' || currentView === 'mcp') ? (
+            <motion.div
+              key={currentView}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={pageVariants}
+              transition={pageTransition}
+              className="flex-1 flex flex-col"
+            >
+              <div className="flex-1 flex flex-col">
+                <main className="flex-1">
+                  <McpServerView 
+                    mode="student"
+                    onBack={() => {
+                      navigate('/');
+                      setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
+                    }}
+                    onOpenTeacherDashboard={() => {
+                      navigate('/app');
+                      setCurrentView('dashboard');
+                    }}
+                    onSwitchMode={(newMode) => {
+                      if (newMode === 'teacher') {
+                        navigate('/teacher/mcp');
+                        setCurrentView('teacher-mcp');
+                      }
                     }}
                   />
                 </main>
@@ -1750,86 +1865,42 @@ const App: React.FC = () => {
               variants={pageVariants}
               className="flex-1 flex flex-col"
             >
-              {user && currentView === 'onboarding' && (
-                <div key="onboarding-view" className="flex-1 flex items-center justify-center p-6 bg-slate-50">
-                  <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-2xl w-full border border-slate-100">
-                    <div className="text-center mb-10">
-                      <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                        <UserIcon className="w-10 h-10 text-indigo-600" />
-                      </div>
-                      <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Welcome to BeginFin</h2>
-                      <p className="text-slate-500 font-medium text-lg">Choose your journey to get started.</p>
-                      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Note: You can switch between modes at any time in your settings.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <button 
-                        onClick={async () => {
-                          try {
-                            triggerPseudoLoading("Setting up your student profile...", 2500);
-                            const userDocRef = doc(db, 'users', user.uid);
-                            await setDoc(userDocRef, {
-                              uid: user.uid,
-                              email: user.email,
-                              displayName: user.displayName,
-                              role: 'student',
-                              completedModules: completedModules || [],
-                              lastUpdated: new Date().toISOString()
-                            }, { merge: true });
-                            setUserRole('student');
-                            setHasStarted(true);
-                            setCurrentView('dashboard');
-                          } catch (err) {
-                            console.error('Onboarding failed:', err);
-                            handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
-                          }
-                        }}
-                        className="group p-8 bg-white border-2 border-slate-100 rounded-[2rem] hover:border-indigo-600 hover:shadow-xl transition-all text-left"
-                      >
-                        <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                          <BookOpen className="w-6 h-6" />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 mb-2">I'm a Student</h3>
-                        <p className="text-slate-500 text-sm font-medium leading-relaxed">Learn financial literacy at your own pace.</p>
-                      </button>
-
-                      <button 
-                        onClick={async () => {
-                          try {
-                            triggerPseudoLoading("Setting up your teacher profile...", 2500);
-                            const userDocRef = doc(db, 'users', user.uid);
-                            await setDoc(userDocRef, {
-                              uid: user.uid,
-                              email: user.email,
-                              displayName: user.displayName,
-                              role: 'teacher',
-                              completedModules: completedModules || [],
-                              lastUpdated: new Date().toISOString()
-                            }, { merge: true });
-                            setUserRole('teacher');
-                            setHasStarted(true);
-                            setCurrentView('dashboard');
-                          } catch (err) {
-                            console.error('Onboarding failed:', err);
-                            handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
-                          }
-                        }}
-                        className="group p-8 bg-white border-2 border-slate-100 rounded-[2rem] hover:border-emerald-600 hover:shadow-xl transition-all text-left"
-                      >
-                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                          <Users className="w-6 h-6" />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 mb-2">I'm a Teacher</h3>
-                        <p className="text-slate-500 text-sm font-medium leading-relaxed">Create classes, invite students, and track their progress.</p>
-                      </button>
-                    </div>
-
-                    <div className="mt-12 text-center">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">
-                        Note: You can switch between Student and Teacher modes later as needed.
-                      </p>
-                    </div>
-                  </div>
+              {currentView === 'onboarding' && (
+                <div key="onboarding-view" className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-[#F4F8FA] min-h-[85vh]">
+                  <ModeSelectionView
+                    onSelectMode={async (role) => {
+                      try {
+                        triggerPseudoLoading(role === 'teacher' ? "Setting up your teacher profile..." : "Setting up your student profile...", 2000);
+                        if (user) {
+                          const userDocRef = doc(db, 'users', user.uid);
+                          await setDoc(userDocRef, {
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName,
+                            role: role,
+                            completedModules: completedModules || [],
+                            lastUpdated: new Date().toISOString()
+                          }, { merge: true });
+                        } else {
+                          localStorage.setItem('beginfin-guest-role', role);
+                        }
+                        setUserRole(role);
+                        setHasStarted(true);
+                        setCurrentView('dashboard');
+                        navigate('/app');
+                      } catch (err) {
+                        console.error('Onboarding failed:', err);
+                        if (user) {
+                          handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
+                        }
+                        setUserRole(role);
+                        setHasStarted(true);
+                        setCurrentView('dashboard');
+                        navigate('/app');
+                      }
+                    }}
+                    currentMode={userRole}
+                  />
                 </div>
               )}
 

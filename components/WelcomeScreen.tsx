@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, CheckCircle, ChevronRight, ChevronDown, Award, Globe, BookOpen, Library, ShieldCheck, Mail, ArrowRight, DollarSign, Info, Users, Map, Search, Share2, FileText, CreditCard, TrendingUp, Home, Shield, Calendar, Clock, Zap, Newspaper, Heart, Menu, Star, Quote, User as UserSilhouette, Linkedin, ArrowUpRight, Instagram, Gauge, Lightbulb, School, Coins, GraduationCap, Sparkles } from 'lucide-react';
+import { X, CheckCircle, ChevronRight, ChevronDown, Award, Globe, BookOpen, Library, ShieldCheck, ArrowRight, DollarSign, Info, Users, Map, Search, Share2, FileText, CreditCard, TrendingUp, Home, Calendar, Clock, Zap, Newspaper, Heart, Menu, Star, Quote, User as UserSilhouette, ArrowUpRight, Gauge, Lightbulb, School, Coins, GraduationCap, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CookieBanner } from './CookieBanner';
 import { Modal } from './Modal';
-import { Language, uiTranslations, languageNames } from '../data/uiTranslations';
+import { Language, uiTranslations } from '../data/uiTranslations';
 import { User, db, OperationType, handleFirestoreError } from '../firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { Article } from '../types';

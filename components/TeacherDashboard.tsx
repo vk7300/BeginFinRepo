@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, Copy, CheckCircle2, BookOpen, Trophy, Loader2, Search, ArrowRight, User as UserIcon, Trash2, ChevronDown, ChevronUp, AlertCircle, FileText, Download, Zap, Calendar, X, Lock, Unlock, Bell, Award, MessageSquare, Share2, GraduationCap, Send, RefreshCw, Link as LinkIcon, ExternalLink, Check, Sparkles } from 'lucide-react';
+import { Users, Plus, Copy, CheckCircle2, BookOpen, Trophy, Loader2, Search, User as UserIcon, Trash2, ChevronDown, ChevronUp, AlertCircle, FileText, Download, Zap, Calendar, X, Lock, Unlock, Bell, Award, Share2, GraduationCap, Send, RefreshCw, Link as LinkIcon, ExternalLink, Check, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db, collection, query, where, getDocs, addDoc, doc, onSnapshot, setDoc, deleteDoc, writeBatch, handleFirestoreError, OperationType, updateDoc } from '../firebase';
 import { modules } from '../data/courseData';
@@ -736,9 +736,9 @@ export const TeacherDashboard: React.FC<{
           </div>
           <div className="flex flex-wrap gap-3">
             <button 
-              onClick={() => navigate('/mcp')} 
+              onClick={() => navigate('/teacher/mcp')} 
               className="px-5 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm"
-              title="Integrate BeginFin with Claude, Gemini, Cursor & MCP"
+              title="Integrate BeginFin Lesson Planner with your AI tool via MCP"
             >
               <Sparkles className="w-4 h-4 text-indigo-400" /> AI Lesson Planner (MCP)
             </button>

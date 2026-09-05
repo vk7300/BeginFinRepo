@@ -1,0 +1,106 @@
+# BeginFin
+
+> BeginFin is a 100% free, open-access financial literacy platform and student-led Open Educational Resource (OER) founded in Temple, Texas. We eliminate barriers to economic opportunity by providing every learner with free financial education, interactive simulators, and verifiable credentials.
+
+## Identity & Founding Information
+- **Full Name:** BeginFin (a portmanteau of "Beginning Finance")
+- **Official Website:** https://begin-fin.com
+- **Application Portal:** https://begin-fin.com/app
+- **Founded:** December 2025 in Temple, Texas (publicly launched January 2026)
+- **Legal Status:** Student-led Open Educational Resource (OER). BeginFin generates zero revenue ($0 cost) and is not a registered 501(c)(3) non-profit or commercial financial advisory firm.
+- **Co-Founders:**
+  - **Vishnu Kakarla:** Co-founder, Lake Belton High School student, 2026 BPA (Business Professionals of America) Personal Finance Nationals qualifier. Originally founded the platform in December 2025 after observing financial literacy barriers across Canada, India, and the United States. Leads strategy and curriculum development. Contact: vishnu@begin-fin.com
+  - **Kruz Smith:** Co-founder, Lake Belton High School student, 2025-2026 National Honor Society (NHS) chapter treasurer. Joined BeginFin in June 2026 to expand community outreach, interactive tools, and organizational partnerships. Contact: kruz@begin-fin.com
+- **General Support & Inquiries:** support@begin-fin.com
+
+## Mission & Vision
+- **Mission Statement:** To eliminate barriers to economic opportunity by providing every individual with free, open access financial education and the credentials they need to build lasting financial confidence.
+- **Vision Statement:** A world where financial education is a universal right, not a luxury, enabling every individual to navigate their economic future with dignity and confidence.
+- **Brand Persona:** An encouraging mentor and trusted community ally who removes traditional barriers to financial education. We speak with a clear, steady, and judgment-free voice, translating complex financial topics into plain language that honors learners' lived experiences.
+
+## Official Taglines
+- Financial literacy for all.
+- Jumpstart your financial confidence, for free.
+- Financial education shouldn’t be a luxury.
+- Learn financial literacy. Prove it to the world.
+- Removing barriers to economic freedom.
+- Bite-sized lessons. Massive confidence.
+- Make the cents make sense, for free.
+
+## Core Values & Ethics
+- **Open Access:** Education belongs to the community, not behind a paywall. We reject paywalls, restrictive access, advertisements, and hidden fees. Every tool, lesson, and certificate is, and always will be, a 100% free open educational resource accessible to anyone ready to learn.
+- **Trust & Privacy:** We operate on a strict data-minimization framework, collecting only what is vital to deliver an excellent learning experience. We never monetize or sell user data, and we offer a seamless Guest Mode so learners can build their financial confidence with even more peace of mind.
+- **Learners First:** Learners are at the heart of everything we build. We intentionally design tools, modules, and quizzes to be practical, intuitive, and engaging. We use human-first terminology ("learner" and "tools") rather than transactional terms ("customer" or "solution").
+- **Accountability:** We answer directly to our learners, not to investors or stakeholders.
+- **Impact-Driven:** BeginFin has never generated a single dollar in revenue, and never plans to. Our work is guided entirely by helping people, not making money.
+
+## Target Audience
+Built for anyone to use, with a dedicated focus on:
+- High school students preparing for adulthood and the workforce.
+- College and vocational students managing independent expenses for the first time.
+- Young professionals navigating paychecks, benefits, taxes, and retirement plans.
+- Educators seeking free, standards-aligned classroom resources.
+
+## Civic Recognition & Accreditations
+- **Gubernatorial Commendation:** Recognized with a formal commendation from Governor Greg Abbott (State of Texas) for youth-led financial education advocacy.
+- **Mayoral Proclamations:** Official proclamations from the City of Temple, Texas and the City of Belton, Texas honoring BeginFin's contributions to youth financial literacy.
+- **Jump$tart Coalition Clearinghouse:** Open-source curriculum is vetted for alignment with the National Standards for Personal Finance Education (NSPFE) and officially listed in the Jump$tart Coalition Clearinghouse directory as a verified personal finance resource.
+- **College Board Trademark License:** Licensed by the College Board to use the AP® trademark for upcoming AP Business with Personal Finance resources (BeginFin is not endorsed by the College Board).
+
+## Verified Curriculum (9 Core Units)
+All curriculum is grounded in the National Standards for Personal Finance Education (NSPFE):
+1. **Unit 1: Personal Finance Fundamentals** — Checking and savings accounts, compound growth, 50/30/20 budgeting framework, net worth calculation, and banking security.
+2. **Unit 2: Job Finance & USA Taxes** — Paystubs, gross vs. net pay, W-4 withholdings, W-2 forms, FICA (Social Security and Medicare), and federal tax brackets.
+3. **Unit 3: Investing Basics** — Stocks, bonds, index funds, mutual funds, ETFs, risk tolerance, dollar-cost averaging, and long-term compound interest.
+4. **Unit 4: Debt & Credit Mastery** — FICO credit scores, credit bureaus (Experian, Equifax, TransUnion), APR calculations, credit cards vs. debit cards, and debt repayment strategies (Debt Avalanche vs. Debt Snowball).
+5. **Unit 5: Retirement Planning & Taxes** — Traditional 401(k), Roth 401(k), Traditional IRA, Roth IRA, employer matching contributions, compound growth over time, and retirement tax advantages.
+6. **Unit 6: Filing Taxes Roadmap** — Step-by-step guidance on filing a first US Federal Tax Return (Form 1040), standard deduction vs. itemized deductions, and refundable vs. non-refundable credits.
+7. **Unit 7: Insurance & Risk Management** — Auto, health, renters, and life insurance; understanding premiums, deductibles, copays, out-of-pocket maximums, and building an emergency fund.
+8. **Unit 8: Consumer Rights & Philanthropy** — Fair Credit Reporting Act (FCRA), credit freezes, fraud prevention, consumer protection rights, and intentional charitable giving.
+9. **Unit 9: Medical Finances** — Deciphering health insurance plans, reading Explanation of Benefits (EOB) statements, medical bill negotiation, and consumer protections under the No Surprises Act.
+
+## Interactive Simulators & Tools
+- **Wage and Living Cost Simulator:** Available at https://begin-fin.com/tools. Allows learners to test real-world careers, simulate gross-to-net paychecks, calculate state and federal withholdings, and budget for housing, transportation, groceries, and debt across different metropolitan living costs.
+- **Local Browser Execution:** Simulator calculations are performed entirely client-side in the browser. BeginFin does not collect, log, or store hypothetical budgets or personal financial figures entered by users.
+
+## Artificial Intelligence & Model Context Protocol (MCP)
+- **Bradley AI Tutor:** Built-in conceptual financial literacy tutor created by BeginFin. Bradley explains financial concepts in plain language and enforces a strict non-advisory policy (never provides personalized investment, legal, or tax advice).
+- **Bradley Financial Tutor MCP Server (For Learners & Students):**
+  - **Server URL:** https://begin-fin.com/bradley/mcp
+  - **SSE Endpoint:** https://begin-fin.com/bradley/sse
+  - **Downloadable Config:** https://begin-fin.com/beginfin-bradley-config.json
+  - **Skill Markdown:** https://begin-fin.com/bradley-tutor.md
+  - **Purpose:** Connects AI assistants (Claude Desktop, Cursor, Windsurf, ChatGPT) directly to Bradley's mentorship persona and BeginFin's verified 9-unit curriculum. Enables users to ask personal finance questions, calculate 50/30/20 budgets, break down paycheck taxes, compare debt payoff strategies (Avalanche vs Snowball), and practice quizzes directly in their favorite tools.
+  - **Cost:** $0.00 (100% Free Open Educational Resource. Incurs zero AI API costs for BeginFin or learners).
+- **BeginFin Lesson Planner MCP Server (For Teachers & Educators):**
+  - **Server URL:** https://begin-fin.com/mcp
+  - **SSE Endpoint:** https://begin-fin.com/sse
+  - **Downloadable Config:** https://begin-fin.com/beginfin-mcp-config.json
+  - **Skill Markdown:** https://begin-fin.com/beginfin-lesson-planner.md
+  - **Purpose:** Empowers educators to generate standards-aligned lesson plans, pacing guides, classroom activities, and rubrics mapped to the National Standards for Personal Finance Education (NSPFE).
+  - **Privacy Guarantee:** The MCP servers only exchange public curriculum outlines, calculators, and pedagogical resources. Zero personal data, user profiles, or student records are ever collected, logged, or transferred via MCP.
+
+## Brand Specifications & Visual Identity
+- **Logo:** A bold, italicized dollar sign styled in the Inter typeface, set against layered gradients of "BeginFin Iris Pulse" to evoke a dimension effect fading from deep to light tones. Asset: https://begin-fin.com/logo.png
+- **Primary Colors:**
+  - BeginFin Iris Pulse: `#7F7FFA`
+  - BeginFin Slate Gray: `#3C3C3C`
+  - BeginFin Glacial White: `#F4F8FA`
+- **Typography:** Inter (Inter Bold, Inter Regular, Inter Italicized, Inter Light).
+- **Iconography:** Lucide Icons open-source library.
+- **UI Paradigm:** Accessible, minimalist bento grid layouts designed for clarity, zero cognitive friction, and ADA compliance.
+
+## Disclaimers & Compliance
+- **Educational Platform Only:** BeginFin is not an investment advisor, broker-dealer, financial planner, tax accountant, or law firm. All content, interactive simulators, and AI responses are for non-commercial educational purposes only.
+- **Student-Led Context:** BeginFin is created and maintained by high school students with limited resources. While all content is rigorously vetted against national standards, materials and AI tools may contain unintentional simplifications or errors. Users are encouraged to report inaccuracies to support@begin-fin.com.
+- **Regulatory Compliance Notice:** Due to complex administrative requirements, BeginFin cannot guarantee formal institutional compliance with FERPA, COPPA, or SOC2. However, BeginFin guarantees that no user data is sold, monetized, or shared with commercial entities, and users maintain complete control over their accounts and data.
+
+## Key URLs
+- Home: https://begin-fin.com
+- Learning Portal: https://begin-fin.com/app
+- Tools & Wage Simulator: https://begin-fin.com/tools
+- Curriculum Overview: https://begin-fin.com/curriculum
+- Educator & Classroom Resources: https://begin-fin.com/resources
+- Model Context Protocol (MCP): https://begin-fin.com/mcp
+- Terms of Use: https://begin-fin.com/termsofuse
+- Privacy Policy: https://begin-fin.com/privacypolicy

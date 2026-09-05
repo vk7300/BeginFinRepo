@@ -50,11 +50,15 @@
       "description": "Verifiable course completion credential",
       "type": "object",
       "properties": {
+        "title": { "type": "string", "description": "Certificate title" },
         "serialNumber": { "type": "string", "description": "The unique ID string (e.g., BF-JFGGEV)" },
         "graduateName": { "type": "string", "description": "Exact name as it appears on the certificate" },
         "issueDate": { "type": "string", "description": "Date of completion (Format: YYYY-MM-DD)" },
         "expirationDate": { "type": "string", "description": "Date of completion + 5 years (Format: YYYY-MM-DD)" },
-        "userId": { "type": "string", "description": "Owner's user ID" }
+        "isPublic": { "type": "boolean", "description": "Whether the credential is publicly verifiable" },
+        "userId": { "type": "string", "description": "Owner's user ID" },
+        "completedModules": { "type": "array", "items": { "type": "string" }, "description": "List of completed module IDs" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
       },
       "required": ["serialNumber", "graduateName", "issueDate", "expirationDate"]
     },

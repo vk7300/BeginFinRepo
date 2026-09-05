@@ -105,7 +105,10 @@ service cloud.firestore {
              data.graduateName is string && data.graduateName.size() > 0 &&
              data.issueDate is string && data.issueDate.size() == 10 &&
              data.expirationDate is string && data.expirationDate.size() == 10 &&
+             (!('title' in data) || data.title is string) &&
              (!('isPublic' in data) || data.isPublic is bool) &&
+             (!('completedModules' in data) || data.completedModules is list) &&
+             (!('updatedAt' in data) || data.updatedAt is string) &&
              (!('userId' in data) || (data.userId is string && (data.userId == request.auth.uid || isAdmin())));
     }
 
@@ -193,8 +196,11 @@ service cloud.firestore {
       allow get: if (resource.data.get('isPublic', false) == true) || 
                    (isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isAdmin()));
       allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      // Credentials creation, update, and deletion are server-side only via Admin SDK
-      allow create, update, delete: if false;
+      // Allow authenticated owner or admin to create and update their verified credential
+      allow create, update: if isAuthenticated() && 
+                            (credentialId == request.auth.uid || isAdmin()) &&
+                            isValidCredential(request.resource.data);
+      allow delete: if isAdmin() || (isAuthenticated() && credentialId == request.auth.uid);
     }
 
     match /articles/{articleId} {

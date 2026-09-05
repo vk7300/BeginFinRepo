@@ -68,7 +68,7 @@ export const CertificateView: React.FC<Props> = ({
         const idToken = await auth.currentUser?.getIdToken();
         if (!idToken) return;
 
-        await fetch('/api/issue-certificate', {
+        const response = await fetch('/api/issue-certificate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -76,9 +76,18 @@ export const CertificateView: React.FC<Props> = ({
           },
           body: JSON.stringify({
             graduateName: userName,
-            isPublic: isPublicVerification
+            isPublic: isPublicVerification,
+            completedModules: completedIds
           })
         });
+
+        if (response.ok) {
+          const resData = await response.json().catch(() => ({}));
+          if (resData.credential) {
+            const credRef = doc(db, 'credentials', userId);
+            await setDoc(credRef, resData.credential, { merge: true });
+          }
+        }
       } catch (err) {
         console.warn('Auto credential sync notice:', err);
       }
@@ -129,13 +138,22 @@ export const CertificateView: React.FC<Props> = ({
         },
         body: JSON.stringify({
           graduateName: userName || "BeginFin Student",
-          isPublic: nextStatus
+          isPublic: nextStatus,
+          completedModules: completedIds
         })
       });
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         throw new Error(errData.error || "Failed to update credential visibility");
+      }
+
+      const resData = await response.json().catch(() => ({}));
+      const credRef = doc(db, 'credentials', userId);
+      if (resData.credential) {
+        await setDoc(credRef, resData.credential, { merge: true });
+      } else {
+        await setDoc(credRef, { isPublic: nextStatus, updatedAt: new Date().toISOString() }, { merge: true });
       }
 
       setIsPublicVerification(nextStatus);
@@ -164,7 +182,7 @@ export const CertificateView: React.FC<Props> = ({
 
         const idToken = await auth.currentUser?.getIdToken();
         if (idToken && allCompleted) {
-          await fetch('/api/issue-certificate', {
+          const response = await fetch('/api/issue-certificate', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -172,9 +190,17 @@ export const CertificateView: React.FC<Props> = ({
             },
             body: JSON.stringify({
               graduateName: finalName,
-              isPublic: isPublicVerification
+              isPublic: isPublicVerification,
+              completedModules: completedIds
             })
           });
+          if (response.ok) {
+            const resData = await response.json().catch(() => ({}));
+            if (resData.credential) {
+              const credRef = doc(db, 'credentials', userId);
+              await setDoc(credRef, resData.credential, { merge: true });
+            }
+          }
         }
 
         setUserName(finalName);
