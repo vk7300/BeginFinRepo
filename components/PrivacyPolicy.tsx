@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { useNavPadding } from './Navbar';
 
 interface Props {
   onBack: () => void;
@@ -10,10 +11,11 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
     window.scrollTo(0, 0);
   }, []);
 
+  const navPadding = useNavPadding();
   const currentDate = "August 30, 2026";
 
   return (
-    <div className="min-h-screen bg-[#F4F8FA] py-12 px-4 sm:px-6 font-sans">
+    <div className={`min-h-screen bg-[#F4F8FA] ${navPadding} pb-16 px-4 sm:px-6 font-sans`}>
       <div className="max-w-4xl mx-auto">
         <button 
           onClick={onBack}
@@ -41,7 +43,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
                     BeginFin is an open-access educational platform and student-led initiative founded in Temple, Texas. WE DO NOT PROVIDE INDIVIDUALIZED FINANCIAL, INVESTMENT, LEGAL, OR TAX ADVICE. Learners should consult qualified professionals regarding their specific circumstances.
                   </p>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>Student-Led Resource Notice:</strong> BeginFin is developed and maintained by high school students with limited resources. While we strive to maintain high-quality educational materials, our website content, learning modules, Bradley AI tutor, Model Context Protocol (MCP) server, and simulators may contain unintentional inaccuracies. Please report any issues or errors to <strong>support@begin-fin.com</strong>.
+                    <strong>Student-Led Resource Notice:</strong> BeginFin is developed and maintained by high school students with limited resources. While we strive to maintain high-quality educational materials, our website content, learning modules, Model Context Protocol (MCP) server, and simulators may contain unintentional inaccuracies. Please report any issues or errors to <strong>support@begin-fin.com</strong>.
                   </p>
                 </div>
               </div>
@@ -63,6 +65,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
               <p>When used in classroom settings or connected through teacher class codes, BeginFin operates to support academic learning:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Classroom Role:</strong> BeginFin provides progress reporting utilities for educators. Student learning records remain under the instructional oversight of the verified teacher.</li>
+                <li><strong>Class Rosters & Automatic Enrollment:</strong> When an educator synchronizes a class roster via Google Classroom or inputs student emails into School Mode, student email identifiers are associated with the class to facilitate seamless, automatic classroom enrollment upon student sign-in, with a one-time welcome notification.</li>
                 <li><strong>Educational Data Usage:</strong> Course progress (quiz scores, module completion status, assignment completions) is used exclusively for educational feedback to the enrolled learner and their verified instructor.</li>
                 <li><strong>No Commercial Exploitation:</strong> We never sell, rent, or lease student records, nor do we build behavioral profiles for commercial advertising.</li>
                 <li><strong>Access and Correction:</strong> Parents, guardians, or eligible students may review, update, or request the deletion of student records by emailing support@begin-fin.com.</li>
@@ -94,7 +97,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-3.5 font-semibold text-[#3C3C3C]">Local Browser Storage & Preferences</td>
-                      <td className="p-3.5">Saving user language preference (English/Spanish), guest progress, and daily AI assistant rate-limit counters</td>
+                      <td className="p-3.5">Saving user language preference (English/Spanish) and guest progress</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-3.5 font-semibold text-[#3C3C3C]">Technical Diagnostics</td>
@@ -118,12 +121,21 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">6. THIRD-PARTY SERVICES, AI & MODEL CONTEXT PROTOCOL (MCP)</h4>
+              <h4 className="font-bold text-[#3C3C3C]">6. AP® COURSE REVIEW RESOURCES & PRIVACY (ZERO DATA COLLECTION)</h4>
+              <p>BeginFin provides open review materials in <em>BeginFin's Guide to AP® Business with Personal Finance</em> (available at <code>/tools/beginfinsguidetoapbusinesswithpf</code>):</p>
+              <ul className="list-disc ml-6 space-y-2 text-xs font-medium text-slate-700">
+                <li><strong>Strictly Read-Only Access:</strong> All AP® review content is delivered statically for educational review. Navigating and reading these pages does not alter BeginFin's strict no-collection privacy posture.</li>
+                <li><strong>No Progress Tracking or Telemetry:</strong> We do not collect, monitor, track, or record learner identities, page views, progress flags, quiz scores, or completion metrics on AP® review pages.</li>
+                <li><strong>Trademark Notice:</strong> AP® is a trademark registered by the College Board. BeginFin is licensed to use the AP® trademark. BeginFin is not endorsed by the College Board. Review resources are independently aligned to the publicly available AP® Business with Personal Finance Course Framework. Note: Only Unit 1 is available now, with more units and BeginFin tools to be supported soon.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-4">
+              <h4 className="font-bold text-[#3C3C3C]">7. THIRD-PARTY SERVICES & MODEL CONTEXT PROTOCOL (MCP)</h4>
               <p>Data sharing is strictly limited to services required to deliver core application functionality. We do not sell or monetize personal data:</p>
               <ul className="list-disc ml-6 space-y-2 mb-4">
                 <li><strong>Cloud Infrastructure & Authentication:</strong> Google Cloud Platform, Firebase (Firestore database and Firebase Authentication), and Google Identity Services provide secure hosting, real-time database synchronization, and encrypted user authentication.</li>
-                <li><strong>Model Context Protocol (MCP) Server (Zero User Data Transferred):</strong> BeginFin provides an open Model Context Protocol (MCP) server (at <code>https://begin-fin.com/mcp</code> and <code>https://begin-fin.com/sse</code>) allowing AI tools (like Claude and Cursor) to read BeginFin's open curriculum metadata, lesson outlines, and simulator documentation. <strong>No learner profiles, user identities, student data, or personal records are ever transmitted or accessible via the MCP server.</strong></li>
-                <li><strong>Bradley AI Educational Assistant (Powered by Google Gemini®):</strong> When authenticated users ask educational questions to Bradley, queries are sent to Google's Gemini API for response generation. Chat sessions are subject to Google's Privacy Policy. Interactions are rate-limited to 5 messages per user per day. BeginFin does not persist, inspect, or sell private chat logs on its application servers.</li>
+                <li><strong>Model Context Protocol (MCP) Server (Zero User Data Transferred):</strong> BeginFin provides an open Model Context Protocol (MCP) server (at <code>https://begin-fin.com/mcp</code> and <code>https://begin-fin.com/sse</code>) allowing external AI tools (such as Claude Desktop, Claude.ai, Cursor, and Windsurf) to access BeginFin's open curriculum metadata, lesson outlines, financial calculators, and pedagogical tools. <strong>No learner profiles, user identities, student data, or personal records are ever transmitted, collected, or accessible via the MCP server.</strong> BeginFin does not host an in-app generative chatbot; all AI queries take place entirely within the user's external environment according to their provider's terms.</li>
                 <li><strong>Google Classroom API:</strong> For teachers connecting their classes, BeginFin uses Google Classroom API scopes exclusively to import student rosters, create assignments, and publish course announcements.</li>
                 <li><strong>Optional Verifiable Credentials (Certifier.io):</strong> If a user requests a third-party verifiable digital credential, we share their name and email with Certifier.io solely to generate the credential.</li>
                 <li><strong>Legal Obligations:</strong> Information may be disclosed if required by law or in response to valid legal requests to protect platform and user safety.</li>
@@ -131,12 +143,12 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">7. DATA SECURITY & RETENTION</h4>
+              <h4 className="font-bold text-[#3C3C3C]">8. DATA SECURITY & RETENTION</h4>
               <p>We maintain technical and administrative safeguards to protect your personal data, including TLS 1.3 encryption for data in transit, AES-256 encryption at rest within Firestore, and strict access controls. Data is retained during the active life of the user account.</p>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">8. USER PRIVACY RIGHTS & DATA CONTROL</h4>
+              <h4 className="font-bold text-[#3C3C3C]">9. USER PRIVACY RIGHTS & DATA CONTROL</h4>
               <p>All users have control over their personal data:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Access and Export:</strong> Request a summary of your account and learning data by contacting support@begin-fin.com.</li>
@@ -147,7 +159,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">9. CONTACT INFORMATION</h4>
+              <h4 className="font-bold text-[#3C3C3C]">10. CONTACT INFORMATION</h4>
               <p>If you have questions, feedback, or requests regarding this Privacy Policy or our data practices, please contact us at:</p>
               <div className="bg-[#F4F8FA] p-6 rounded-2xl border border-slate-200/80 font-sans text-sm">
                 <strong>BeginFin Privacy & Support Team</strong><br />

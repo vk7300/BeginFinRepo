@@ -1,8 +1,9 @@
 import React from 'react';
-import { ArrowLeft, Download, Printer, ChevronRight, BookOpen, Users, Shield, CheckCircle2, Info, Mail } from 'lucide-react';
+import { ArrowLeft, Download, Printer, ChevronRight, BookOpen, Users, Shield, CheckCircle2, Info, Mail, Terminal, Server, Code2, Cpu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { jsPDF } from 'jspdf';
+import { useNavPadding } from './Navbar';
 
 interface Props {
   onBack: () => void;
@@ -13,11 +14,12 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
     { id: 'intro', title: '1. Overview' },
     { id: 'teacher', title: '2. Teacher Account Setup' },
     { id: 'classroom', title: '3. Google Classroom Integration' },
-    { id: 'assignments', title: '4. Managing Assignments' },
-    { id: 'student', title: '5. Student Account Setup' },
-    { id: 'privacy', title: '6. Privacy & Data' },
-    { id: 'checklist', title: '7. Implementation Checklist' },
-    { id: 'support', title: '8. Support & Contact' },
+    { id: 'assignments', title: '4. Managing Assignments & Challenges' },
+    { id: 'mcp', title: '5. Model Context Protocol (MCP) Infrastructure' },
+    { id: 'student', title: '6. Student Account Setup' },
+    { id: 'privacy', title: '7. Privacy & Data Governance' },
+    { id: 'checklist', title: '8. Implementation Checklist' },
+    { id: 'support', title: '9. Support & Contact' },
   ];
 
   const scrollToSection = (id: string) => {
@@ -67,7 +69,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(127, 127, 250);
-    doc.text('Classroom Setup, Student Management & Implementation Checklist', margin + 8, y + 16);
+    doc.text('Classroom Setup, MCP Infrastructure, Student Management & Implementation', margin + 8, y + 16);
 
     y += 32;
 
@@ -109,24 +111,32 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
     addSectionHeader('2', 'TEACHER ACCOUNT SETUP');
     addParagraph('1. Register Account: Select Teacher account type during registration using your preferred email.\n2. Create Class: Define class sections corresponding to your teaching schedule.\n3. Share Class Code: Distribute the generated class code for students to join your roster.');
 
-    // 3. Managing Assignments
-    addSectionHeader('3', 'MANAGING ASSIGNMENTS');
+    // 3. Google Classroom Integration
+    addSectionHeader('3', 'GOOGLE CLASSROOM INTEGRATION');
+    addParagraph('Educators can link Google Classroom courses via OAuth to import student rosters, publish NSPFE-aligned coursework, and automatically sync completed module grades with one click.');
+
+    // 4. Managing Assignments
+    addSectionHeader('4', 'MANAGING ASSIGNMENTS & CHALLENGES');
     addParagraph('Creating Challenges: Select required financial units, set target completion dates, and assign to individual class periods.\n\nReviewing Progress: Monitor completion rates, review quiz attempt summaries, and export grade summaries to CSV.');
 
-    // 4. Student Account Setup
-    addSectionHeader('4', 'STUDENT ACCOUNT SETUP');
+    // 5. Model Context Protocol (MCP) Infrastructure
+    addSectionHeader('5', 'MODEL CONTEXT PROTOCOL (MCP) INFRASTRUCTURE');
+    addParagraph('BeginFin utilizes an open Model Context Protocol (MCP) architecture ($0 cost, zero data transfer). Educators and students can integrate the BeginFin curriculum directly into Claude Desktop, Cursor, Windsurf, or custom AI agents:\n\n- Stateless Protocol: Zero student records, personal information, or chat histories are ever collected or stored.\n- Curricular Scope: Delivers all 9 NSPFE-aligned modules, 50/30/20 budget calculations, tax withholding formulas, and lesson plan generators.\n- Server Endpoints: Connect via SSE (https://begin-fin.com/sse) or HTTP POST (https://begin-fin.com/mcp).');
+
+    // 6. Student Account Setup
+    addSectionHeader('6', 'STUDENT ACCOUNT SETUP');
     addParagraph('Students register using email credentials or permitted SSO options and input the teacher\'s class code during sign-up to join the class roster.\n\nGuest Mode: Allows immediate exploration of learning units without account creation. Guest progress is not saved to a class gradebook.');
 
-    // 5. Privacy & Data Governance
-    addSectionHeader('5', 'PRIVACY & DATA GOVERNANCE');
+    // 7. Privacy & Data Governance
+    addSectionHeader('7', 'PRIVACY & DATA GOVERNANCE');
     addParagraph('Privacy Protocols: Minimal operational data is collected solely for student progress tracking. Student records are not sold or used for third-party advertising. We will share your name and email with Certifier.io, a trusted 3rd party digital credential provider, if the user requests.\n\nTerms of Service: Designed for educational instruction. Users maintain full control over account credentials and data deletion requests.');
 
-    // 6. Implementation Checklist
-    addSectionHeader('6', 'IMPLEMENTATION CHECKLIST');
-    addParagraph('Step 1: Create Teacher account\nStep 2: Set up class section and generate code\nStep 3: Distribute class code to students\nStep 4: Students sign up and enter class code\nStep 5: Create and assign learning challenge\nStep 6: Students complete assigned units\nStep 7: Review completion stats on teacher dashboard');
+    // 8. Implementation Checklist
+    addSectionHeader('8', 'IMPLEMENTATION CHECKLIST');
+    addParagraph('Step 1: Create Teacher account\nStep 2: Set up class section and generate code\nStep 3: Connect Google Classroom (Optional)\nStep 4: Distribute class code to students\nStep 5: Students sign up and enter class code\nStep 6: Create and assign learning challenge\nStep 7: Connect BeginFin MCP server to AI assistant (Optional)\nStep 8: Review completion stats on teacher dashboard');
 
-    // 7. Support Contacts
-    addSectionHeader('7', 'SUPPORT & CONTACTS');
+    // 9. Support Contacts
+    addSectionHeader('9', 'SUPPORT & CONTACTS');
     addParagraph('General Questions: contact@begin-fin.com\nTeacher Support: teachers@begin-fin.com\nMedia Relations: mediarelations@begin-fin.com\nAccount Assistance: support@begin-fin.com');
 
     const totalPages = doc.getNumberOfPages();
@@ -147,46 +157,42 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
     }
   };
 
+  const navPadding = useNavPadding();
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-24">
+    <div className={`min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-24 ${navPadding}`}>
       <Helmet>
         <title>Quick Start Guide | BeginFin Educator Resources</title>
       </Helmet>
 
-      {/* Sticky Header Bar */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 no-print">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <motion.button
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            onClick={onBack}
-            className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer group"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Back to Dashboard</span>
-          </motion.button>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="p-2.5 rounded-full border border-slate-200/80 hover:bg-slate-100 text-slate-600 transition-all cursor-pointer"
-              title="Print Guide"
-            >
-              <Printer className="w-4 h-4" />
-            </button>
-            <button
-              onClick={generatePDF}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-[#7F7FFA]" />
-              <span>Save as PDF</span>
-            </button>
-          </div>
+      {/* Guide Sub-Bar Actions */}
+      <div className="max-w-7xl mx-auto px-6 pt-4 pb-2 flex items-center justify-between gap-4 no-print">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-3 py-1 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] font-extrabold uppercase tracking-wider">
+            Educator & Student Handbook
+          </span>
         </div>
-      </header>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrint}
+            className="p-2 rounded-xl border border-slate-200/80 hover:bg-slate-100 text-slate-600 transition-all cursor-pointer"
+            title="Print Guide"
+          >
+            <Printer className="w-4 h-4" />
+          </button>
+          <button
+            onClick={generatePDF}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5 text-[#7F7FFA]" />
+            <span>Save as PDF</span>
+          </button>
+        </div>
+      </div>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-6 pt-12 flex flex-col lg:flex-row gap-12">
+      <main className="max-w-7xl mx-auto px-6 pt-6 flex flex-col lg:flex-row gap-12">
         {/* Navigation Sidebar */}
         <aside className="hidden lg:block w-64 shrink-0 no-print sticky top-28 h-fit">
           <div className="bg-white rounded-[24px] border border-slate-200/80 p-5 shadow-sm space-y-2">
@@ -365,11 +371,79 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
             </div>
           </section>
 
-          {/* 5. Student Account Setup */}
-          <section id="student" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+          {/* 5. Model Context Protocol (MCP) Infrastructure */}
+          <section id="mcp" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
                 05
+              </div>
+              <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Model Context Protocol (MCP) Infrastructure</h2>
+            </div>
+
+            <p className="text-slate-600 text-sm leading-relaxed font-normal">
+              BeginFin is powered exclusively by a 100% free, stateless Model Context Protocol (MCP) architecture. Rather than relying on proprietary chat interfaces or transmitting sensitive student prompts to cloud providers, BeginFin exposes its full 9-unit NSPFE-aligned financial curriculum and calculation tools directly to open AI environments.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-[#7F7FFA] shadow-sm mb-3">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-[#3C3C3C] text-sm">Zero Data Collection</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-normal">
+                  The MCP server is stateless. No student accounts, gradebook records, or personal queries are ever stored, indexed, or shared.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-[#7F7FFA] shadow-sm mb-3">
+                  <Server className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-[#3C3C3C] text-sm">Everyday AI Integration</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-normal">
+                  Connect effortlessly to Claude Desktop, Cursor, Windsurf, or custom school LLM agents via standard Server-Sent Events (SSE) or HTTP POST.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-[#F4F8FA] border border-slate-200/60 space-y-2">
+                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-[#7F7FFA] shadow-sm mb-3">
+                  <Code2 className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-[#3C3C3C] text-sm">Curricular Scope</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-normal">
+                  Query 50/30/20 budget allocations, FICA paycheck tax calculations, loan amortization schedules, and unit mastery quizzes in real time.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-900 text-white rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-[#7F7FFA] uppercase tracking-wider flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5" /> MCP Server Configuration
+                </span>
+                <span className="text-[10px] bg-white/10 text-slate-300 px-2 py-0.5 rounded-full font-mono">claude_desktop_config.json</span>
+              </div>
+              <pre className="text-xs font-mono bg-black/40 p-4 rounded-xl text-slate-200 overflow-x-auto">
+{`{
+  "mcpServers": {
+    "beginfin": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote@latest", "https://begin-fin.com/sse"]
+    }
+  }
+}`}
+              </pre>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Live HTTP POST endpoint: <code className="text-indigo-300">https://begin-fin.com/mcp</code> • Open config: <code className="text-indigo-300">https://begin-fin.com/beginfin-mcp-config.json</code>
+              </p>
+            </div>
+          </section>
+
+          {/* 6. Student Account Setup */}
+          <section id="student" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
+                06
               </div>
               <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Student Account Setup</h2>
             </div>
@@ -384,11 +458,11 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
             </div>
           </section>
 
-          {/* 6. Privacy & Terms */}
+          {/* 7. Privacy & Terms */}
           <section id="privacy" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
-                06
+                07
               </div>
               <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Privacy & Data Governance</h2>
             </div>
@@ -410,11 +484,11 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
             </div>
           </section>
 
-          {/* 7. Implementation Checklist */}
+          {/* 8. Implementation Checklist */}
           <section id="checklist" className="bg-white rounded-[32px] border border-slate-200/80 p-8 md:p-10 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
-                07
+                08
               </div>
               <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Implementation Checklist</h2>
             </div>
@@ -436,8 +510,9 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
                     { step: 4, task: 'Distribute class code to students', role: 'Teacher' },
                     { step: 5, task: 'Students sign up and enter class code', role: 'Student' },
                     { step: 6, task: 'Create and assign learning challenge / Classroom coursework', role: 'Teacher' },
-                    { step: 7, task: 'Students complete assigned units', role: 'Student' },
-                    { step: 8, task: 'Review completion stats on teacher dashboard', role: 'Teacher' },
+                    { step: 7, task: 'Integrate BeginFin MCP server with AI workspace (Optional)', role: 'Teacher / Student' },
+                    { step: 8, task: 'Students complete assigned units', role: 'Student' },
+                    { step: 9, task: 'Review completion stats and export CSV on teacher dashboard', role: 'Teacher' },
                   ].map((row) => (
                     <tr key={row.step} className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-bold text-slate-400">{row.step}</td>
@@ -456,11 +531,11 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
             </div>
           </section>
 
-          {/* 8. Support & Contact */}
+          {/* 9. Support & Contact */}
           <section id="support" className="bg-[#0b0f19] text-white rounded-[32px] border border-white/10 p-8 md:p-10 shadow-xl space-y-6 scroll-mt-28">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-[#7F7FFA] font-bold text-sm">
-                08
+                09
               </div>
               <h2 className="text-2xl font-bold text-white tracking-tight">Support & Inquiry Contacts</h2>
             </div>

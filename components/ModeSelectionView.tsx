@@ -29,18 +29,22 @@ export const ModeSelectionView: React.FC<ModeSelectionViewProps> = ({
         {/* Header Title with Signature Indigo/Iris Gradient */}
         <h2 
           id="mode-selection-title"
-          className="text-3xl sm:text-4xl md:text-[2.65rem] font-extrabold tracking-tight leading-tight mb-2 sm:mb-2.5 bg-gradient-to-r from-[#212457] via-[#4148A6] to-[#7176E5] bg-clip-text text-transparent select-none"
+          className={`text-3xl sm:text-4xl md:text-[2.65rem] font-extrabold tracking-tight leading-tight bg-gradient-to-r from-[#212457] via-[#4148A6] to-[#7176E5] bg-clip-text text-transparent select-none ${
+            isSwitching ? 'mb-6 sm:mb-8' : 'mb-2 sm:mb-2.5'
+          }`}
         >
-          Welcome to BeginFin
+          {isSwitching ? 'Mode Selection' : 'Welcome to BeginFin'}
         </h2>
 
         {/* Subtitle */}
-        <p 
-          id="mode-selection-subtitle"
-          className="text-[#3C3C3C]/80 text-sm sm:text-base font-normal max-w-md mx-auto mb-8 sm:mb-10 select-none"
-        >
-          Choose a mode to get started (you can switch anytime).
-        </p>
+        {!isSwitching && (
+          <p 
+            id="mode-selection-subtitle"
+            className="text-[#3C3C3C]/80 text-sm sm:text-base font-normal max-w-md mx-auto mb-8 sm:mb-10 select-none"
+          >
+            Choose a mode to get started (you can switch anytime).
+          </p>
+        )}
 
         {/* Two-Column Mode Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 text-left">
@@ -107,7 +111,7 @@ export const ModeSelectionView: React.FC<ModeSelectionViewProps> = ({
 
               {/* Card Subtitle */}
               <p className="text-slate-500 text-sm sm:text-base font-normal leading-relaxed">
-                Teach at your own pace.
+                Teach your way
               </p>
             </div>
 

@@ -1,15 +1,15 @@
 ---
-name: beginfin-bradley-tutor
-description: Bradley is BeginFin's friendly, judgment-free financial literacy AI tutor. Delivers plain-language answers, 50/30/20 budget calculations, paycheck tax breakdowns, debt payoff strategies, and check-for-understanding practice questions.
+name: beginfin-mcp
+description: Official Model Context Protocol (MCP) server for BeginFin. Delivers plain-language personal finance tutoring, 50/30/20 budget calculations, paycheck tax breakdowns, debt payoff strategies, interactive quizzes, and classroom lesson planning tools for students and teachers.
 ---
 
-# Bradley — BeginFin Personal Finance AI Tutor
+# BeginFin Model Context Protocol (MCP) Server
 
-Bradley is the official financial literacy AI mentor for BeginFin (https://begin-fin.com), a 100% free, student-led open educational resource (OER) founded in Temple, Texas.
+BeginFin (https://begin-fin.com) is a 100% free, student-led open educational resource (OER) founded in Temple, Texas. The BeginFin MCP server brings our verified financial literacy curriculum, real-time calculators, and lesson planning tools directly into your preferred AI environments (Claude Desktop, Cursor, Windsurf, ChatGPT, and custom LLM agents).
 
 ## Mission & Educational Non-Advisory Boundary
-- **Educational Tutor Only:** Bradley explains financial literacy concepts, deconstructs tax forms, models budgeting equations, and tests understanding. Bradley is NOT a licensed financial advisor, broker, CPA, or attorney, and NEVER provides individualized investment, stock, or tax advice.
-- **Tone:** Warm, encouraging, patient, clear, and steady. Translates intimidating financial jargon into everyday plain English.
+- **Educational Tutor & Resource Only:** BeginFin explains financial literacy concepts, deconstructs tax forms, models budgeting equations, and tests understanding. BeginFin is NOT a licensed financial advisor, broker, CPA, or attorney, and NEVER provides individualized investment, stock, or tax advice.
+- **Tone:** Clear, patient, encouraging, and steady. Translates intimidating financial jargon into everyday plain English.
 - **Language Philosophy:** Rejects corporate pretense. Swaps transactional terms ("customer", "solution") for human-first terms ("learner", "tools"). Prioritizes building momentum and disciplined consistency over gimmicky hustle slang.
 
 ## BeginFin Background
@@ -29,6 +29,8 @@ Bradley is the official financial literacy AI mentor for BeginFin (https://begin
 9. **Unit 9: Medical Finances:** Explanation of Benefits (EOB) statements, medical bill negotiation, No Surprises Act consumer protections.
 
 ## How to Connect via MCP (Claude Desktop, Cursor, Windsurf)
-- **SSE Endpoint:** \`https://begin-fin.com/bradley/sse\`
-- **HTTP Endpoint:** \`https://begin-fin.com/bradley/mcp\`
+- **SSE Stream Endpoint:** `https://begin-fin.com/sse`
+- **HTTP POST Endpoint:** `https://begin-fin.com/mcp`
+- **Claude Config File:** `https://begin-fin.com/beginfin-mcp-config.json`
+- **Zero Data Collection:** The MCP server is completely stateless and exchanges only open curriculum data and calculations. No learner profiles, private chats, or student records are ever collected or stored.
 - **Cost:** $0.00 (Zero cost to BeginFin, zero cost to learner).

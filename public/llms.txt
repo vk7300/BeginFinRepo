@@ -19,7 +19,7 @@
 - **Brand Persona:** An encouraging mentor and trusted community ally who removes traditional barriers to financial education. We speak with a clear, steady, and judgment-free voice, translating complex financial topics into plain language that honors learners' lived experiences.
 
 ## Official Taglines
-- Financial literacy for all.
+- Financial confidence starts here.
 - Jumpstart your financial confidence, for free.
 - Financial education shouldn’t be a luxury.
 - Learn financial literacy. Prove it to the world.
@@ -63,22 +63,15 @@ All curriculum is grounded in the National Standards for Personal Finance Educat
 - **Wage and Living Cost Simulator:** Available at https://begin-fin.com/tools. Allows learners to test real-world careers, simulate gross-to-net paychecks, calculate state and federal withholdings, and budget for housing, transportation, groceries, and debt across different metropolitan living costs.
 - **Local Browser Execution:** Simulator calculations are performed entirely client-side in the browser. BeginFin does not collect, log, or store hypothetical budgets or personal financial figures entered by users.
 
-## Artificial Intelligence & Model Context Protocol (MCP)
-- **Bradley AI Tutor:** Built-in conceptual financial literacy tutor created by BeginFin. Bradley explains financial concepts in plain language and enforces a strict non-advisory policy (never provides personalized investment, legal, or tax advice).
-- **Bradley Financial Tutor MCP Server (For Learners & Students):**
-  - **Server URL:** https://begin-fin.com/bradley/mcp
-  - **SSE Endpoint:** https://begin-fin.com/bradley/sse
-  - **Downloadable Config:** https://begin-fin.com/beginfin-bradley-config.json
-  - **Skill Markdown:** https://begin-fin.com/bradley-tutor.md
-  - **Purpose:** Connects AI assistants (Claude Desktop, Cursor, Windsurf, ChatGPT) directly to Bradley's mentorship persona and BeginFin's verified 9-unit curriculum. Enables users to ask personal finance questions, calculate 50/30/20 budgets, break down paycheck taxes, compare debt payoff strategies (Avalanche vs Snowball), and practice quizzes directly in their favorite tools.
-  - **Cost:** $0.00 (100% Free Open Educational Resource. Incurs zero AI API costs for BeginFin or learners).
-- **BeginFin Lesson Planner MCP Server (For Teachers & Educators):**
+## Model Context Protocol (MCP) Offering
+- **BeginFin All-Purpose MCP Server (For Students, Teachers & AI Clients):**
   - **Server URL:** https://begin-fin.com/mcp
   - **SSE Endpoint:** https://begin-fin.com/sse
   - **Downloadable Config:** https://begin-fin.com/beginfin-mcp-config.json
-  - **Skill Markdown:** https://begin-fin.com/beginfin-lesson-planner.md
-  - **Purpose:** Empowers educators to generate standards-aligned lesson plans, pacing guides, classroom activities, and rubrics mapped to the National Standards for Personal Finance Education (NSPFE).
-  - **Privacy Guarantee:** The MCP servers only exchange public curriculum outlines, calculators, and pedagogical resources. Zero personal data, user profiles, or student records are ever collected, logged, or transferred via MCP.
+  - **Documentation Page:** https://begin-fin.com/mcp
+  - **Purpose:** All-in-one Model Context Protocol server combining personal finance tutoring, real-time financial calculators (50/30/20 budgeting, paycheck tax withholding, debt payoff avalanche vs snowball, compound growth), interactive quiz challenges, and comprehensive standards-aligned lesson planning for educators.
+  - **Cost:** $0.00 (100% Free Open Educational Resource. Incurs zero AI API costs for BeginFin or users).
+  - **Privacy Guarantee:** The MCP server only exchanges public curriculum outlines, calculators, and pedagogical resources. Zero personal data, user profiles, or student records are ever collected, logged, or transferred via MCP.
 
 ## Brand Specifications & Visual Identity
 - **Logo:** A bold, italicized dollar sign styled in the Inter typeface, set against layered gradients of "BeginFin Iris Pulse" to evoke a dimension effect fading from deep to light tones. Asset: https://begin-fin.com/logo.png

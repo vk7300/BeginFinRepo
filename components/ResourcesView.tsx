@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavPadding } from './Navbar';
 import { 
   ArrowLeft, 
   ExternalLink, 
@@ -122,29 +123,16 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ onBack }) => {
     }
   ];
 
+  const navPadding = useNavPadding();
+
   return (
     <div className="min-h-screen bg-[#F4F8FA] text-[#3C3C3C] font-sans pb-24">
       <Helmet>
         <title>BeginFin Resources | Financial Education Tools</title>
       </Helmet>
 
-      {/* Top Header Navigation */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <motion.button
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            onClick={onBack}
-            className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer group"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Back to Portal</span>
-          </motion.button>
-        </div>
-      </header>
-
       {/* Main Content */}
-      <section className="max-w-7xl mx-auto px-6 pt-12">
+      <section className={`max-w-7xl mx-auto px-6 ${navPadding}`}>
         {/* Section Title */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}

@@ -7,7 +7,6 @@ import {
   Sparkles, 
   BookOpen, 
   HelpCircle,
-  ArrowRight,
   MessageSquare,
   Calculator,
   Compass,
@@ -17,41 +16,36 @@ import {
   FileText,
   Percent,
   CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  Code2,
+  Terminal,
+  ExternalLink,
+  ChevronRight
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Modal } from './Modal';
+import { Link, useNavigate } from 'react-router-dom';
+import { useNavPadding } from './Navbar';
 
 export interface McpServerViewProps {
   onBack: () => void;
   onOpenTeacherDashboard?: () => void;
-  mode?: 'student' | 'teacher';
-  onSwitchMode?: (newMode: 'student' | 'teacher') => void;
 }
 
 export const McpServerView: React.FC<McpServerViewProps> = ({ 
   onBack, 
-  onOpenTeacherDashboard,
-  mode: propMode,
-  onSwitchMode
+  onOpenTeacherDashboard
 }) => {
-  const location = useLocation();
   const navigate = useNavigate();
-
-  // Determine current mode from props or current pathname without merging
-  const isTeacherRoute = location.pathname.startsWith('/teacher');
-  const isTeacher = propMode ? propMode === 'teacher' : isTeacherRoute;
 
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
-  const [showSwitchModal, setShowSwitchModal] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'claude' | 'cursor' | 'windsurf' | 'http'>('claude');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [isTeacher, location.pathname]);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!sectionRef.current) return;
@@ -74,91 +68,84 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
     setTimeout(() => setCopiedPrompt(null), 2500);
   };
 
-  const handleSwitchTarget = () => {
-    setShowSwitchModal(false);
-    if (isTeacher) {
-      if (onSwitchMode) onSwitchMode('student');
-      navigate('/bradley/mcp');
-    } else {
-      if (onSwitchMode) onSwitchMode('teacher');
-      navigate('/teacher/mcp');
-    }
+  const SERVER_URL = 'https://begin-fin.com/mcp';
+  const SSE_URL = 'https://begin-fin.com/sse';
+
+  const configSnippets = {
+    claude: JSON.stringify({
+      mcpServers: {
+        beginfin: {
+          url: SERVER_URL
+        }
+      }
+    }, null, 2),
+    cursor: JSON.stringify({
+      mcpServers: {
+        beginfin: {
+          url: SERVER_URL
+        }
+      }
+    }, null, 2),
+    windsurf: JSON.stringify({
+      mcpServers: {
+        beginfin: {
+          serverUrl: SERVER_URL
+        }
+      }
+    }, null, 2),
+    http: `curl -X POST ${SERVER_URL} \\
+  -H "Content-Type: application/json" \\
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
   };
 
-  const SERVER_URL = isTeacher ? 'https://begin-fin.com/teacher/mcp' : 'https://begin-fin.com/bradley/mcp';
+  const samplePrompts = [
+    {
+      role: 'Student / Learner',
+      prompt: 'I earn $22/hr working 35 hours a week in Texas. Can you break down my mandatory FICA taxes, estimated net take-home pay, and generate a 50/30/20 monthly budget?',
+      icon: <Calculator className="w-4 h-4 text-emerald-500" />
+    },
+    {
+      role: 'Teacher / Educator',
+      prompt: 'Draft an interactive 50-minute lesson plan on paycheck deductions, Form W-4, and FICA taxes using BeginFin Unit 2, including a hands-on hook and formative quiz.',
+      icon: <FileText className="w-4 h-4 text-indigo-500" />
+    },
+    {
+      role: 'Curriculum & Concepts',
+      prompt: 'Explain the difference between a Roth IRA and a Traditional 401(k) using plain, judgment-free language without corporate jargon.',
+      icon: <Compass className="w-4 h-4 text-amber-500" />
+    },
+    {
+      role: 'National Standards',
+      prompt: 'Which National Standards for Personal Finance Education (NSPFE) benchmarks align with BeginFin Unit 4 on credit scores and debt payoff?',
+      icon: <Scale className="w-4 h-4 text-purple-500" />
+    }
+  ];
 
-  // Sample copyable prompts for the connection card
-  const samplePrompt = isTeacher
-    ? 'Draft a 45-minute lesson plan on paycheck deductions, W-4 withholdings, and FICA taxes using BeginFin Unit 2.'
-    : 'I earn $20/hr working 35 hours a week. Can you break down my estimated payroll taxes and create a 50/30/20 budget for me?';
+  const navPadding = useNavPadding();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F8FA] text-[#3C3C3C] font-sans selection:bg-[#7F7FFA]/20 selection:text-[#7F7FFA]">
       <Helmet>
-        <title>{isTeacher ? "Teacher MCP — Lesson Planning | BeginFin" : "Bradley MCP — Personal Finance AI Tutor | BeginFin"}</title>
+        <title>BeginFin MCP — All-Purpose Personal Finance & Classroom Tools</title>
         <meta 
           name="description" 
-          content={isTeacher 
-            ? "Connect your AI tool to BeginFin's National Standards-aligned personal finance curriculum, structured lesson plan generators, and simulator references." 
-            : "Connect your AI tool to Bradley, BeginFin's encouraging personal finance tutor. Ask questions, compute 50/30/20 budgets, and practice quizzes."
-          } 
+          content="Connect your AI tools (Claude, Cursor, Windsurf, ChatGPT) to BeginFin's all-purpose Model Context Protocol server. Access personal finance tutoring, paycheck tax calculators, 50/30/20 budget tools, quiz practice, and lesson plans." 
         />
-        <meta property="og:title" content={isTeacher ? "Teacher MCP — BeginFin" : "Bradley MCP — BeginFin"} />
-        <meta property="og:description" content={isTeacher ? "Lesson planning, now directly in your AI tools." : "Bradley, now directly in your AI tools."} />
+        <meta property="og:title" content="BeginFin MCP — All-Purpose Personal Finance & Classroom Tools" />
+        <meta property="og:description" content="One unified MCP server for personal finance tutoring, budgeting calculators, quizzes, lesson planning, and national curriculum standards." />
       </Helmet>
 
-      {/* Top Navigation Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 py-3.5 shadow-xs">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onBack}
-              className="p-2 rounded-xl text-slate-500 hover:text-[#3C3C3C] hover:bg-slate-100 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </button>
-            <div className="h-4 w-px bg-slate-200" />
-            <Link to="/" className="flex items-center gap-2 group">
-              <img 
-                src="/logo.png" 
-                alt="BeginFin Logo" 
-                className="w-7 h-7 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform" 
-                referrerPolicy="no-referrer"
-              />
-              <span className="font-extrabold text-[#3C3C3C] text-base tracking-tight">BeginFin</span>
-              <span className="text-slate-300 font-light">/</span>
-              <span className="text-xs font-bold text-[#7F7FFA] tracking-tight">
-                {isTeacher ? "Teacher MCP" : "Bradley MCP"}
-              </span>
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {isTeacher && onOpenTeacherDashboard && (
-              <button
-                onClick={onOpenTeacherDashboard}
-                className="px-4 py-2 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-full text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Teacher Dashboard</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
       <main className="flex-grow">
-        {/* Hero Section matching WelcomeScreen hero design language */}
-        <section className="relative bg-gradient-to-b from-[#2b2d35] via-[#1a1c22] to-[#101115] pt-10 pb-16 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
+        {/* Hero Section */}
+        <section className={`relative bg-gradient-to-b from-[#2b2d35] via-[#1a1c22] to-[#101115] ${navPadding} pb-16 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center`}>
           
-          {/* Rounded-Corner Hero Box Container with Interactive Cursor Glow */}
+          {/* Rounded Hero Box */}
           <div 
             ref={sectionRef}
             onMouseMove={handleMouseMove}
             className="relative w-full max-w-6xl rounded-[2.5rem] md:rounded-[3.2rem] bg-gradient-to-br from-[#3b437e] via-[#353c70] to-[#252a55] border border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.5)] overflow-hidden select-none cursor-default py-14 sm:py-20 px-6 sm:px-12 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-500"
           >
-            {/* Dynamic Interactive Cursor Tracking Glow */}
+            {/* Dynamic Interactive Cursor Glow */}
             <div 
               className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
               style={{
@@ -180,27 +167,20 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
               {/* Top Pill Badge */}
               <div className="inline-flex items-center gap-2 px-6 py-2 bg-[#F4F8FA] text-[#3C3C3C] border border-[#7F7FFA]/20 rounded-full font-bold text-xs sm:text-sm shadow-lg tracking-tight">
                 <Sparkles className="w-4 h-4 text-[#7F7FFA]" />
-                <span>{isTeacher ? "Classroom Lesson Planning" : "Personal Finance AI Tutor"}</span>
+                <span>Unified Model Context Protocol Server</span>
               </div>
 
-              {/* Main Headline with italic accent (NO 'favorite' before 'AI tools') */}
+              {/* Main Headline */}
               <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight text-center max-w-4xl">
-                {isTeacher ? (
-                  <>Lesson planning, <span className="italic font-normal">now directly in your AI tools.</span></>
-                ) : (
-                  <>Bradley, <span className="italic font-normal">now directly in your AI tools.</span></>
-                )}
+                Personal finance tutoring & teaching, <span className="italic font-normal">now directly in your AI tools.</span>
               </h1>
 
-              {/* Subtitle in plain, encouraging language */}
+              {/* Subtitle */}
               <p className="text-sm sm:text-base text-slate-200/90 max-w-2xl mx-auto font-normal leading-relaxed">
-                {isTeacher 
-                  ? "Empower your AI tool with BeginFin's National Standards-aligned curriculum, structured lesson plan generators, and simulator references."
-                  : "Ask personal finance questions, calculate take-home pay, compute 50/30/20 budgets, and practice quizzes directly inside your AI tool."
-                }
+                One cohesive, all-purpose MCP server. Access personal finance tutoring, compute paychecks and 50/30/20 budgets, practice quizzes, generate classroom lesson plans, and explore National Standards.
               </p>
 
-              {/* Segmented Button Capsule for Server URL Copying */}
+              {/* Segmented Capsule for Server URL Copying */}
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 w-full max-w-xl justify-center">
                 <div className="flex items-center bg-black/90 rounded-full p-1.5 shadow-2xl border border-white/15 w-full justify-between">
                   <div className="flex items-center gap-2 pl-4 text-left min-w-0">
@@ -217,27 +197,34 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
                 </div>
               </div>
 
-              {/* Subtle Helper Text */}
-              <p className="text-slate-300/80 text-xs font-medium tracking-tight">
-                Add this URL to your AI tool's MCP settings to connect.
-              </p>
+              {/* SSE Alternative Note */}
+              <div className="flex flex-wrap items-center justify-center gap-3 text-slate-300/90 text-xs font-medium tracking-tight">
+                <span>Also supports Server-Sent Events (SSE):</span>
+                <button
+                  onClick={() => handleCopyText(SSE_URL, 'sse-url')}
+                  className="font-mono text-[11px] text-[#A5B4FC] hover:text-white underline underline-offset-4 cursor-pointer flex items-center gap-1"
+                >
+                  <span>{SSE_URL}</span>
+                  {copiedSnippet === 'sse-url' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                </button>
+              </div>
 
             </div>
           </div>
         </section>
 
-        {/* Approachable Bento Content Section */}
+        {/* Content Section */}
         <section className="pt-10 pb-20 bg-[#F4F8FA] border-t border-slate-200/60 relative z-20">
-          <div className="container mx-auto px-4 sm:px-6 max-w-6xl space-y-10">
+          <div className="container mx-auto px-4 sm:px-6 max-w-6xl space-y-12">
 
-            {/* Quick Connection Bento Card */}
+            {/* Quick Connection Card */}
             <div className="bg-white p-7 sm:p-9 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-6">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
-                  How to connect to your AI tool
+                  How to connect in 3 steps
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Connect in three simple steps.
+                  Compatible with Claude Desktop, Claude Code, Cursor, Windsurf, Cline, and any MCP-compliant client.
                 </p>
               </div>
 
@@ -246,9 +233,9 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
                   <div className="w-8 h-8 rounded-xl bg-white text-[#7F7FFA] font-extrabold flex items-center justify-center text-sm shadow-xs border border-slate-200/60">
                     1
                   </div>
-                  <h3 className="text-base font-bold text-[#3C3C3C]">Open Integrations</h3>
+                  <h3 className="text-base font-bold text-[#3C3C3C]">Open MCP Settings</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Open your AI tool's settings and look for the MCP or server connections section.
+                    Open your AI tool's settings and locate the Model Context Protocol (MCP) or external tools configuration.
                   </p>
                 </div>
 
@@ -258,7 +245,7 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
                   </div>
                   <h3 className="text-base font-bold text-[#3C3C3C]">Add BeginFin MCP URL</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Add a new server and paste <code className="font-mono text-[11px] text-[#7F7FFA] bg-white px-1.5 py-0.5 rounded border border-slate-200">{SERVER_URL}</code> as the server URL.
+                    Add a new server with URL <code className="font-mono text-[11px] text-[#7F7FFA] bg-white px-1.5 py-0.5 rounded border border-slate-200 select-all">{SERVER_URL}</code>.
                   </p>
                 </div>
 
@@ -266,193 +253,298 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
                   <div className="w-8 h-8 rounded-xl bg-white text-[#7F7FFA] font-extrabold flex items-center justify-center text-sm shadow-xs border border-slate-200/60">
                     3
                   </div>
-                  <h3 className="text-base font-bold text-[#3C3C3C]">Start Chatting</h3>
+                  <h3 className="text-base font-bold text-[#3C3C3C]">Start Prompting</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    {isTeacher 
-                      ? "Prompt your AI tool to draft lesson plans, outline pacing guides, or map standards." 
-                      : "Ask questions, compute wages, or practice quizzes right in your conversation."
-                    }
+                    Ask financial literacy questions, run paycheck tax math, generate lesson plans, or review curriculum standards.
                   </p>
                 </div>
               </div>
 
-              {/* Sample Prompt Capsule */}
+              {/* Client Config Code Snippet Box */}
               <div className="pt-2">
-                <div className="bg-slate-900 text-slate-200 p-5 rounded-[1.75rem] border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7F7FFA]">Sample prompt to try</span>
-                    <p className="text-xs sm:text-sm text-white font-medium italic">
-                      "{samplePrompt}"
-                    </p>
+                <div className="bg-[#0b0e26] rounded-[2rem] p-5 sm:p-6 text-slate-200 border border-white/10 shadow-lg space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Code2 className="w-4 h-4 text-[#7F7FFA]" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Configuration Snippet</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
+                      <button
+                        onClick={() => setActiveTab('claude')}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${activeTab === 'claude' ? 'bg-[#7F7FFA] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        Claude
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('cursor')}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${activeTab === 'cursor' ? 'bg-[#7F7FFA] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        Cursor
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('windsurf')}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${activeTab === 'windsurf' ? 'bg-[#7F7FFA] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        Windsurf
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('http')}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${activeTab === 'http' ? 'bg-[#7F7FFA] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        cURL
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleCopyPromptText(samplePrompt, 'sample-p')}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
-                  >
-                    {copiedPrompt === 'sample-p' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedPrompt === 'sample-p' ? 'Copied' : 'Copy Prompt'}</span>
-                  </button>
+
+                  <div className="relative">
+                    <pre className="font-mono text-xs text-slate-300 overflow-x-auto p-3 bg-black/40 rounded-xl border border-white/5 leading-relaxed">
+                      {configSnippets[activeTab]}
+                    </pre>
+                    <button
+                      onClick={() => handleCopyText(configSnippets[activeTab], `tab-${activeTab}`)}
+                      className="absolute top-2 right-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
+                    >
+                      {copiedSnippet === `tab-${activeTab}` ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedSnippet === `tab-${activeTab}` ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
+
             </div>
 
-            {/* Capabilities Bento Grid */}
-            <div className="space-y-6">
+            {/* Interactive Prompt Examples */}
+            <div className="space-y-4">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
-                  {isTeacher ? "Teacher Capabilities" : "What Bradley can do for you"}
+                  Sample prompts to try
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  {isTeacher 
-                    ? "Grounded in BeginFin's verified 9-unit personal finance curriculum and National Standards."
-                    : "Encouraging, judgment-free mentorship to build financial confidence in plain language."
-                  }
+                  Copy any of these prompts into your connected AI tool to test the capabilities immediately.
                 </p>
               </div>
 
-              {/* Student Capabilities (6 cards) */}
-              {!isTeacher && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {samplePrompts.map((p, idx) => (
+                  <div 
+                    key={idx}
+                    className="bg-white p-5 rounded-[1.75rem] border border-slate-200/70 shadow-xs flex flex-col justify-between gap-3 hover:border-[#7F7FFA]/40 transition-colors"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        {p.icon}
+                        <span>{p.role}</span>
+                      </div>
+                      <p className="text-xs text-[#3C3C3C] font-medium italic leading-relaxed">
+                        "{p.prompt}"
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex justify-end">
+                      <button
+                        onClick={() => handleCopyPromptText(p.prompt, `sample-${idx}`)}
+                        className="px-3.5 py-1.5 bg-slate-100 hover:bg-[#7F7FFA]/10 text-slate-700 hover:text-[#7F7FFA] rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        {copiedPrompt === `sample-${idx}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedPrompt === `sample-${idx}` ? 'Copied' : 'Copy Prompt'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Full All-in-One Capabilities Showcase */}
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
+                  Unified Toolset (15 Built-in Tools)
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Everything both students and teachers need, accessible in a single server connection.
+                </p>
+              </div>
+
+              {/* Student & Personal Finance Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#7F7FFA]">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Student Mentorship & Calculation Tools</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">
                       <MessageSquare className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Ask Bradley</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Financial Literacy Mentorship</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Ask any money question. Bradley translates complex financial topics into relatable language without corporate jargon.
+                      Ask any money question. Translates complex financial topics into clear, plain language grounded in BeginFin's verified 9-unit curriculum without corporate pretense or sales pitches.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "How do I start building credit safely as an 18-year-old?"
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: ask_bradley
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                       <Calculator className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Paycheck & Budget Math</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Paycheck & 50/30/20 Math</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Calculates mandatory payroll taxes (FICA), net take-home pay, and generates a personalized 50/30/20 monthly budget breakdown.
+                      Calculates mandatory FICA taxes (Social Security 6.2% + Medicare 1.45%), estimated federal withholding, and monthly 50/30/20 targets.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Calculate my take-home pay on a $48,000 annual salary."
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: calculate_paycheck_and_budget
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                       <Compass className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Explain Concepts</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Explain Concepts</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Deep-dive explanations of compound interest, FICO credit factors, emergency funds, and tax brackets with real-world scenarios.
+                      Structured breakdowns of compound interest, FICO credit factors, Roth vs Traditional IRAs, emergency funds, and HSA tax benefits.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Explain how compound interest works over 30 years."
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: explain_concept
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                       <Scale className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Compare Financial Options</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Compare Financial Options</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Objective side-by-side trade-offs between options like Roth vs Traditional IRA, or Debt Avalanche vs Debt Snowball.
+                      Side-by-side trade-offs between options like Debt Avalanche vs Snowball, Roth vs Traditional, or HYSA vs Certificates of Deposit.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Compare a High-Yield Savings Account with a CD."
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: compare_financial_options
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                       <BookOpen className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Curriculum Glossary</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Curriculum Glossary</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Instant definitions for confusing terms like APY, FICA, deductible, out-of-pocket maximum, and index funds.
+                      Instant definitions for financial vocabulary like APY, amortization, FICA, deductible, out-of-pocket maximum, and mutual funds.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "What does FICA stand for on my paystub?"
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: get_curriculum_glossary
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
                       <Percent className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Quiz Practice</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Practice Quizzes</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Check your understanding with multiple-choice practice questions and clear educational explanations from all 9 units.
+                      Multiple-choice questions with answer keys and complete educational explanations across all 9 BeginFin units.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Give me a practice quiz question on credit scores."
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: practice_quiz_question
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Teacher Capabilities (4 cards) */}
-              {isTeacher && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">
+              {/* Educator & Classroom Section */}
+              <div className="space-y-4 pt-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#10B981]">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Educator & Curriculum Tools</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                       <FileText className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Structured Lesson Plans</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Lesson Plan Generator</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Generate structured 45–90 minute lesson plans complete with real-world hooks, student activities, and formative checks for understanding.
+                      Produce structured 45–90 minute classroom lesson plans with interactive hooks, group activities, and formative checks.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Create a 60-minute lesson on compound interest and index funds."
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: generate_lesson_plan
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                      <Calculator className="w-5 h-5" />
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center font-bold">
+                      <Layers className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Wage & Living Cost Simulator</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Curriculum Overview</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      References take-home pay formulas, federal and state tax withholding calculations, and cost-of-living breakdowns with BeginFin tools.
+                      Access all 9 BeginFin curriculum units, learning outcomes, lesson outlines, and Spanish language translations.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Outline a classroom activity using the salary simulator."
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: get_curriculum, get_unit_details
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                       <Scale className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">National Standards Alignment</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Standards Alignment</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Instantly map classroom units to the National Standards for Personal Finance Education (NSPFE) and Jump$tart Coalition benchmarks.
+                      Maps any BeginFin unit directly to the National Standards for Personal Finance Education (NSPFE) and Jump$tart benchmarks.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Which NSPFE standards align with Unit 4 on debt and credit?"
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: get_standards_alignment
                     </div>
                   </div>
 
-                  <div className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-3">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                       <Calendar className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#3C3C3C]">Custom Pacing Guides</h3>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Pacing Sequences</h3>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Build tailored multi-week course schedules for full-semester certifications, high school electives, or career readiness bootcamps.
+                      Semester, quarter, elective, or intensive bootcamp schedule templates covering all 9 core personal finance units.
                     </p>
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 italic">
-                      "Generate a 9-week pacing guide covering all BeginFin modules."
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: get_pacing_guide
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Classroom Activity Bank</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Ready-to-use simulations, stock market games, budgeting challenges, and debt payoff scenarios for student engagement.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: suggest_activities
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                      <GraduationCap className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-[#3C3C3C]">Teacher Portal Guide</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Guidance on Google Classroom sync, class codes, student gradebook monitoring, and official completion certificates.
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 font-mono text-[10px] text-slate-400">
+                      tool: get_teacher_dashboard_guide
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+
             </div>
 
             {/* Approachable FAQ Section */}
-            <div className="space-y-4">
+            <div className="space-y-4 pt-4">
               <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
                 Frequently Asked Questions
               </h2>
@@ -460,66 +552,31 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
               <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
                 <div className="flex items-center gap-2 text-[#7F7FFA] font-bold text-sm">
                   <HelpCircle className="w-4 h-4" />
-                  <span>How does this compare to chatting directly on BeginFin?</span>
+                  <span>Why does BeginFin offer an MCP server instead of an in-app chatbot?</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  On the BeginFin website, Bradley has a 5-message daily quota to protect our community servers. By connecting the MCP server to your AI tool, you can ask unlimited questions and run calculations directly inside your own workflow.
+                  Rather than confining learners to a walled-garden web chatbot, BeginFin's Model Context Protocol (MCP) server integrates natively into whatever AI environment you already use—Claude Desktop, Cursor, Windsurf, ChatGPT, or custom agents. You get direct access to BeginFin's verified 9-unit curriculum, financial calculators, and lesson planning tools with zero paywalls, zero ads, and zero daily caps.
                 </p>
               </div>
 
               <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
                 <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Is my personal or student data tracked?</span>
+                  <span>Is any user, student, or personal financial data collected or tracked?</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  No. The MCP server exchanges only educational data and calculations. BeginFin does not track, collect, or store your queries, numbers, or conversations. All calculations are completely stateless.
+                  No. The MCP server is completely stateless and exchanges only open educational curriculum data and calculations. BeginFin never tracks, collects, or logs your prompts, personal figures, student rosters, or private chats.
                 </p>
               </div>
 
               <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
                 <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Does Bradley give individualized investment or legal advice?</span>
+                  <span>Does BeginFin provide individualized financial advice?</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  No. BeginFin provides objective financial education and explains foundational principles so learners can make informed decisions. We do not provide personalized stock picks, legal advice, or individualized tax preparation.
+                  No. BeginFin provides objective financial literacy education and explains foundational principles so learners can make their own informed decisions. We never provide stock picks, legal advice, or individualized tax preparation.
                 </p>
-              </div>
-            </div>
-
-            {/* Cross-Link Switcher Section at the End */}
-            <div className="pt-6 pb-4">
-              <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] text-center space-y-4 max-w-2xl mx-auto">
-                <div className="w-12 h-12 rounded-2xl bg-[#F4F8FA] text-[#7F7FFA] flex items-center justify-center mx-auto border border-[#7F7FFA]/20">
-                  {isTeacher ? <GraduationCap className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold text-[#3C3C3C]">
-                    {isTeacher ? "Looking for the student tutor?" : "Teaching personal finance in the classroom?"}
-                  </h3>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                    {isTeacher
-                      ? "Switch to our Bradley Student MCP for personal finance questions, budgeting calculations, and quiz practice."
-                      : "Switch to our Teacher MCP for structured lesson plans, pacing guides, and National Standards alignment."
-                    }
-                  </p>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => setShowSwitchModal(true)}
-                    className="px-6 py-3 bg-[#F4F8FA] hover:bg-[#7F7FFA]/10 text-[#7F7FFA] border border-[#7F7FFA]/30 rounded-full text-xs font-extrabold transition-all shadow-xs hover:border-[#7F7FFA] flex items-center gap-2 mx-auto cursor-pointer active:scale-95"
-                  >
-                    <span>
-                      {isTeacher 
-                        ? "Are you a student? View our student MCP instead." 
-                        : "Are you a teacher? View our teacher MCP instead."
-                      }
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -527,55 +584,14 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
         </section>
       </main>
 
-      {/* Switcher Modal */}
-      <Modal
-        isOpen={showSwitchModal}
-        onClose={() => setShowSwitchModal(false)}
-        title={isTeacher ? "Switch to Student MCP" : "Switch to Teacher MCP"}
-        size="sm"
-      >
-        <div className="p-6 space-y-5 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-[#7F7FFA] flex items-center justify-center mx-auto border border-indigo-100">
-            {isTeacher ? <MessageSquare className="w-6 h-6" /> : <GraduationCap className="w-6 h-6" />}
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-lg font-bold text-[#3C3C3C]">
-              {isTeacher 
-                ? "Are you a student? View our student MCP instead." 
-                : "Are you a teacher? View our teacher MCP instead."
-              }
-            </h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {isTeacher 
-                ? "Looking for Bradley, our personal finance AI tutor? You can connect Bradley directly to your AI tool to practice budgeting, calculate take-home pay, and master key financial concepts."
-                : "Teaching personal finance? Our Teacher MCP lets your AI tool generate classroom lesson plans, reference National Standards, and build course pacing guides."
-              }
-            </p>
-          </div>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <button
-              onClick={() => setShowSwitchModal(false)}
-              className="px-4 py-2.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              Stay Here
-            </button>
-            <button
-              onClick={handleSwitchTarget}
-              className="px-6 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-full text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
-            >
-              <span>{isTeacher ? "Go to Student MCP" : "Go to Teacher MCP"}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </Modal>
-
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-8 px-6 text-center text-xs text-slate-400 space-y-2">
         <div className="flex items-center justify-center gap-4 text-xs font-semibold text-slate-600">
-          <Link to="/termsofuse" className="hover:text-[#7F7FFA] transition-colors">Terms of Service</Link>
+          <Link to="/termsofuse" className="hover:text-[#7F7FFA] transition-colors">Terms of Use</Link>
           <span>•</span>
           <Link to="/privacypolicy" className="hover:text-[#7F7FFA] transition-colors">Privacy Policy</Link>
+          <span>•</span>
+          <Link to="/status" className="hover:text-[#7F7FFA] transition-colors">System Status</Link>
           <span>•</span>
           <a href="mailto:support@begin-fin.com" className="hover:text-[#7F7FFA] transition-colors">support@begin-fin.com</a>
         </div>

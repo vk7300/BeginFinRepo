@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, Instagram, Linkedin } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSystemStatus } from '../services/systemStatusService';
 
 interface FooterProps {
   onViewCurriculum: () => void;
@@ -18,6 +19,12 @@ export const Footer: React.FC<FooterProps> = ({
   onViewTools
 }) => {
   const navigate = useNavigate();
+  const { overall: systemStatus } = useSystemStatus();
+
+  const statusDotColor = 
+    systemStatus === 'Operational' ? 'bg-emerald-400' :
+    systemStatus === 'Issues Observed' ? 'bg-amber-400' :
+    'bg-rose-500';
   return (
     <footer 
        
@@ -69,22 +76,15 @@ export const Footer: React.FC<FooterProps> = ({
             onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
             className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span className={`w-1.5 h-1.5 rounded-full ${statusDotColor} transition-colors`}></span>
             System Status
           </Link>
           <Link 
-            to="/bradley/mcp" 
+            to="/mcp" 
             onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
             className="hover:text-white transition-colors cursor-pointer flex items-center gap-1"
           >
-            Bradley MCP
-          </Link>
-          <Link 
-            to="/teacher/mcp" 
-            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
-            className="hover:text-white transition-colors cursor-pointer flex items-center gap-1"
-          >
-            Teacher MCP
+            MCP
           </Link>
           <Link 
             to="/termsofuse" 

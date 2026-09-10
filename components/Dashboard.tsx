@@ -54,6 +54,52 @@ export const Dashboard: React.FC<Props> = ({
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [isAskingName, setIsAskingName] = useState<{ classId: string; teacherId: string; className: string } | null>(null);
   const [tempName, setTempName] = useState('');
+  const [autoEnrolledNotification, setAutoEnrolledNotification] = useState<{
+    className: string;
+    classId: string;
+  } | null>(null);
+
+  // Check if student was automatically added to class by a teacher's roster
+  useEffect(() => {
+    if (!user) return;
+
+    const checkAutoEnrollment = async () => {
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/check-roster-enrollment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.autoEnrolled && data.className && data.classId) {
+            const dismissedKey = `beginfin_dismissed_auto_enroll_${data.classId}`;
+            if (!localStorage.getItem(dismissedKey)) {
+              setAutoEnrolledNotification({
+                className: data.className,
+                classId: data.classId
+              });
+              setClassName((prev) => prev || data.className);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Check roster enrollment note:', err);
+      }
+    };
+
+    checkAutoEnrollment();
+  }, [user]);
+
+  const dismissAutoEnroll = () => {
+    if (autoEnrolledNotification) {
+      localStorage.setItem(`beginfin_dismissed_auto_enroll_${autoEnrolledNotification.classId}`, 'true');
+      setAutoEnrolledNotification(null);
+    }
+  };
 
   // Find next module
   const requiredModules = modules.filter(m => !m.isOptional);
@@ -278,10 +324,42 @@ export const Dashboard: React.FC<Props> = ({
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* One-time notification: added automatically to class by teacher */}
+                  {autoEnrolledNotification && (
+                    <div className="p-3.5 bg-indigo-50 border border-[#7F7FFA]/30 rounded-2xl flex items-start justify-between gap-3 text-indigo-950 animate-in fade-in">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-[#7F7FFA] text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5 shadow-xs">
+                          ✓
+                        </div>
+                        <div className="text-xs">
+                          <p className="font-bold text-slate-900">Added to Class!</p>
+                          <p className="text-slate-600 mt-0.5 leading-relaxed">
+                            Your teacher added you automatically to <strong className="text-slate-900">{autoEnrolledNotification.className}</strong>.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={dismissAutoEnroll}
+                        className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+                        title="Dismiss notification"
+                        aria-label="Dismiss notification"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
                   <div>
-                    <label htmlFor="join-class-code" className="block text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-2">
-                      Classroom Join Code
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label htmlFor="join-class-code" className="block text-[11px] uppercase tracking-wider font-bold text-slate-500">
+                        Classroom Join Code
+                      </label>
+                      {autoEnrolledNotification && (
+                        <span className="text-[11px] font-semibold text-[#7F7FFA]">
+                          Enrolled in {autoEnrolledNotification.className}
+                        </span>
+                      )}
+                    </div>
                     <input 
                       id="join-class-code"
                       type="text" 
@@ -479,17 +557,39 @@ export const Dashboard: React.FC<Props> = ({
               </button>
             )}
             
-            {/* Join Class Action */}
-            <button 
-              onClick={() => {
-                setShowJoinInput(true);
-                setJoinFeedback({ status: 'idle', message: '' });
-                setJoinCode('');
-              }}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold transition-colors text-xs px-3.5 py-2.5 rounded-xl border text-[#7F7FFA] bg-[#F4F8FA] border-[#7F7FFA]/20 hover:bg-[#ECECFC] cursor-pointer"
-            >
-              <Users className="w-3.5 h-3.5" /> Join Class
-            </button>
+            {/* Join Class Action & Auto-enroll Notification on the side */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => {
+                  setShowJoinInput(true);
+                  setJoinFeedback({ status: 'idle', message: '' });
+                  setJoinCode('');
+                }}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold transition-colors text-xs px-3.5 py-2.5 rounded-xl border text-[#7F7FFA] bg-[#F4F8FA] border-[#7F7FFA]/20 hover:bg-[#ECECFC] cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5" /> Join Class
+              </button>
+
+              {autoEnrolledNotification && (
+                <div 
+                  id="auto-enrolled-toast"
+                  className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-[#7F7FFA]/30 rounded-xl text-xs text-indigo-950 shadow-xs animate-in fade-in"
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#7F7FFA] shrink-0" />
+                  <span className="text-slate-700 font-medium">
+                    Added to <strong className="text-slate-900 font-bold">{autoEnrolledNotification.className}</strong>
+                  </span>
+                  <button
+                    onClick={dismissAutoEnroll}
+                    className="text-slate-400 hover:text-slate-700 p-0.5 rounded cursor-pointer transition-colors"
+                    title="Dismiss notification"
+                    aria-label="Dismiss notification"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Certificate Action */}
             <button 

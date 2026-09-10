@@ -27,8 +27,10 @@ import { ResourcesView } from './components/ResourcesView';
 import { AboutView } from './components/AboutView';
 import { McpServerView } from './components/McpServerView';
 import { ToolsView } from './components/ToolsView';
+import { APUnitView } from './components/APUnitView';
+import { APTopicView } from './components/APTopicView';
 import { Footer } from './components/Footer';
-import { BradleyChatbot } from './components/BradleyChatbot';
+import { Navbar } from './components/Navbar';
 import { GoogleOneTap } from './components/GoogleOneTap';
 import { StatusView } from './components/StatusView';
 import { ModeSelectionView } from './components/ModeSelectionView';
@@ -46,7 +48,7 @@ const orderedModules = [
   modules.find(m => m.id === 'm9')
 ].filter((m): m is Module => !!m);
 
-export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'mcp' | 'teacher-mcp' | 'bradley-mcp' | 'tools' | 'status';
+export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'mcp' | 'teacher-mcp' | 'bradley-mcp' | 'tools' | 'status' | 'ap-unit' | 'ap-topic';
 
 enum OperationType {
   CREATE = 'create',
@@ -555,15 +557,6 @@ const SwitchRoleModalContent: React.FC<{
 }> = ({ onClose, onConfirm, currentRole }) => {
   return (
     <div className="py-2">
-      <div className="text-center mb-6">
-        <h3 className="text-2xl font-extrabold bg-gradient-to-r from-[#212457] via-[#4148A6] to-[#7176E5] bg-clip-text text-transparent mb-1">
-          Welcome to BeginFin
-        </h3>
-        <p className="text-slate-600 text-sm">
-          Choose a mode to get started (you can switch anytime).
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
         {/* Student Mode Card */}
         <button
@@ -605,7 +598,7 @@ const SwitchRoleModalContent: React.FC<{
               <Users className="w-5 h-5 text-[#10B981] stroke-[1.8]" />
             </div>
             <h4 className="text-base font-bold text-[#1E2022] mb-0.5">Teacher Mode</h4>
-            <p className="text-slate-500 text-xs leading-relaxed">Teach at your own pace.</p>
+            <p className="text-slate-500 text-xs leading-relaxed">Teach your way</p>
           </div>
           {currentRole === 'teacher' && (
             <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
@@ -632,7 +625,13 @@ const SwitchRoleModalContent: React.FC<{
 const App: React.FC = () => {
   const [hasStarted, setHasStarted] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<'student' | 'teacher' | null>(null);
+  const [userRole, setUserRole] = useState<'student' | 'teacher' | null>(() => {
+    try {
+      return (localStorage.getItem('beginfin-user-role') as 'student' | 'teacher' | null) || null;
+    } catch {
+      return null;
+    }
+  });
   const [classId, setClassId] = useState<string | null>(null);
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [isFullScreenLockEnabled, setIsFullScreenLockEnabled] = useState(false);
@@ -667,8 +666,11 @@ const App: React.FC = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showMobileDashboardNav, setShowMobileDashboardNav] = useState(false);
   const userAgreedConsentRef = useRef(false);
+  const [selectedApTopic, setSelectedApTopic] = useState<string>('1.1');
   const location = useLocation();
   const navigate = useNavigate();
+
+  const isDashboardView = ['dashboard', 'module', 'certificate', 'tax-roadmap', 'onboarding'].includes(currentView);
 
   useEffect(() => {
     const path = location.pathname;
@@ -685,12 +687,30 @@ const App: React.FC = () => {
       setCurrentView('resources');
     } else if (path === '/about') {
       setCurrentView('about');
+    } else if (path === '/tools/beginfinsguidetoapbusinesswithpf' || path.startsWith('/tools/beginfinsguidetoapbusinesswithpf/')) {
+      const topicSub = path.replace('/tools/beginfinsguidetoapbusinesswithpf', '').replace(/^\//, '');
+      if (topicSub) {
+        const formattedTopic = topicSub.replace('-', '.');
+        setSelectedApTopic(formattedTopic || '1.1');
+        setCurrentView('ap-topic');
+      } else {
+        setCurrentView('ap-unit');
+      }
     } else if (path === '/tools' || path.startsWith('/tools/') || path === '/simulator' || path === '/simulators') {
       setCurrentView('tools');
-    } else if (path === '/teacher/mcp' || path.startsWith('/teacher/mcp')) {
-      setCurrentView('teacher-mcp');
-    } else if (path === '/bradley/mcp' || path.startsWith('/bradley/mcp') || path === '/bradley' || path.startsWith('/bradley/') || path === '/mcp' || path.startsWith('/mcp/') || path === '/mcp.json' || path === '/beginfin-mcp') {
-      setCurrentView('bradley-mcp');
+    } else if (
+      path === '/mcp' || 
+      path.startsWith('/mcp/') || 
+      path === '/teacher/mcp' || 
+      path.startsWith('/teacher/mcp') || 
+      path === '/bradley/mcp' || 
+      path.startsWith('/bradley/mcp') || 
+      path === '/bradley' || 
+      path.startsWith('/bradley/') || 
+      path === '/mcp.json' || 
+      path === '/beginfin-mcp'
+    ) {
+      setCurrentView('mcp');
     } else if (path === '/status' || path.startsWith('/status')) {
       setCurrentView('status');
     } else if (path === '/crud-qms' || path.startsWith('/crud-qms')) {
@@ -781,12 +801,16 @@ const App: React.FC = () => {
       case 'crud-qms':
         sectionTitle = 'QMS & Certifier';
         break;
-      case 'teacher-mcp':
-        sectionTitle = 'Teacher MCP';
-        break;
-      case 'bradley-mcp':
       case 'mcp':
-        sectionTitle = 'Bradley MCP';
+      case 'teacher-mcp':
+      case 'bradley-mcp':
+        sectionTitle = 'MCP Server';
+        break;
+      case 'ap-unit':
+        sectionTitle = 'Unit 1 Review · AP® Business with Personal Finance';
+        break;
+      case 'ap-topic':
+        sectionTitle = `Topic ${selectedApTopic} · AP® Business with Personal Finance`;
         break;
       case 'guide':
         sectionTitle = 'Quick Start Guide';
@@ -941,6 +965,13 @@ const App: React.FC = () => {
 
         setCompletedModules(loadedModules);
         setUserRole(data.role || null);
+        try {
+          if (data.role) {
+            localStorage.setItem('beginfin-user-role', data.role);
+          } else {
+            localStorage.removeItem('beginfin-user-role');
+          }
+        } catch(e) {}
         setClassId(data.classId || null);
         setTeacherId(data.teacherId || null);
         if (data.displayName) {
@@ -1183,6 +1214,9 @@ const App: React.FC = () => {
       setCompletedModules([]);
       setUserName('');
       setUserRole(null);
+      try {
+        localStorage.removeItem('beginfin-user-role');
+      } catch(e) {}
       setClassId(null);
       setHasStarted(false);
       setCurrentView('welcome');
@@ -1213,6 +1247,9 @@ const App: React.FC = () => {
       }
       
       setUserRole(nextRole);
+      try {
+        localStorage.setItem('beginfin-user-role', nextRole);
+      } catch(e) {}
       if (nextRole === 'teacher') {
         setIsTeacherInStudentMode(false);
       }
@@ -1451,6 +1488,23 @@ const App: React.FC = () => {
           </div>
         </Modal>
 
+        {!isDashboardView && (
+          <Navbar
+            user={user}
+            currentView={currentView}
+            variant={currentView === 'welcome' ? 'auto' : 'light'}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
+            onStart={() => handleStart()}
+            onOpenSettings={() => setShowSettingsModal(true)}
+            onViewCurriculum={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); navigate('/curriculum'); setCurrentView('curriculum'); }}
+            onViewTools={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); navigate('/tools'); setCurrentView('tools'); }}
+            onViewResources={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); navigate('/resources'); setCurrentView('resources'); }}
+            onViewAbout={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); navigate('/about'); setCurrentView('about'); }}
+            onOpenGuide={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); navigate('/guide'); setCurrentView('guide'); }}
+          />
+        )}
+
         <AnimatePresence mode="wait">
           {currentView === 'not-found' ? (
             <motion.div
@@ -1575,24 +1629,7 @@ const App: React.FC = () => {
               className="flex-1 flex flex-col"
             >
               <div className="flex-1 flex flex-col">
-                <header className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-slate-200 px-6 flex items-center justify-between no-print bg-white/70 backdrop-blur-md">
-                  <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
-                    <div className="flex items-center gap-2">
-                       <img src="/logo.png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
-                       <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {user ? (
-                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">
-                        {user.displayName?.[0] || user.email?.[0] || 'U'}
-                      </div>
-                    ) : (
-                      <button onClick={handleLogin} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-full">Sign In</button>
-                    )}
-                  </div>
-                </header>
-                <main className="flex-1 pt-16">
+                <main className="flex-1">
                   <div className="min-h-screen bg-white">
                     <CurriculumView
                       language={language}
@@ -1621,24 +1658,7 @@ const App: React.FC = () => {
               className="flex-1 flex flex-col"
             >
               <div className="flex-1 flex flex-col">
-                <header className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-slate-200 px-6 flex items-center justify-between no-print bg-white/70 backdrop-blur-md">
-                  <div className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95" onClick={handleLogoClick}>
-                    <div className="flex items-center gap-2">
-                       <img src="/logo.png" alt="BeginFin Logo" className="w-6 h-6 object-contain rounded-md shadow-xs" referrerPolicy="no-referrer" />
-                       <span className="font-bold text-slate-900 tracking-tight text-lg">BeginFin</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {user ? (
-                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">
-                        {user.displayName?.[0] || user.email?.[0] || 'U'}
-                      </div>
-                    ) : (
-                      <button onClick={handleLogin} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-full">Sign In</button>
-                    )}
-                  </div>
-                </header>
-                <main className="flex-1 pt-16">
+                <main className="flex-1">
                   <div className="min-h-screen bg-white">
                     <ResourcesView
                       onBack={() => {
@@ -1686,9 +1706,9 @@ const App: React.FC = () => {
                 />
               </div>
             </motion.div>
-          ) : currentView === 'teacher-mcp' ? (
+          ) : (currentView === 'mcp' || currentView === 'teacher-mcp' || currentView === 'bradley-mcp') ? (
             <motion.div
-              key={currentView}
+              key="mcp-view"
               initial="initial"
               animate="animate"
               exit="exit"
@@ -1699,7 +1719,6 @@ const App: React.FC = () => {
               <div className="flex-1 flex flex-col">
                 <main className="flex-1">
                   <McpServerView 
-                    mode="teacher"
                     onBack={() => {
                       navigate('/');
                       setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
@@ -1707,51 +1726,6 @@ const App: React.FC = () => {
                     onOpenTeacherDashboard={() => {
                       navigate('/app');
                       setCurrentView('dashboard');
-                    }}
-                    onSwitchMode={(newMode) => {
-                      if (newMode === 'student') {
-                        navigate('/bradley/mcp');
-                        setCurrentView('bradley-mcp');
-                      }
-                    }}
-                  />
-                </main>
-                <Footer 
-                  onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
-                  onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
-                  onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
-                  onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
-                  onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
-                />
-              </div>
-            </motion.div>
-          ) : (currentView === 'bradley-mcp' || currentView === 'mcp') ? (
-            <motion.div
-              key={currentView}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              variants={pageVariants}
-              transition={pageTransition}
-              className="flex-1 flex flex-col"
-            >
-              <div className="flex-1 flex flex-col">
-                <main className="flex-1">
-                  <McpServerView 
-                    mode="student"
-                    onBack={() => {
-                      navigate('/');
-                      setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
-                    }}
-                    onOpenTeacherDashboard={() => {
-                      navigate('/app');
-                      setCurrentView('dashboard');
-                    }}
-                    onSwitchMode={(newMode) => {
-                      if (newMode === 'teacher') {
-                        navigate('/teacher/mcp');
-                        setCurrentView('teacher-mcp');
-                      }
                     }}
                   />
                 </main>
@@ -1785,6 +1759,11 @@ const App: React.FC = () => {
                       }}
                       user={user}
                       initialTool={location.pathname.includes('credit') ? 'credit' : 'wage'}
+                      onNavigateToAP={() => {
+                        window.scrollTo(0,0);
+                        navigate('/tools/beginfinsguidetoapbusinesswithpf');
+                        setCurrentView('ap-unit');
+                      }}
                     />
                   </div>
                 </main>
@@ -1796,6 +1775,68 @@ const App: React.FC = () => {
                   onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
                 />
               </div>
+            </motion.div>
+          ) : currentView === 'ap-unit' ? (
+            <motion.div
+              key="ap-unit"
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={pageVariants}
+              transition={pageTransition}
+              className="flex-1 flex flex-col"
+            >
+              <APUnitView
+                onBackToTools={() => {
+                  window.scrollTo(0,0);
+                  navigate('/tools');
+                  setCurrentView('tools');
+                }}
+                onSelectTopic={(id) => {
+                  window.scrollTo(0,0);
+                  setSelectedApTopic(id);
+                  navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
+                  setCurrentView('ap-topic');
+                }}
+              />
+              <Footer 
+                onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
+                onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
+                onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
+                onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
+                onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+              />
+            </motion.div>
+          ) : currentView === 'ap-topic' ? (
+            <motion.div
+              key="ap-topic"
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={pageVariants}
+              transition={pageTransition}
+              className="flex-1 flex flex-col"
+            >
+              <APTopicView
+                topicId={selectedApTopic}
+                onBackToUnit={() => {
+                  window.scrollTo(0,0);
+                  navigate('/tools/beginfinsguidetoapbusinesswithpf');
+                  setCurrentView('ap-unit');
+                }}
+                onSelectTopic={(id) => {
+                  window.scrollTo(0,0);
+                  setSelectedApTopic(id);
+                  navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
+                }}
+              />
+              <Footer 
+                onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
+                onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
+                onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
+                onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
+                onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+              />
             </motion.div>
           ) : currentView === 'status' ? (
             <motion.div
@@ -2363,6 +2404,41 @@ const App: React.FC = () => {
                           }}
                           user={user}
                           initialTool={location.pathname.includes('credit') ? 'credit' : 'wage'}
+                          onNavigateToAP={() => {
+                            window.scrollTo(0,0);
+                            navigate('/tools/beginfinsguidetoapbusinesswithpf');
+                            setCurrentView('ap-unit');
+                          }}
+                        />
+                      )}
+                      {((currentView as string) === 'ap-unit') && (
+                        <APUnitView
+                          onBackToTools={() => {
+                            window.scrollTo(0,0);
+                            navigate('/tools');
+                            setCurrentView('tools');
+                          }}
+                          onSelectTopic={(id) => {
+                            window.scrollTo(0,0);
+                            setSelectedApTopic(id);
+                            navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
+                            setCurrentView('ap-topic');
+                          }}
+                        />
+                      )}
+                      {((currentView as string) === 'ap-topic') && (
+                        <APTopicView
+                          topicId={selectedApTopic}
+                          onBackToUnit={() => {
+                            window.scrollTo(0,0);
+                            navigate('/tools/beginfinsguidetoapbusinesswithpf');
+                            setCurrentView('ap-unit');
+                          }}
+                          onSelectTopic={(id) => {
+                            window.scrollTo(0,0);
+                            setSelectedApTopic(id);
+                            navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
+                          }}
                         />
                       )}
                       {((currentView as string) === 'curriculum') && (
@@ -2411,7 +2487,6 @@ const App: React.FC = () => {
         onClose={() => setShowSettingsModal(false)}
         user={user}
       />
-      <BradleyChatbot user={user} />
     </ErrorBoundary>
     </HelmetProvider>
   );

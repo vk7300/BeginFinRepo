@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import { Helmet } from 'react-helmet-async';
 import { modules } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
+import { useNavPadding } from './Navbar';
 import { 
   BookOpen, 
   ArrowLeft, 
@@ -231,55 +232,43 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
     doc.save('BeginFin_Curriculum_Syllabus.pdf');
   };
 
+  const navPadding = useNavPadding();
+
   return (
     <div className="min-h-screen bg-[#F4F8FA] text-[#3C3C3C] font-sans pb-24">
       <Helmet>
         <title>BeginFin Curriculum | Personal Finance Learning Outcomes</title>
       </Helmet>
 
-      {/* Top Header Bar */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 no-print">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <motion.button
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            onClick={onBack}
-            className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer group"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
-            <span>{t.back || 'Back to Portal'}</span>
-          </motion.button>
-
-          <div className="flex items-center gap-3">
-            <motion.button
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              onClick={generatePDF}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer group"
-            >
-              <FileText className="w-4 h-4 text-[#7F7FFA] group-hover:text-white transition-colors" />
-              <span>Export PDF Curriculum</span>
-            </motion.button>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-12 pb-10">
+      <section className={`max-w-7xl mx-auto px-6 ${navPadding} pb-10`}>
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-3xl mx-auto mb-12"
         >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider mb-4 border border-[#7F7FFA]/20">
+            <GraduationCap className="w-3.5 h-3.5" />
+            <span>Structured Financial Learning</span>
+          </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-5 leading-[1.1]">
             Curriculum
           </h1>
-          <p className="text-lg md:text-xl text-slate-500 font-normal leading-relaxed mb-3">
+          <p className="text-lg md:text-xl text-slate-500 font-normal leading-relaxed mb-4">
             Every module is engineered to build lasting financial independence through practical, real-world applications.
           </p>
-          <p className="text-xs text-slate-500 font-medium bg-slate-100 border border-slate-200/80 rounded-full px-4 py-1.5 inline-block">
-            BeginFin's curriculum is open-source and free for anyone to use for non-commercial purposes.
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <p className="text-xs text-slate-500 font-medium bg-slate-100 border border-slate-200/80 rounded-full px-4 py-2 inline-block">
+              BeginFin's curriculum is open-source and free for anyone to use for non-commercial purposes.
+            </p>
+            <button
+              onClick={generatePDF}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer group"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#7F7FFA] group-hover:text-white transition-colors" />
+              <span>Export PDF Curriculum</span>
+            </button>
+          </div>
         </motion.div>
 
         {/* Top Bento Grid Section */}

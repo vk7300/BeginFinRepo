@@ -25,6 +25,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { db, doc, onSnapshot, setDoc, auth, onAuthStateChanged, User } from '../firebase';
 import { DEFAULT_ADMIN_EMAILS, isEmailAdmin, checkIsAdmin } from '../config/adminConfig';
+import { useNavPadding } from './Navbar';
 
 export type ServiceStatus = 'Operational' | 'Issues Observed' | 'Not Operational';
 
@@ -464,95 +465,80 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
     }
   };
 
+  const navPadding = useNavPadding();
+
   return (
-    <div className="min-h-screen bg-[#F4F8FA] text-[#3C3C3C] selection:bg-[#7F7FFA]/20 pb-20">
-      {/* Top Header Bar */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={onBackToApp}>
-            <div className="p-2 bg-white rounded-xl border border-slate-200/80 shadow-2xs group-hover:border-[#7F7FFA] transition-colors">
-              <img src="/logo.png" alt="BeginFin Logo" className="w-6 h-6 object-contain" referrerPolicy="no-referrer" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-bold text-[#3C3C3C] tracking-tight">BeginFin</span>
-              <span className="text-xs px-2 py-0.5 rounded-md bg-[#7F7FFA]/10 text-[#7F7FFA] font-bold uppercase tracking-wider">
-                Status
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Refresh Button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
-              title="Refresh status"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#7F7FFA]' : 'text-slate-500'}`} />
-              <span className="hidden md:inline">Refresh</span>
-            </button>
-
-            {/* Admin Controls Trigger (when authenticated as Admin) */}
-            {isAdmin ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleOpenAdminModal}
-                  id="admin-status-controls-btn"
-                  className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-[#7F7FFA] text-white text-xs font-bold hover:bg-[#7F7FFA]/90 shadow-md shadow-[#7F7FFA]/20 transition-all active:scale-95 cursor-pointer ring-2 ring-[#7F7FFA]/30"
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                  <span>Admin Controls</span>
-                </button>
-              </div>
-            ) : activeUser ? (
-              <div className="flex items-center gap-2">
-                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-medium border border-slate-200 truncate max-w-[150px]">
-                  <UserIcon className="w-3 h-3 text-slate-400" />
-                  <span className="truncate">{activeUser.email || 'User'}</span>
-                </span>
-                {onOpenLogin && (
-                  <button
-                    onClick={onOpenLogin}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200/80 transition-colors"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Admin Login</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  if (onOpenLogin) {
-                    onOpenLogin();
-                  } else {
-                    onBackToApp();
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
-              >
-                <Lock className="w-3.5 h-3.5 text-[#7F7FFA]" />
-                <span>Admin Sign In</span>
-              </button>
-            )}
-
-            {/* Back to BeginFin Button */}
-            <button
-              onClick={onBackToApp}
-              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-2xs active:scale-95 cursor-pointer"
-            >
-              <span>Launch App</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
+    <div className={`min-h-screen bg-[#F4F8FA] text-[#3C3C3C] selection:bg-[#7F7FFA]/20 pb-20 ${navPadding}`}>
+      {/* Top Status Sub-Bar */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2.5 py-1 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] font-extrabold uppercase tracking-wider">
+            Live System Health
+          </span>
         </div>
-      </header>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
+            title="Refresh status"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#7F7FFA]' : 'text-slate-500'}`} />
+            <span>Refresh</span>
+          </button>
+
+          {/* Admin Controls Trigger (when authenticated as Admin) */}
+          {isAdmin ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleOpenAdminModal}
+                id="admin-status-controls-btn"
+                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-xl bg-[#7F7FFA] text-white text-xs font-bold hover:bg-[#7F7FFA]/90 shadow-md shadow-[#7F7FFA]/20 transition-all active:scale-95 cursor-pointer ring-2 ring-[#7F7FFA]/30"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Admin Controls</span>
+              </button>
+            </div>
+          ) : activeUser ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-medium border border-slate-200 truncate max-w-[150px]">
+                <UserIcon className="w-3 h-3 text-slate-400" />
+                <span className="truncate">{activeUser.email || 'User'}</span>
+              </span>
+              {onOpenLogin && (
+                <button
+                  onClick={onOpenLogin}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200/80 transition-colors"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Admin Login</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                if (onOpenLogin) {
+                  onOpenLogin();
+                } else {
+                  onBackToApp();
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5 text-[#7F7FFA]" />
+              <span>Admin Sign In</span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Admin Floating Banner (if Admin) */}
       {isAdmin && (
-        <div className="bg-gradient-to-r from-[#7F7FFA] to-indigo-600 text-white px-4 py-2.5 text-xs font-medium border-b border-[#7F7FFA]/30 shadow-2xs">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 mt-2 mb-4">
+          <div className="bg-gradient-to-r from-[#7F7FFA] to-indigo-600 text-white px-4 py-2.5 rounded-2xl text-xs font-medium border border-[#7F7FFA]/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded bg-white/20 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> Admin Mode

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useNavPadding } from './Navbar';
 import { 
   ArrowLeft, 
   Sparkles, 
@@ -6,12 +7,12 @@ import {
   ShieldCheck, 
   Users, 
   Award, 
-  ExternalLink,
-  BookOpen,
-  Eye,
-  Lock,
-  Globe2,
-  Building2
+  ExternalLink, 
+  BookOpen, 
+  Eye, 
+  Lock, 
+  Globe2, 
+  Building2 
 } from 'lucide-react';
 
 interface AboutViewProps {
@@ -23,33 +24,12 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
     window.scrollTo(0, 0);
   }, []);
 
+  const navPadding = useNavPadding();
+
   return (
-    <div className="min-h-screen bg-[#F4F8FA] text-[#3C3C3C] selection:bg-[#7F7FFA]/20 selection:text-indigo-950 font-sans pb-24">
-      {/* Sticky Sub-Header Navigation */}
-      <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 shadow-xs">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button 
-            onClick={onBack}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-[#7F7FFA] transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Portal</span>
-          </button>
-
-          <div className="flex items-center gap-2">
-            <img 
-              src="/logo.png" 
-              alt="BeginFin Logo" 
-              className="w-6 h-6 object-contain rounded-md shadow-xs" 
-              referrerPolicy="no-referrer"
-            />
-            <span className="font-extrabold text-sm text-slate-900 tracking-tight">About BeginFin</span>
-          </div>
-        </div>
-      </header>
-
+    <div className={`min-h-screen bg-[#F4F8FA] text-[#3C3C3C] selection:bg-[#7F7FFA]/20 selection:text-indigo-950 font-sans pb-24 ${navPadding}`}>
       {/* Main Article Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 space-y-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-10">
         
         {/* Article Headline Header */}
         <section className="space-y-4 border-b border-slate-200/80 pb-8 text-center sm:text-left">

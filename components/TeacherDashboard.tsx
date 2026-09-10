@@ -18,6 +18,8 @@ interface ClassData {
   linkedCourseId?: string;
   linkedCourseName?: string;
   isFullScreenLockEnabled?: boolean;
+  rosterEmails?: string[];
+  rosterSyncedAt?: string;
   challenge?: {
     title: string;
     deadline: string;
@@ -91,6 +93,14 @@ export const TeacherDashboard: React.FC<{
   const [announcementClass, setAnnouncementClass] = useState<ClassData | null>(null);
   const [rosterSyncClass, setRosterSyncClass] = useState<ClassData | null>(null);
   const [classRosterPreview, setClassRosterPreview] = useState<ClassroomStudent[]>([]);
+  const [isAddingRosterToBeginFin, setIsAddingRosterToBeginFin] = useState(false);
+  const [rosterSyncSuccess, setRosterSyncSuccess] = useState<string | null>(null);
+  
+  // Manual Roster States
+  const [manualRosterClass, setManualRosterClass] = useState<ClassData | null>(null);
+  const [manualRosterText, setManualRosterText] = useState('');
+  const [manualRosterSaving, setManualRosterSaving] = useState(false);
+  const [manualRosterFeedback, setManualRosterFeedback] = useState<string | null>(null);
   
   // Form fields for Coursework
   const [courseworkTitle, setCourseworkTitle] = useState('');
@@ -114,6 +124,43 @@ export const TeacherDashboard: React.FC<{
 
   // Automatic background grade sync
   const [hasAutoSynced, setHasAutoSynced] = useState(false);
+
+  // Auto-restore Google Classroom cached session and courses on mount
+  useEffect(() => {
+    const cachedToken = googleClassroomService.getAccessToken();
+    const cachedEmail = googleClassroomService.getCachedEmail();
+    const cachedCourses = googleClassroomService.getCachedCourses();
+
+    if (cachedCourses && cachedCourses.length > 0) {
+      setClassroomCourses(cachedCourses);
+      setIsConnectedClassroom(true);
+    }
+    if (cachedEmail) {
+      setClassroomUserEmail(cachedEmail);
+      setIsConnectedClassroom(true);
+    }
+    if (cachedToken) {
+      setIsConnectedClassroom(true);
+      // Silently refresh courses in the background to ensure up-to-date data
+      googleClassroomService.fetchCourses(cachedToken)
+        .then((courses) => {
+          if (courses && courses.length > 0) {
+            setClassroomCourses(courses);
+          }
+        })
+        .catch((e) => {
+          console.warn("Silent Google Classroom courses refresh note:", e);
+        });
+    }
+  }, []);
+
+  // When course import modal opens, ensure courses are loaded
+  useEffect(() => {
+    if (showCourseImportModal && classroomCourses.length === 0 && !isFetchingCourses) {
+      fetchClassroomCourses().catch(() => {});
+    }
+  }, [showCourseImportModal]);
+
   useEffect(() => {
     if (isConnectedClassroom && classes.length > 0 && students.length > 0 && !hasAutoSynced) {
       const linkedClasses = classes.filter(cls => cls.linkedCourseId);
@@ -407,6 +454,104 @@ export const TeacherDashboard: React.FC<{
     }
   };
 
+  const handleAddRosterToBeginFin = async () => {
+    if (!rosterSyncClass || !user) return;
+    setIsAddingRosterToBeginFin(true);
+    setRosterSyncSuccess(null);
+    try {
+      const emails = classRosterPreview
+        .map(s => s.profile?.emailAddress?.toLowerCase().trim())
+        .filter(Boolean) as string[];
+
+      if (emails.length === 0) {
+        if (triggerLoading) triggerLoading("No student emails found in this Google Classroom roster.", 3000);
+        return;
+      }
+
+      if (triggerLoading) triggerLoading(`Adding ${emails.length} student emails to BeginFin class...`, 2500);
+
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/sync-class-roster', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          classId: rosterSyncClass.id,
+          rosterEmails: emails
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to sync roster to BeginFin.');
+      }
+
+      const resData = await response.json();
+      setRosterSyncSuccess(`Added ${resData.count} students! They will be automatically enrolled and greeted with a notification upon login.`);
+      if (triggerLoading) {
+        triggerLoading(`✓ ${resData.count} students added to BeginFin roster!`, 4000);
+      }
+    } catch (err: any) {
+      console.error("Error adding roster to BeginFin:", err);
+      if (triggerLoading) triggerLoading(`Failed to add roster: ${err.message}`, 4000);
+    } finally {
+      setIsAddingRosterToBeginFin(false);
+    }
+  };
+
+  const handleSaveManualRoster = async () => {
+    if (!manualRosterClass || !user) return;
+    setManualRosterSaving(true);
+    setManualRosterFeedback(null);
+    try {
+      const emails = manualRosterText
+        .split(/[\n,;]+/)
+        .map(e => e.trim().toLowerCase())
+        .filter(e => e.includes('@'));
+
+      if (emails.length === 0) {
+        setManualRosterFeedback("Please enter at least one valid email address.");
+        setManualRosterSaving(false);
+        return;
+      }
+
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/sync-class-roster', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          classId: manualRosterClass.id,
+          rosterEmails: emails
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save roster.');
+      }
+
+      const resData = await response.json();
+      setManualRosterFeedback(`✓ Saved ${resData.count} students! Enrolled students will receive a one-time notification on their first login.`);
+      if (triggerLoading) {
+        triggerLoading(`✓ Roster updated with ${resData.count} students.`, 3000);
+      }
+      setTimeout(() => {
+        setManualRosterClass(null);
+        setManualRosterFeedback(null);
+      }, 2000);
+    } catch (err: any) {
+      console.error("Error saving manual roster:", err);
+      setManualRosterFeedback(`Error: ${err.message}`);
+    } finally {
+      setManualRosterSaving(false);
+    }
+  };
+
   const generateJoinCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid ambiguous chars
     const randomArray = new Uint8Array(6);
@@ -486,30 +631,37 @@ export const TeacherDashboard: React.FC<{
     try {
       if (triggerLoading) triggerLoading("Deleting class and updating student records...", 3000);
       
-      // 1. Find all students in this class and remove them
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('classId', '==', classId));
-      const querySnapshot = await getDocs(q);
+      // 1. Safely unenroll all students belonging to this class
+      // Using students in memory avoids the Firestore permission failure from querying without teacherId
+      const targetStudents = students.filter(s => s.classId === classId);
+      if (targetStudents.length > 0) {
+        await Promise.allSettled(
+          targetStudents.map(student =>
+            updateDoc(doc(db, 'users', student.uid), {
+              classId: null,
+              teacherId: null
+            }).catch(e => console.warn(`Notice: Could not unenroll student ${student.uid}:`, e))
+          )
+        );
+      }
       
-      const batch = writeBatch(db);
-      querySnapshot.docs.forEach((userDoc) => {
-        batch.update(userDoc.ref, {
-          classId: null,
-          teacherId: null
-        });
-      });
-      
-      // 2. Delete alerts subcollection
-      const alertsRef = collection(db, 'classes', classId, 'alerts');
-      const alertsSnapshot = await getDocs(alertsRef);
-      alertsSnapshot.docs.forEach((alertDoc) => {
-        batch.delete(alertDoc.ref);
-      });
+      // 2. Delete alerts subcollection safely
+      try {
+        const alertsRef = collection(db, 'classes', classId, 'alerts');
+        const alertsSnapshot = await getDocs(alertsRef);
+        await Promise.allSettled(
+          alertsSnapshot.docs.map(alertDoc => deleteDoc(alertDoc.ref))
+        );
+      } catch (alertErr) {
+        console.warn("Notice: could not clear alerts subcollection:", alertErr);
+      }
       
       // 3. Delete the class document
-      batch.delete(doc(db, 'classes', classId));
+      await deleteDoc(doc(db, 'classes', classId));
       
-      await batch.commit();
+      // 4. Update local state immediately for instant responsive UI
+      setClasses(prev => prev.filter(c => c.id !== classId));
+      setStudents(prev => prev.filter(s => s.classId !== classId));
       setDeletingClassId(null);
       setDeleteConfirmationText('');
       if (triggerLoading) triggerLoading("Class deleted successfully!", 3000);
@@ -821,39 +973,28 @@ export const TeacherDashboard: React.FC<{
                           )}
                         </div>
 
-                        {/* Functional Action Pills */}
-                        <div className="flex flex-wrap gap-2 mb-6">
-                          <button
-                            onClick={() => toggleScreenLock(cls.id, !cls.isFullScreenLockEnabled)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2 whitespace-nowrap ${cls.isFullScreenLockEnabled ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-md'}`}
-                          >
-                            {cls.isFullScreenLockEnabled ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                            {cls.isFullScreenLockEnabled ? 'Screen Lock Active' : 'Enable Screen Lock'}
-                          </button>
-                          
-                          {cls.challenge?.isActive ? (
-                            <button
-                              onClick={() => handleEndChallenge(cls.id)}
-                              className="px-4 py-2 bg-rose-500/20 text-rose-300 font-bold text-xs rounded-full hover:bg-rose-500/30 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap border border-rose-500/20 backdrop-blur-md"
-                            >
-                              <X className="w-3.5 h-3.5" /> End Challenge
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => { setIsCreatingChallenge(cls.id); }}
-                              className="px-4 py-2 bg-white/10 text-white font-bold text-xs rounded-full hover:bg-white/20 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap backdrop-blur-md"
-                            >
-                              <Zap className="w-3.5 h-3.5" /> Launch Challenge
-                            </button>
+                        {/* Status Indicators / Active State Badges */}
+                        <div className="flex flex-wrap gap-2 mb-6 items-center">
+                          {cls.isFullScreenLockEnabled && (
+                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-md flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5" /> Screen Lock Active
+                            </span>
                           )}
-                          <button
-                            onClick={() => handleDownloadReport(cls)}
-                            disabled={isGeneratingReport === cls.id}
-                            className="px-4 py-2 bg-white/10 text-white font-bold text-xs rounded-full hover:bg-white/20 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap disabled:opacity-50 backdrop-blur-md"
-                          >
-                            {isGeneratingReport === cls.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                            Download Report
-                          </button>
+                          {cls.challenge?.isActive && (
+                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 backdrop-blur-md flex items-center gap-1.5">
+                              <Zap className="w-3.5 h-3.5" /> Challenge Active: {cls.challenge.title}
+                            </span>
+                          )}
+                          {cls.rosterEmails && cls.rosterEmails.length > 0 && (
+                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white/90 border border-white/10 backdrop-blur-md flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-indigo-300" /> {cls.rosterEmails.length} Enrolled
+                            </span>
+                          )}
+                          {!cls.isFullScreenLockEnabled && !cls.challenge?.isActive && (!cls.rosterEmails || cls.rosterEmails.length === 0) && (
+                            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 text-white/70 border border-white/10 backdrop-blur-md">
+                              Ready for instruction
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -875,7 +1016,7 @@ export const TeacherDashboard: React.FC<{
                             onClick={() => toggleCollapse(cls.id)}
                             className="bg-black text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-gray-900 transition-colors w-full sm:w-auto justify-center"
                           >
-                            {isCollapsed ? 'View More' : 'Hide Details'}
+                            {isCollapsed ? 'View Controls & Students' : 'Hide Details'}
                           </button>
                         </div>
                       </div>
@@ -922,49 +1063,65 @@ export const TeacherDashboard: React.FC<{
                                </div>
                              )}
 
+                             {/* Unified Teacher Controls Toolbar */}
                              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                               <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+                               <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
                                   <button
                                     onClick={() => toggleScreenLock(cls.id, !cls.isFullScreenLockEnabled)}
-                                    className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2 whitespace-nowrap ${cls.isFullScreenLockEnabled ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                                    className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2 whitespace-nowrap ${cls.isFullScreenLockEnabled ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                                   >
-                                    {cls.isFullScreenLockEnabled ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                                    {cls.isFullScreenLockEnabled ? <Lock className="w-3.5 h-3.5 text-amber-700" /> : <Unlock className="w-3.5 h-3.5 text-slate-500" />}
                                     {cls.isFullScreenLockEnabled ? 'Screen Lock Active' : 'Enable Screen Lock'}
                                   </button>
                                   
                                   {cls.challenge?.isActive ? (
                                     <button
                                       onClick={() => handleEndChallenge(cls.id)}
-                                      className="px-4 py-2.5 bg-rose-50 text-rose-600 font-bold text-xs rounded-full hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                      className="px-4 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs rounded-full hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
                                     >
                                       <X className="w-3.5 h-3.5" /> End Challenge
                                     </button>
                                   ) : (
                                     <button
                                       onClick={() => { setIsCreatingChallenge(cls.id); }}
-                                      className="px-4 py-2.5 bg-amber-50 text-amber-600 font-bold text-xs rounded-full hover:bg-amber-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                      className="px-4 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs rounded-full hover:bg-amber-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
                                     >
-                                      <Zap className="w-3.5 h-3.5" /> Launch Challenge
+                                      <Zap className="w-3.5 h-3.5 text-amber-600" /> Launch Challenge
                                     </button>
                                   )}
 
                                   <button
                                     onClick={() => handleDownloadReport(cls)}
                                     disabled={isGeneratingReport === cls.id}
-                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-full hover:bg-slate-200 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
+                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
                                   >
                                     {isGeneratingReport === cls.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                     Download CSV
                                   </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setManualRosterClass(cls);
+                                      setManualRosterText(cls.rosterEmails ? cls.rosterEmails.join('\n') : '');
+                                      setManualRosterFeedback(null);
+                                    }}
+                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                  >
+                                    <Users className="w-3.5 h-3.5 text-indigo-600" />
+                                    {cls.rosterEmails && cls.rosterEmails.length > 0
+                                      ? `Roster (${cls.rosterEmails.length})`
+                                      : 'Manage Roster'}
+                                  </button>
                                </div>
 
-                               <div className="flex gap-2">
+                               <div className="flex gap-2 w-full md:w-auto justify-end">
                                   <button
                                     onClick={() => { setDeletingClassId(cls.id); setDeleteConfirmationText(''); }}
-                                    className="p-2.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
-                                    title="Delete Class"
+                                    className="px-4 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                    title="Delete this class section"
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                    <span>Delete Class</span>
                                   </button>
                                </div>
                              </div>
@@ -1588,13 +1745,127 @@ export const TeacherDashboard: React.FC<{
                 </div>
               )}
 
-              <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+              {rosterSyncSuccess && (
+                <div className="mt-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2.5 text-xs text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{rosterSyncSuccess}</span>
+                </div>
+              )}
+
+              <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p className="text-xs text-slate-500 font-medium">
+                  {classRosterPreview.length} student{classRosterPreview.length === 1 ? '' : 's'} found
+                </p>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => setRosterSyncClass(null)}
+                    className="flex-1 sm:flex-none px-5 py-2.5 text-slate-600 hover:text-slate-800 font-bold rounded-xl text-sm"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleAddRosterToBeginFin}
+                    disabled={isAddingRosterToBeginFin || classRosterPreview.length === 0}
+                    className="flex-1 sm:flex-none px-5 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    {isAddingRosterToBeginFin ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Adding...
+                      </>
+                    ) : (
+                      <>
+                        <Users className="w-4 h-4" /> Add Roster to BeginFin
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Manual Student Roster Modal */}
+      <AnimatePresence>
+        {manualRosterClass && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl relative"
+            >
+              <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#7F7FFA]">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900">Class Roster</h3>
+                    <p className="text-xs text-slate-500 font-medium">Auto-enroll students in {manualRosterClass.className}</p>
+                  </div>
+                </div>
                 <button
-                  onClick={() => setRosterSyncClass(null)}
-                  className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800"
+                  onClick={() => {
+                    setManualRosterClass(null);
+                    setManualRosterFeedback(null);
+                  }}
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-50"
                 >
-                  Done
+                  <X className="w-5 h-5" />
                 </button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Enter student email addresses (separated by commas or new lines). When these students sign in to BeginFin for the first time, they will be <strong>automatically enrolled</strong> into <strong>{manualRosterClass.className}</strong> and receive a welcome notification.
+                </p>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Student Emails
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={manualRosterText}
+                    onChange={(e) => setManualRosterText(e.target.value)}
+                    placeholder="student1@school.edu&#10;student2@school.edu&#10;student3@school.edu"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7F7FFA]"
+                  />
+                </div>
+
+                {manualRosterFeedback && (
+                  <div className={`p-3 rounded-xl text-xs font-medium ${manualRosterFeedback.startsWith('✓') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                    {manualRosterFeedback}
+                  </div>
+                )}
+
+                <div className="pt-2 flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setManualRosterClass(null);
+                      setManualRosterFeedback(null);
+                    }}
+                    className="px-5 py-2.5 text-slate-600 hover:text-slate-800 font-bold rounded-xl text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveManualRoster}
+                    disabled={manualRosterSaving}
+                    className="px-6 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center gap-2"
+                  >
+                    {manualRosterSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" /> Save Roster
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -1688,7 +1959,7 @@ export const TeacherDashboard: React.FC<{
                 </button>
                 <button 
                   onClick={() => handleDeleteClass(deletingClassId!)}
-                  disabled={isDeleting || deleteConfirmationText !== 'DELETE'}
+                  disabled={isDeleting || deleteConfirmationText.trim().toUpperCase() !== 'DELETE'}
                   className="flex-1 py-4 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-200 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete Class'}

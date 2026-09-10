@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, CheckCircle, ChevronRight, ChevronDown, Award, Globe, BookOpen, Library, ShieldCheck, ArrowRight, DollarSign, Info, Users, Map, Search, Share2, FileText, CreditCard, TrendingUp, Home, Calendar, Clock, Zap, Newspaper, Heart, Menu, Star, Quote, User as UserSilhouette, ArrowUpRight, Gauge, Lightbulb, School, Coins, GraduationCap, Sparkles } from 'lucide-react';
+import { X, CheckCircle, ChevronRight, ChevronDown, Award, Globe, BookOpen, Library, ShieldCheck, ArrowRight, DollarSign, Info, Users, Map, Search, Share2, FileText, CreditCard, TrendingUp, Home, Calendar, Clock, Zap, Newspaper, Heart, Menu, Star, Quote, User as UserSilhouette, ArrowUpRight, Gauge, Lightbulb, School, Coins, GraduationCap, Sparkles, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CookieBanner } from './CookieBanner';
 import { Modal } from './Modal';
@@ -9,6 +9,7 @@ import { Language, uiTranslations } from '../data/uiTranslations';
 import { User, db, OperationType, handleFirestoreError } from '../firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { Article } from '../types';
+import { useSystemStatus } from '../services/systemStatusService';
 
 import { Footer } from './Footer';
 
@@ -82,19 +83,16 @@ export const WelcomeScreen: React.FC<Props> = ({
   onOpenGuide,
   modules 
 }) => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [activeModal, setActiveModal] = useState<'map' | 'ios' | null>(null);
   const navigate = useNavigate();
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([]);
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
 
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!sectionRef.current) return;
@@ -128,14 +126,6 @@ export const WelcomeScreen: React.FC<Props> = ({
         name: r.author
       };
     });
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
@@ -220,268 +210,80 @@ export const WelcomeScreen: React.FC<Props> = ({
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const { notice } = useSystemStatus();
+  const hasBanner = Boolean(notice && notice.show && (notice.title || notice.message));
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F8FA] text-[#3C3C3C] overflow-x-hidden">
-      {/* Glassmorphic Header */}
-      <header>
-        <nav className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[150] max-w-6xl mx-auto transition-all duration-500 transform-gpu ${
-          isScrolled 
-            ? 'top-3 sm:top-4 bg-white/95 backdrop-blur-xl shadow-lg py-2 sm:py-2.5 px-3.5 sm:px-6 border-slate-200/70' 
-            : 'top-3.5 sm:top-5 bg-[#0d0f18]/90 backdrop-blur-2xl border-white/15 shadow-2xl py-2 sm:py-3 px-3.5 sm:px-6'
-        } border rounded-full flex items-center justify-between`}>
-        <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <img 
-            src="/logo.png" 
-            alt="BeginFin Logo" 
-            className="w-7 h-7 sm:w-8 sm:h-8 object-contain rounded-xl shadow-sm" 
-            referrerPolicy="no-referrer" 
-          />
-          <span className={`font-extrabold tracking-tight text-lg sm:text-xl ${isScrolled ? 'text-[#3C3C3C]' : 'text-white'}`}>BeginFin</span>
-        </div>
+      <main id="main-content" className="flex-grow">
+      {/* Hero Section - Full-Screen Interactive Purple Background */}
+      <section 
+        ref={sectionRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`relative w-full overflow-hidden select-none cursor-default bg-gradient-to-br from-[#3b437e] via-[#353c70] to-[#252a55] ${hasBanner ? 'pt-44 sm:pt-52' : 'pt-32 sm:pt-36'} pb-16 sm:pb-24 min-h-[92vh] md:min-h-screen flex flex-col justify-center items-center`}
+      >
+        {/* Dynamic Interactive Cursor Tracking Glow - Fills Entire Hero Screen */}
+        <div 
+          className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, rgba(165, 180, 252, 0.35) 0%, rgba(99, 102, 241, 0.16) 45%, transparent 75%)`
+          }}
+        />
 
-        <div className="hidden lg:flex items-center gap-7">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>HOME</button>
-          <button onClick={onViewCurriculum} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>CURRICULUM</button>
-          <button 
-            onClick={() => {
-              if (onViewTools) onViewTools();
-              else navigate('/tools');
-            }} 
-            className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}
+        {/* Hero Glow Backdrop - Fills Entire Hero Screen */}
+        <div 
+          className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, rgba(127, 127, 250, 0.32) 0%, rgba(104, 104, 235, 0.14) 45%, transparent 75%)`
+          }}
+        />
+
+        {/* Hero Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-5xl xl:max-w-6xl mx-auto px-6 sm:px-12 text-center animate-in fade-in duration-700">
+          {/* Top Pill Badge */}
+          <div className="inline-flex items-center px-6 py-2 sm:px-8 sm:py-2.5 bg-[#F4F8FA] text-[#3C3C3C] border border-[#7F7FFA]/20 rounded-full font-bold text-xs sm:text-sm md:text-base shadow-lg mb-8 md:mb-10 tracking-tight">
+            Personal Finance Certification
+          </div>
+
+          {/* Main Headline */}
+          <h1 
+            id="hero-tagline"
+            className="text-2xl min-[380px]:text-3xl sm:text-[1.85rem] md:text-4xl lg:text-[2.85rem] xl:text-[3.65rem] font-bold text-white mb-8 md:mb-10 tracking-tight leading-[1.2] sm:leading-tight md:leading-normal text-center w-full max-w-5xl mx-auto font-sans sm:whitespace-nowrap"
           >
-            TOOLS
-          </button>
-          <button onClick={onViewResources} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>RESOURCES</button>
-          {onViewAbout && <button onClick={onViewAbout} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C] hover:text-[#7F7FFA]' : 'text-slate-200 hover:text-white'} transition-colors`}>ABOUT</button>}
-          <button onClick={onOpenGuide} className={`text-[11px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#7F7FFA] bg-[#F4F8FA] hover:bg-[#ECECFC]' : 'text-white bg-[#222536] hover:bg-[#2c3046] border border-white/5'} transition-all px-4 py-1.5 rounded-full shadow-sm`}>
-            GUIDE
-          </button>
-        </div>
+            <span className="block sm:inline">Financial confidence </span>
+            <span className="block sm:inline">starts here.</span>
+          </h1>
 
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
-          <button 
-            onClick={user ? onStart : onLogin}
-            className="bg-[#7F7FFA] text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold sm:font-extrabold text-[10px] sm:text-[11px] uppercase tracking-wide sm:tracking-wider shadow-md hover:bg-[#6868EB] transition-all active:scale-95 whitespace-nowrap"
-          >
-            {user ? 'CONTINUE' : 'GET STARTED'}
-          </button>
+          {/* Segmented Button Capsule */}
+          <div className="flex items-center bg-black rounded-full p-1.5 shadow-2xl border border-white/10 mb-6">
+            <button 
+              onClick={user ? onStart : onLogin}
+              className="px-6 py-3 sm:px-9 sm:py-3.5 bg-white text-black font-extrabold text-sm sm:text-base rounded-full hover:bg-slate-100 transition-all active:scale-[0.98] shadow-md flex items-center justify-center whitespace-nowrap cursor-pointer"
+            >
+              Get Started
+            </button>
 
-          {!user ? (
             <button 
               onClick={onStart}
-              className={`hidden sm:flex items-center px-4 py-2 rounded-full border ${isScrolled ? 'border-slate-200 bg-white/80 text-[#3C3C3C]' : 'border-white/30 bg-white/10 text-white'} backdrop-blur-md hover:bg-white/20 transition-all text-[11px] font-extrabold uppercase tracking-wider`}
+              className="px-6 py-3 sm:px-9 sm:py-3.5 text-white font-extrabold text-sm sm:text-base rounded-full hover:bg-white/10 transition-all active:scale-[0.98] flex items-center justify-center whitespace-nowrap cursor-pointer"
             >
-              GUEST MODE
+              Guest Mode
             </button>
-          ) : (
-            <div className="relative">
-              <button 
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`flex items-center gap-2 ${isScrolled ? 'bg-[#F4F8FA] border-slate-200' : 'bg-[#181b2a] border-white/20'} backdrop-blur-md px-3 py-1.5 rounded-full border hover:bg-white/20 transition-all`}
-              >
-                <div className="w-5 h-5 rounded-full bg-[#7F7FFA] flex items-center justify-center text-[9px] font-bold text-white uppercase">
-                  {user.displayName?.[0] || 'U'}
-                </div>
-                <span className={`text-[10px] font-extrabold uppercase tracking-widest ${isScrolled ? 'text-[#3C3C3C]' : 'text-white'} hidden sm:inline`}>
-                  {user.displayName?.split(' ')[0]}
-                </span>
-              </button>
-              {showUserMenu && (
-                <div className="absolute top-full mt-2 right-0 bg-white border border-slate-100 rounded-2xl shadow-2xl py-2 w-40 z-[160] overflow-hidden">
-                  <button 
-                    onClick={() => {
-                      onOpenSettings();
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full text-left px-4 py-2 text-[10px] font-bold text-[#3C3C3C] hover:bg-[#F4F8FA] transition-colors flex items-center gap-2"
-                  >
-                    Settings
-                  </button>
-                  <button 
-                    onClick={() => { onLogout(); setShowUserMenu(false); }}
-                    className="w-full text-left px-4 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 transition-colors"
-                  >
-                    Log Out
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          <button 
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className={`lg:hidden p-2 sm:p-2.5 rounded-full ${isScrolled ? 'text-[#3C3C3C] border-slate-200/40 bg-white/50' : 'text-white border-white/20 bg-white/10'} hover:bg-white/20 transition-all flex items-center justify-center border shrink-0`}
-            aria-label="Toggle Mobile Menu"
-          >
-            {showMobileMenu ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Panel */}
-      <AnimatePresence>
-        {showMobileMenu && (
-          <>
-            {/* Backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMobileMenu(false)}
-              className="fixed inset-0 z-[140] bg-slate-950/20 backdrop-blur-sm"
-              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            {/* Drawer */}
-            <motion.div 
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="fixed inset-x-4 top-20 z-[145] bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 lg:hidden flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-50">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#2c5282]">Navigation Menu</span>
-                <button 
-                  onClick={() => setShowMobileMenu(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <button 
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }} 
-                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
-                >
-                  <Home className="w-4 h-4 shrink-0" /> Home
-                </button>
-                <button 
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    onViewCurriculum();
-                  }} 
-                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
-                >
-                  <BookOpen className="w-4 h-4 shrink-0" /> Curriculum
-                </button>
-                <button 
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    if (onViewTools) onViewTools();
-                    else navigate('/tools');
-                  }} 
-                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
-                >
-                  <Sparkles className="w-4 h-4 shrink-0" /> Tools & Simulators
-                </button>
-                <button 
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    onViewResources();
-                  }} 
-                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
-                >
-                  <Library className="w-4 h-4 shrink-0" /> Resources
-                </button>
-                {onViewAbout && (
-                  <button 
-                    onClick={() => {
-                      setShowMobileMenu(false);
-                      onViewAbout();
-                    }} 
-                    className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
-                  >
-                    <Users className="w-4 h-4 shrink-0" /> About
-                  </button>
-                )}
-                <button 
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    onOpenGuide();
-                  }} 
-                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#7F7FFA] bg-[#F4F8FA] hover:bg-[#7F7FFA]/10 transition-colors flex items-center gap-3 cursor-pointer"
-                >
-                  <BookOpen className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Guide
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-      </header>
-
-      <main id="main-content" className="flex-grow">
-      {/* Hero Outer Wrapper */}
-      <section className="relative bg-gradient-to-b from-[#2b2d35] via-[#1a1c22] to-[#101115] pt-28 pb-14 px-4 sm:px-6 lg:px-8 min-h-[90vh] md:min-h-screen flex flex-col justify-center items-center">
-        
-        {/* Rounded-Corner Hero Box Container */}
-        <div 
-          ref={sectionRef}
-          onMouseMove={handleMouseMove}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className="relative w-full max-w-6xl rounded-[2.5rem] md:rounded-[3.2rem] bg-gradient-to-br from-[#3b437e] via-[#353c70] to-[#252a55] border border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.5)] overflow-hidden select-none cursor-default py-16 sm:py-20 md:py-24 px-6 sm:px-12 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-700"
-        >
-          {/* Dynamic Interactive Cursor Tracking Glow */}
-          <div 
-            className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle 650px at ${mousePosition.x}px ${mousePosition.y}px, rgba(165, 180, 252, 0.28) 0%, rgba(99, 102, 241, 0.12) 45%, transparent 75%)`
-            }}
-          />
-
-          {/* Hero Glow Backdrop */}
-          <div 
-            className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle 650px at ${mousePosition.x}px ${mousePosition.y}px, rgba(127, 127, 250, 0.28) 0%, rgba(104, 104, 235, 0.12) 45%, transparent 75%)`
-            }}
-          />
-
-          {/* Hero Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center max-w-4xl mx-auto">
-            {/* Top Pill Badge */}
-            <div className="inline-flex items-center px-6 py-2 sm:px-8 sm:py-2.5 bg-[#F4F8FA] text-[#3C3C3C] border border-[#7F7FFA]/20 rounded-full font-bold text-xs sm:text-sm md:text-base shadow-lg mb-8 md:mb-10 tracking-tight">
-              Personal Finance Certification
-            </div>
-
-            {/* Main Headline (One line) */}
-            <h1 className="text-2xl min-[400px]:text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[4.75rem] font-extrabold text-white mb-8 md:mb-10 tracking-tight leading-tight text-center w-full max-w-5xl mx-auto whitespace-nowrap">
-              Financial literacy <span className="italic font-normal">for all.</span>
-            </h1>
-
-            {/* Segmented Button Capsule */}
-            <div className="flex items-center bg-black rounded-full p-1.5 shadow-2xl border border-white/10 mb-6">
-              <button 
-                onClick={user ? onStart : onLogin}
-                className="px-6 py-3 sm:px-9 sm:py-3.5 bg-white text-black font-extrabold text-sm sm:text-base rounded-full hover:bg-slate-100 transition-all active:scale-[0.98] shadow-md flex items-center justify-center whitespace-nowrap"
-              >
-                Get Started
-              </button>
-
-              <button 
-                onClick={onStart}
-                className="px-6 py-3 sm:px-9 sm:py-3.5 text-white font-extrabold text-sm sm:text-base rounded-full hover:bg-white/10 transition-all active:scale-[0.98] flex items-center justify-center whitespace-nowrap"
-              >
-                Guest Mode
-              </button>
-            </div>
-            
-            {/* Terms Disclaimer Subtext */}
-            <p className="text-slate-300/85 text-xs sm:text-sm font-medium tracking-tight">
-              By proceeding, you agree to our{' '}
-              <Link to="/termsofuse" className="font-bold text-white hover:underline transition-colors">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link to="/privacypolicy" className="font-bold text-white hover:underline transition-colors">
-                Privacy Policy
-              </Link>.
-            </p>
           </div>
+          
+          {/* Terms Disclaimer Subtext */}
+          <p className="text-slate-300/85 text-xs sm:text-sm font-medium tracking-tight">
+            By proceeding, you agree to our{' '}
+            <Link to="/termsofuse" className="font-bold text-white hover:underline transition-colors">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacypolicy" className="font-bold text-white hover:underline transition-colors">
+              Privacy Policy
+            </Link>.
+          </p>
         </div>
 
         {/* Cookie Notice Preserved */}
@@ -504,7 +306,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                 <div>
                   <h3 className="text-4xl md:text-5xl font-normal text-[#3C3C3C] tracking-tight">10,000+</h3>
                   <p className="text-xs font-semibold text-[#3C3C3C] mt-1">Unique Visitors</p>
-                  <p className="text-xs text-slate-500 mt-0.5 font-normal">Empowered since launch in 2026</p>
+                  <p className="text-xs text-slate-500 mt-0.5 font-normal">Empowered since launch</p>
                 </div>
               </div>
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-end">

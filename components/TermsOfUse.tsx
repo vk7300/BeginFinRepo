@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { useNavPadding } from './Navbar';
 
 interface Props {
   onBack: () => void;
@@ -10,10 +11,11 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
     window.scrollTo(0, 0);
   }, []);
 
+  const navPadding = useNavPadding();
   const currentDate = "August 30, 2026";
 
   return (
-    <div className="min-h-screen bg-[#F4F8FA] py-12 px-4 sm:px-6 font-sans">
+    <div className={`min-h-screen bg-[#F4F8FA] ${navPadding} pb-16 px-4 sm:px-6 font-sans`}>
       <div className="max-w-4xl mx-auto">
         <button 
           onClick={onBack}
@@ -38,10 +40,10 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
                 <AlertTriangle className="w-8 h-8 text-[#7F7FFA] shrink-0 mt-0.5" />
                 <div className="space-y-2">
                   <p className="text-[#3C3C3C] font-bold italic leading-relaxed">
-                    BeginFin is an EDUCATIONAL PLATFORM ONLY. The materials, interactive modules, simulators, Model Context Protocol (MCP) server, Bradley AI assistant, and tools provided on this website are NOT intended to be financial, investment, legal, or tax advice. Always seek the advice of a qualified professional for your specific circumstances. We do not provide personalized recommendations.
+                    BeginFin is an EDUCATIONAL PLATFORM ONLY. The materials, interactive modules, simulators, Model Context Protocol (MCP) server, and tools provided on this website are NOT intended to be financial, investment, legal, or tax advice. Always seek the advice of a qualified professional for your specific circumstances. We do not provide personalized recommendations.
                   </p>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>Notice Regarding Potential Inaccuracies:</strong> BeginFin is a student-led open educational initiative built and maintained by high school students with very limited resources. While we make every effort to ground our materials in national standards, our website content, learning modules, Bradley AI tutor, Model Context Protocol (MCP) tools, and simulators may contain unintentional errors, simplifications, or inaccuracies. If you discover any inaccuracies or issues, please report them to <strong>support@begin-fin.com</strong> so we can promptly correct them.
+                    <strong>Notice Regarding Potential Inaccuracies:</strong> BeginFin is a student-led open educational initiative built and maintained by high school students with very limited resources. While we make every effort to ground our materials in national standards, our website content, learning modules, Model Context Protocol (MCP) tools, and simulators may contain unintentional errors, simplifications, or inaccuracies. If you discover any inaccuracies or issues, please report them to <strong>support@begin-fin.com</strong> so we can promptly correct them.
                   </p>
                 </div>
               </div>
@@ -58,7 +60,7 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
               <p>Subject to these Terms, BeginFin grants you the following limited licenses:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>General User License:</strong> You are granted a personal, non-exclusive, non-transferable, revocable license to access and use the Platform, course modules, interactive simulators, and personal progress tracking tools for personal, non-commercial educational purposes.</li>
-                <li><strong>Educator License:</strong> Verified teachers and educational institutions are granted a limited, non-exclusive license to utilize the Platform, its Educator Dashboard ("School Mode"), Google Classroom integration, and downloadable lesson planning resources within academic environments. This includes enrolling students, syncing class rosters, publishing coursework assignments, and monitoring class mastery.</li>
+                <li><strong>Educator License:</strong> Verified teachers and educational institutions are granted a limited, non-exclusive license to utilize the Platform, its Educator Dashboard ("School Mode"), Google Classroom integration, and downloadable lesson planning resources within academic environments. This includes enrolling students, syncing class rosters (which automatically associates student accounts upon login and displays a one-time welcome notification), publishing coursework assignments, and monitoring class mastery.</li>
                 <li><strong>Model Context Protocol (MCP) Server License:</strong> BeginFin provides an open Model Context Protocol (MCP) server (accessible via <code>https://begin-fin.com/mcp</code> and <code>https://begin-fin.com/sse</code>) permitting educators, students, and developers to interface artificial intelligence assistants (such as Claude Desktop, Claude.ai, and Cursor) with BeginFin's verified curriculum, national standards alignments, and lesson plan generators for non-commercial educational purposes. Zero user data is transferred via this protocol.</li>
               </ul>
             </section>
@@ -74,14 +76,14 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">4. BRADLEY AI EDUCATIONAL ASSISTANT & MODEL CONTEXT PROTOCOL (MCP)</h4>
-              <p>BeginFin offers automated educational AI integrations, including the Bradley AI tutor (powered by Google Gemini®) and the BeginFin Model Context Protocol (MCP) server:</p>
+              <h4 className="font-bold text-slate-900">4. MODEL CONTEXT PROTOCOL (MCP) SERVER & AI INTEGRATIONS</h4>
+              <p>BeginFin provides an open, standards-compliant Model Context Protocol (MCP) server (accessible at <code>https://begin-fin.com/mcp</code> and <code>https://begin-fin.com/sse</code>) enabling external artificial intelligence assistants and development environments (such as Claude Desktop, Claude.ai, Cursor, and Windsurf) to interface with BeginFin's verified curriculum and financial calculation engines:</p>
               <ul className="list-disc ml-6 space-y-2 text-xs leading-relaxed text-slate-700">
-                <li><strong>Third-Party Technology:</strong> Bradley is powered by Google Gemini APIs. Usage is subject to Google's Terms of Service and Privacy Policy. The MCP server interfaces with user-configured AI clients.</li>
-                <li><strong>Accuracy Disclaimer & Student-Led Context:</strong> AI responses generated by Bradley and MCP-connected clients are produced dynamically by artificial intelligence and <strong>may contain inaccuracies, simplifications, or outdated figures</strong>. As a student-led platform with limited resources, BeginFin cannot guarantee the absolute accuracy of AI-generated responses. You are solely responsible for independently verifying information before relying on it, and you are invited to report any errors to <strong>support@begin-fin.com</strong>.</li>
-                <li><strong>Strictly Non-Advisory:</strong> AI tools provide purely conceptual explanations of financial literacy principles and strictly refuse personalized financial, tax, legal, or investment recommendations.</li>
-                <li><strong>No Liability:</strong> BeginFin, its student founders, contributors, and affiliates <strong>are not liable for any damages, losses, financial decisions, errors, or omissions arising from or related to the use of or reliance on Bradley, the MCP server, or their outputs</strong>.</li>
-                <li><strong>Privacy of AI Interactions & MCP:</strong> BeginFin does not inspect, sell, or monetize private user chat queries. The MCP server only exchanges public curriculum metadata and lesson planning structures; no user or student personal data is ever collected, logged, or transferred.</li>
+                <li><strong>Third-Party AI Environments:</strong> BeginFin does not host an in-app generative chatbot; rather, our MCP server delivers structured tools, resources, and curriculum prompts directly into the user's chosen external AI environment. Usage of external AI clients is subject to the respective third-party provider's Terms of Service and Privacy Policy.</li>
+                <li><strong>Accuracy Disclaimer & Student-Led Context:</strong> AI responses generated by MCP-connected clients are produced dynamically by artificial intelligence and <strong>may contain inaccuracies, simplifications, or outdated figures</strong>. As a student-led platform with limited resources, BeginFin cannot guarantee the absolute accuracy of AI-generated responses. You are solely responsible for independently verifying information before relying on it, and you are invited to report any errors to <strong>support@begin-fin.com</strong>.</li>
+                <li><strong>Strictly Non-Advisory:</strong> MCP tools provide purely conceptual explanations of financial literacy principles, automated calculations, and lesson planning frameworks, and strictly refuse personalized financial, tax, legal, or investment recommendations.</li>
+                <li><strong>No Liability:</strong> BeginFin, its student founders, contributors, and affiliates <strong>are not liable for any damages, losses, financial decisions, errors, or omissions arising from or related to the use of or reliance on the MCP server, MCP tools, or their outputs</strong>.</li>
+                <li><strong>Stateless Architecture & Zero Personal Data:</strong> The BeginFin MCP server operates completely statelessly. No learner profiles, user identities, student data, or personal records are ever collected, logged, or transferred via MCP endpoints.</li>
               </ul>
             </section>
 
@@ -111,11 +113,11 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">8. INTELLECTUAL PROPERTY & ATTRIBUTIONS</h4>
+              <h4 className="font-bold text-slate-900">8. INTELLECTUAL PROPERTY, ATTRIBUTIONS & AP® TRADEMARKS</h4>
               <p>The hosted BeginFin platform, website software, custom visual assets, and design system are maintained by BeginFin. The core curriculum text is open-source for non-commercial educational use.</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Educational Framework Alignment:</strong> Curriculum topics are developed with national financial education frameworks in mind, referencing principles from the <em>National Standards for Personal Finance Education</em> (2021), developed jointly by the <strong>Council for Economic Education (CEE)</strong> and the <strong>Jump$tart Coalition for Personal Financial Literacy</strong>. Copyright &copy; 2021 CEE and Jump$tart. All rights reserved.</li>
-                <li><strong>College Board AP® Notice:</strong> AP® is a registered trademark of the College Board, which is not affiliated with, and does not endorse, BeginFin.</li>
+                <li><strong>College Board AP® Trademark Use & Non-Endorsement:</strong> AP® is a trademark registered by the College Board. BeginFin is licensed to use the AP® trademark. BeginFin is not endorsed by the College Board. All review materials in <em>BeginFin's Guide to AP® Business with Personal Finance</em> are independently aligned to the publicly available AP® Business with Personal Finance Course Framework. College Board trademarks are used strictly as adjectives modifying generic nouns in compliance with College Board trademark guidelines. Note: Only Unit 1 is available now, with more units and BeginFin tools to be supported soon.</li>
               </ul>
             </section>
 

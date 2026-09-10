@@ -5,10 +5,9 @@ import fs from "fs";
 import { rateLimit } from "express-rate-limit";
 import cors from "cors";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getStrippedQuestionsForModule, gradeQuizAnswers } from "./server/quizAnswerKeys";
 import { 
   MCP_SERVER_INFO, 
@@ -23,17 +22,6 @@ import {
   handleMcpDirectPost,
   handleMcpManifest
 } from "./server/mcpHandler";
-import {
-  BRADLEY_MCP_SERVER_INFO,
-  BRADLEY_MCP_TOOLS,
-  BRADLEY_MCP_RESOURCES,
-  BRADLEY_MCP_PROMPTS,
-  handleBradleyMcpSseConnection,
-  handleBradleyMcpMessagePost,
-  handleBradleyMcpDirectPost,
-  handleBradleyMcpManifest,
-  executeBradleyMcpTool
-} from "./server/bradleyMcpHandler";
 
 dotenv.config();
 
@@ -48,23 +36,6 @@ const firestoreDbId = process.env.FIRESTORE_DATABASE_ID || "ai-studio-815a8484-c
 
 const adminAuth = getAuth(adminApp);
 const adminDb = getFirestore(adminApp, firestoreDbId);
-
-let aiClient: GoogleGenAI | null = null;
-function getGenAI(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-  if (!aiClient) {
-    aiClient = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
-    });
-  }
-  return aiClient;
-}
 
 function sanitizeHeader(str: string): string {
   return String(str || '').replace(/[\r\n]+/g, ' ').trim();
@@ -253,19 +224,19 @@ async function startServer() {
   });
 
   // Model Context Protocol (MCP) Server Endpoints (https://begin-fin.com/mcp & https://begin-fin.com/sse)
-  // 1. Standard MCP SSE Stream Endpoints (GET /sse, GET /api/mcp/sse, GET /mcp/sse)
-  app.get(['/sse', '/api/mcp/sse', '/mcp/sse'], handleMcpSseConnection);
+  // 1. Standard MCP SSE Stream Endpoints (GET /sse, GET /api/mcp/sse, GET /mcp/sse, and legacy aliases)
+  app.get(['/sse', '/api/mcp/sse', '/mcp/sse', '/bradley/sse', '/api/bradley/sse'], handleMcpSseConnection);
 
-  // 2. Standard MCP Session Messages Endpoint (POST /messages, POST /mcp/messages, POST /api/mcp/messages)
-  app.post(['/messages', '/mcp/messages', '/api/mcp/messages'], handleMcpMessagePost);
+  // 2. Standard MCP Session Messages Endpoint (POST /messages, POST /mcp/messages, POST /api/mcp/messages, and legacy aliases)
+  app.post(['/messages', '/mcp/messages', '/api/mcp/messages', '/bradley/messages', '/api/bradley/messages'], handleMcpMessagePost);
 
-  // 3. Direct JSON-RPC 2.0 MCP POST Handlers (POST /mcp, POST /api/mcp, POST /sse, POST /teacher/mcp)
-  app.post(['/mcp', '/api/mcp', '/sse', '/teacher/mcp'], handleMcpDirectPost);
+  // 3. Direct JSON-RPC 2.0 MCP POST Handlers (POST /mcp, POST /api/mcp, POST /sse, POST /teacher/mcp, and legacy aliases)
+  app.post(['/mcp', '/api/mcp', '/sse', '/teacher/mcp', '/bradley/mcp', '/api/bradley/mcp', '/bradley/sse', '/bradley'], handleMcpDirectPost);
 
-  // 4. Smart GET Routing for /mcp, /api/mcp, and /teacher/mcp
-  app.get(['/mcp', '/api/mcp', '/teacher/mcp'], (req, res, next) => {
+  // 4. Smart GET Routing for /mcp, /api/mcp, /teacher/mcp, and backward-compatible aliases
+  app.get(['/mcp', '/api/mcp', '/teacher/mcp', '/bradley', '/bradley/mcp', '/api/bradley', '/api/bradley/mcp'], (req, res, next) => {
     const isSse = req.headers.accept?.includes('text/event-stream') || req.query.sse === 'true' || req.query.transport === 'sse';
-    const isExplicitJson = req.headers.accept?.includes('application/json') || req.query.format === 'json' || req.path === '/api/mcp';
+    const isExplicitJson = req.headers.accept?.includes('application/json') || req.query.format === 'json' || req.path.startsWith('/api/');
     const userAgent = (req.headers['user-agent'] || '').toLowerCase();
     const isMcpClient = userAgent.includes('mcp') || userAgent.includes('claude') || userAgent.includes('cursor') || userAgent.includes('anthropic') || userAgent.includes('python-requests') || userAgent.includes('curl') || userAgent.includes('go-http-client');
 
@@ -273,24 +244,28 @@ async function startServer() {
       return handleMcpSseConnection(req, res);
     }
 
-    if (isExplicitJson) {
+    if (isExplicitJson || (isMcpClient && !req.headers.accept?.includes('text/html'))) {
       return handleMcpManifest(req, res);
     }
 
-    // If request is from an MCP client or CLI tool requesting /mcp without text/html
-    if (isMcpClient && !req.headers.accept?.includes('text/html')) {
-      return handleMcpManifest(req, res);
-    }
-
-    // For standard web browsers visiting /mcp or /teacher/mcp, hand off to React SPA router
+    // For standard web browsers visiting /mcp or aliases, hand off to React SPA router
     next();
   });
 
   // 5. MCP Manifest Discovery (.well-known and manifest.json)
-  app.get(['/mcp/manifest.json', '/.well-known/mcp', '/.well-known/mcp.json', '/mcp.json', '/api/mcp/manifest'], handleMcpManifest);
+  app.get([
+    '/mcp/manifest.json',
+    '/.well-known/mcp',
+    '/.well-known/mcp.json',
+    '/mcp.json',
+    '/api/mcp/manifest',
+    '/bradley/manifest.json',
+    '/.well-known/mcp-bradley.json',
+    '/api/bradley/manifest'
+  ], handleMcpManifest);
 
-  // 6. REST Helper Endpoints for Frontend Interactive Playground
-  app.get('/api/mcp/tools', (req, res) => {
+  // 6. REST Helper Endpoints for Interactive Playground & Tool Execution
+  app.get(['/api/mcp/tools', '/api/bradley/tools'], (req, res) => {
     res.json({
       serverInfo: MCP_SERVER_INFO,
       tools: MCP_TOOLS,
@@ -299,7 +274,7 @@ async function startServer() {
     });
   });
 
-  app.post('/api/mcp/execute', async (req, res) => {
+  app.post(['/api/mcp/execute', '/api/bradley/execute'], async (req, res) => {
     try {
       const { toolName, args } = req.body || {};
       if (!toolName) {
@@ -312,7 +287,8 @@ async function startServer() {
     }
   });
 
-  app.get('/beginfin-mcp-config.json', (req, res) => {
+  // Claude Desktop MCP Configuration Download (https://begin-fin.com/beginfin-mcp-config.json)
+  app.get(['/beginfin-mcp-config.json', '/beginfin-bradley-config.json', '/bradley-config.json'], (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename="claude_desktop_config.json"');
     const host = req.get('host') || 'begin-fin.com';
@@ -328,285 +304,24 @@ async function startServer() {
     });
   });
 
-  // --------------------------------------------------------------------------
-  // Bradley Financial Tutor MCP Server (https://begin-fin.com/bradley/sse & /bradley/mcp)
-  // 100% Free Open Educational Resource ($0 Cost to BeginFin & Learner)
-  // --------------------------------------------------------------------------
-  // Direct route to serve the Bradley Tutor markdown documentation
-  app.get(['/bradley-tutor.md', '/bradley.md'], (req, res) => {
-    const distMd = path.join(process.cwd(), 'dist', 'bradley-tutor.md');
-    const publicMd = path.join(process.cwd(), 'public', 'bradley-tutor.md');
+  // Direct route to serve the BeginFin MCP markdown documentation
+  app.get(['/beginfin-mcp.md', '/bradley-tutor.md', '/bradley.md'], (req, res) => {
+    const distMd = path.join(process.cwd(), 'dist', 'beginfin-mcp.md');
+    const publicMd = path.join(process.cwd(), 'public', 'beginfin-mcp.md');
+    const fallbackDistMd = path.join(process.cwd(), 'dist', 'beginfin-lesson-planner.md');
+    const fallbackPublicMd = path.join(process.cwd(), 'public', 'beginfin-lesson-planner.md');
     res.setHeader('Content-Type', 'text/markdown; charset=UTF-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="bradley-tutor.md"');
+    res.setHeader('Content-Disposition', 'attachment; filename="beginfin-mcp.md"');
     if (fs.existsSync(distMd)) {
       res.sendFile(distMd);
     } else if (fs.existsSync(publicMd)) {
       res.sendFile(publicMd);
+    } else if (fs.existsSync(fallbackDistMd)) {
+      res.sendFile(fallbackDistMd);
+    } else if (fs.existsSync(fallbackPublicMd)) {
+      res.sendFile(fallbackPublicMd);
     } else {
       res.sendStatus(404);
-    }
-  });
-
-  // 1. Standard Bradley MCP SSE Stream Endpoints (GET /bradley/sse, GET /api/bradley/sse)
-  app.get(['/bradley/sse', '/api/bradley/sse'], handleBradleyMcpSseConnection);
-
-  // 2. Standard Bradley MCP Session Messages Endpoint (POST /bradley/messages, POST /api/bradley/messages)
-  app.post(['/bradley/messages', '/api/bradley/messages'], handleBradleyMcpMessagePost);
-
-  // 3. Direct JSON-RPC 2.0 Bradley MCP POST Handlers (POST /bradley/mcp, POST /api/bradley/mcp, POST /bradley/sse, POST /bradley)
-  app.post(['/bradley/mcp', '/api/bradley/mcp', '/bradley/sse', '/bradley'], handleBradleyMcpDirectPost);
-
-  // 4. Smart GET Routing for /bradley and /bradley/mcp
-  app.get(['/bradley', '/bradley/mcp', '/api/bradley', '/api/bradley/mcp'], (req, res, next) => {
-    const isSse = req.headers.accept?.includes('text/event-stream') || req.query.sse === 'true' || req.query.transport === 'sse';
-    const isExplicitJson = req.headers.accept?.includes('application/json') || req.query.format === 'json' || req.path.startsWith('/api/');
-    const userAgent = (req.headers['user-agent'] || '').toLowerCase();
-    const isMcpClient = userAgent.includes('mcp') || userAgent.includes('claude') || userAgent.includes('cursor') || userAgent.includes('anthropic') || userAgent.includes('python-requests') || userAgent.includes('curl') || userAgent.includes('go-http-client');
-
-    if (isSse) {
-      return handleBradleyMcpSseConnection(req, res);
-    }
-
-    if (isExplicitJson || (isMcpClient && !req.headers.accept?.includes('text/html'))) {
-      return handleBradleyMcpManifest(req, res);
-    }
-
-    // For standard web browsers visiting /bradley or /bradley/mcp, hand off to React SPA router
-    next();
-  });
-
-  // 5. Bradley MCP Manifest Discovery (.well-known and manifest.json)
-  app.get(['/bradley/manifest.json', '/.well-known/mcp-bradley.json', '/api/bradley/manifest'], handleBradleyMcpManifest);
-
-  // 6. REST Helper Endpoints for Frontend Interactive Playground
-  app.get('/api/bradley/tools', (req, res) => {
-    res.json({
-      serverInfo: BRADLEY_MCP_SERVER_INFO,
-      tools: BRADLEY_MCP_TOOLS,
-      resources: BRADLEY_MCP_RESOURCES,
-      prompts: BRADLEY_MCP_PROMPTS
-    });
-  });
-
-  app.post('/api/bradley/execute', async (req, res) => {
-    try {
-      const { toolName, args } = req.body || {};
-      if (!toolName) {
-        return res.status(400).json({ isError: true, content: [{ type: 'text', text: 'Missing required toolName' }] });
-      }
-      const result = await executeBradleyMcpTool(toolName, args || {});
-      return res.json(result);
-    } catch (err: any) {
-      return res.status(500).json({ isError: true, content: [{ type: 'text', text: err?.message || 'Error executing tool' }] });
-    }
-  });
-
-  app.get(['/beginfin-bradley-config.json', '/bradley-config.json'], (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', 'attachment; filename="claude_desktop_config.json"');
-    const host = req.get('host') || 'begin-fin.com';
-    const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
-    const baseUrl = `${proto}://${host}`;
-
-    res.json({
-      mcpServers: {
-        "beginfin-bradley": {
-          "url": `${baseUrl}/bradley/sse`
-        }
-      }
-    });
-  });
-
-  // Daily Rate Limiting for Bradley AI Chatbot (Strict 5 messages per calendar day / 24h per registered user)
-  const MAX_DAILY_MESSAGES = 5;
-
-  // Helper to ensure response is clean plain text with no asterisks, hashtags, or markdown formatting
-  function cleanPlainTextResponse(text: string): string {
-    if (!text) return "";
-    return text
-      .replace(/^#{1,6}\s+/gm, '') // remove markdown header hashtags
-      .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1') // remove bold/italic asterisks
-      .replace(/_{1,3}([^_]+)_{1,3}/g, '$1') // remove underscores
-      .replace(/[*#`]/g, '') // remove lingering asterisks, hashtags, backticks
-      .replace(/^\s*[-•*]\s+/gm, '') // remove markdown bullet symbols
-      .replace(/\n{3,}/g, '\n\n') // collapse excess newlines
-      .trim();
-  }
-
-  const BRADLEY_SYSTEM_INSTRUCTION = `You are 'Bradley', a friendly, knowledgeable personal finance expert and educational tutor created by BeginFin.
-BeginFin is an open-access non-profit web app providing a free personal finance certification course.
-
-Role & Core Rules:
-1. Educational Purpose: Your goal is to answer personal finance questions and clarify concepts from the BeginFin curriculum in clear, friendly plain language.
-2. Mandatory Disclaimer Handled by UI: The chat interface already displays the mandatory disclaimer ("I am Bradley, an AI assistant created by BeginFin. I am not a financial advisor, and I cannot provide personalized financial advice.") to the user. Do NOT waste space repeating this full disclaimer on every answer unless the user specifically asks who you are or asks for personalized financial advice.
-3. No Financial Advice: You must strictly refuse any request to provide personalized investment advice, stock picks, or individual financial planning recommendations. Politely explain the underlying educational principle instead.
-4. Formatting & Brevity:
-   - Output ONLY clean, natural plain text.
-   - DO NOT use asterisks (* or **), hashtags (#), bullet points with symbols, bolding, italics, or code blocks.
-   - Keep answers concise and direct: aim for 2 to 4 plain-language sentences (or a short paragraph) that are easy for any student to understand.
-   - Explain financial terms simply without overwhelming jargon.
-
-BeginFin Curriculum Reference:
-- Unit 1: Personal Finance Fundamentals (Scarcity, Opportunity Cost, Net Worth = Assets - Liabilities, Checking vs Savings vs HYSA, FDIC/NCUA Insurance, APY, 50/30/20 Budgeting Rule).
-- Unit 2: Paychecks, Taxes & Deductions (Gross vs Net Pay, FICA: Social Security 6.2% & Medicare 1.45%, Federal/State Income Taxes, W-4, W-2, 1099, Standard vs Itemized Deductions, Marginal Brackets).
-- Unit 3: Banking & Credit Mastery (Credit Scores: FICO 300-850, 5 Factors: Payment History 35%, Utilization 30%, Length/Age 15%, Credit Mix 10%, New Credit 10%, Credit vs Debit Cards, APR, Grace Period).
-- Unit 4: Debt Management & Payoff Strategies (Good vs Bad Debt, Avalanche Method: highest APR first, Snowball Method: lowest balance first, Student Loans: Federal vs Private).
-- Unit 5: Investing Basics & Building Wealth (Compound Interest, Rule of 72, Inflation, Stocks, Bonds, Index Funds, ETFs, Diversification, Dollar-Cost Averaging, Risk vs Reward).
-- Unit 6: Insurance & Protecting Your Wealth (Risk Management, Premiums, Deductibles, Co-pays, Out-of-Pocket Max, Health, Auto, Renters, Homeowners, Term vs Whole Life).
-- Unit 7: Retirement Accounts & Long-Term Planning (401k & 403b with Employer Match, Traditional IRA vs Roth IRA, Contribution Limits, 59.5 Early Withdrawal Rule, Social Security).
-- Unit 8: Consumer Protection, Rights & Scams (Phishing, Identity Theft, Credit Freezes, FCRA, TILA, Reporting Fraud).`;
-
-  app.post("/api/chat/bradley", async (req, res) => {
-    try {
-      const { message, history } = req.body;
-      const authHeader = req.headers.authorization;
-
-      // 1. Strictly verify Firebase ID token signature
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ 
-          error: "Authentication required. Please sign in to chat with Bradley AI." 
-        });
-      }
-
-      const idToken = authHeader.split('Bearer ')[1]?.trim();
-      if (!idToken) {
-        return res.status(401).json({ 
-          error: "Authentication token missing. Please sign in again." 
-        });
-      }
-
-      let verifiedUid: string;
-      try {
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        if (!decodedToken || !decodedToken.uid) {
-          throw new Error("Invalid token payload");
-        }
-        verifiedUid = decodedToken.uid;
-      } catch (authErr: any) {
-        return res.status(401).json({ 
-          error: "Invalid or expired session. Please sign in again to use Bradley AI." 
-        });
-      }
-
-      const effectiveUserId = verifiedUid;
-
-      if (!message || typeof message !== "string" || !message.trim()) {
-        return res.status(400).json({ error: "Message is required." });
-      }
-
-      if (message.length > 1000) {
-        return res.status(400).json({ error: "Message exceeds maximum length of 1000 characters." });
-      }
-
-      // 2. Enforce 5 messages per calendar day limit per registered user via Firestore with expiry
-      const todayStr = new Date().toISOString().split('T')[0];
-      const userUsageKey = `${effectiveUserId}_${todayStr}`;
-      const usageDocRef = adminDb.collection("dailyUserUsage").doc(userUsageKey);
-
-      let currentCount = 0;
-      try {
-        const usageSnap = await usageDocRef.get();
-        if (usageSnap.exists) {
-          const uData = usageSnap.data();
-          currentCount = typeof uData?.count === 'number' ? uData.count : 0;
-        }
-      } catch (dbErr) {
-        console.warn("Could not read daily user usage from Firestore:", dbErr);
-      }
-
-      if (currentCount >= MAX_DAILY_MESSAGES) {
-        return res.status(429).json({ 
-          error: "You have reached your daily limit of 5 messages with Bradley. Your daily limit resets tomorrow.",
-          remainingToday: 0
-        });
-      }
-
-      // Helper to atomically record increment in Firestore with 48h expiry metadata
-      const recordUsageIncrement = async (current: number): Promise<number> => {
-        const newCount = current + 1;
-        const now = new Date();
-        const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
-        try {
-          await usageDocRef.set({
-            userId: effectiveUserId,
-            date: todayStr,
-            count: newCount,
-            lastUsedAt: now.toISOString(),
-            expiresAt
-          }, { merge: true });
-        } catch (dbErr) {
-          console.warn("Could not persist daily AI usage in Firestore:", dbErr);
-        }
-        return newCount;
-      };
-
-      const client = getGenAI();
-
-      // If Gemini API Key is not configured in the environment, return a graceful fallback
-      if (!client) {
-        const newCount = await recordUsageIncrement(currentCount);
-        return res.json({
-          reply: `I am Bradley, an AI assistant created by BeginFin. I am not a financial advisor, and I cannot provide personalized financial advice.\n\nTo enable live Google Gemini AI responses, please configure your GEMINI_API_KEY in your environment settings.\n\nIn the meantime, feel free to explore the 8 interactive units in the BeginFin curriculum!`,
-          remainingToday: Math.max(0, MAX_DAILY_MESSAGES - newCount),
-          isFallback: true
-        });
-      }
-
-      // Format conversation contents for multi-turn chat ensuring strictly alternating user/model turns
-      const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
-
-      if (Array.isArray(history) && history.length > 0) {
-        let expectedRole: 'user' | 'model' = 'user';
-        for (const item of history.slice(-6)) {
-          if (item && item.text && typeof item.text === 'string' && item.text.trim()) {
-            const role = item.role === 'model' ? 'model' : 'user';
-            if (role === expectedRole) {
-              contents.push({
-                role,
-                parts: [{ text: item.text.trim() }]
-              });
-              expectedRole = expectedRole === 'user' ? 'model' : 'user';
-            }
-          }
-        }
-      }
-
-      // If contents ends with 'user', drop the last user item so the new query can be appended cleanly
-      if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
-        contents.pop();
-      }
-
-      // Add the current user query
-      contents.push({
-        role: 'user',
-        parts: [{ text: message.trim() }]
-      });
-
-      const response = await client.models.generateContent({
-        model: 'gemini-3.7-flash',
-        contents,
-        config: {
-          systemInstruction: BRADLEY_SYSTEM_INSTRUCTION,
-          temperature: 0.6,
-          maxOutputTokens: 500,
-        }
-      });
-
-      // Increment usage count upon successful generation
-      const newCount = await recordUsageIncrement(currentCount);
-
-      const rawReply = response.text || "I apologize, but I could not generate a response right now. Please try asking your question again.";
-      const cleanReply = cleanPlainTextResponse(rawReply);
-
-      return res.json({ 
-        reply: cleanReply,
-        remainingToday: Math.max(0, MAX_DAILY_MESSAGES - newCount)
-      });
-    } catch (error: any) {
-      console.error("Error in Bradley AI chat:", error?.message || 'internal error');
-      return res.status(500).json({ 
-        error: "Failed to communicate with Bradley. Please try again in a few moments." 
-      });
     }
   });
 
@@ -743,7 +458,9 @@ BeginFin Curriculum Reference:
             updatedCompletedModules = currentCompleted;
           }
         } catch (dbErr: any) {
-          console.error("Error writing completedModules via Admin SDK:", dbErr?.message || dbErr);
+          if (dbErr?.code !== 7 && !dbErr?.message?.includes('PERMISSION_DENIED')) {
+            console.error("Error writing completedModules via Admin SDK:", dbErr?.message || dbErr);
+          }
         }
       }
 
@@ -799,7 +516,10 @@ BeginFin Curriculum Reference:
           completedModules = Array.isArray(userData.completedModules) ? userData.completedModules : [];
         }
       } catch (dbErr: any) {
-        console.warn("Could not query user profile via Admin SDK (falling back to client payload):", dbErr?.message || dbErr);
+        // Fallback gracefully to client payload if container environment lacks Admin SDK IAM permissions
+        if (dbErr?.code !== 7 && !dbErr?.message?.includes('PERMISSION_DENIED')) {
+          console.warn("Could not query user profile via Admin SDK:", dbErr?.message || dbErr);
+        }
       }
 
       // If server could not read from adminDb (e.g., container IAM sandbox), use completedModules supplied in client request
@@ -832,8 +552,11 @@ BeginFin Curriculum Reference:
         if (existingCred.exists) {
           existingData = existingCred.data();
         }
-      } catch (credErr) {
-        console.warn("Could not read existing credential via Admin SDK:", credErr);
+      } catch (credErr: any) {
+        // Fallback gracefully if Admin SDK lacks IAM permissions; client SDK persists directly
+        if (credErr?.code !== 7 && !credErr?.message?.includes('PERMISSION_DENIED')) {
+          console.warn("Could not read existing credential via Admin SDK:", credErr?.message || credErr);
+        }
       }
 
       const finalIssueDate = existingData?.issueDate || issueDate;
@@ -859,7 +582,10 @@ BeginFin Curriculum Reference:
         const credRef = adminDb.collection("credentials").doc(verifiedUid);
         await credRef.set(credData, { merge: true });
       } catch (writeErr: any) {
-        console.warn("Could not persist credential via Admin SDK (client will persist directly to Firestore):", writeErr?.message || writeErr);
+        // Fallback gracefully; client SDK persists directly to Firestore
+        if (writeErr?.code !== 7 && !writeErr?.message?.includes('PERMISSION_DENIED')) {
+          console.warn("Could not persist credential via Admin SDK:", writeErr?.message || writeErr);
+        }
       }
 
       return res.json({
@@ -948,6 +674,208 @@ BeginFin Curriculum Reference:
     } catch (err: any) {
       console.error("Error joining class:", err?.message || err);
       return res.status(500).json({ error: "Failed to join class. Please try again." });
+    }
+  });
+
+  // Check if a student was added to any teacher's roster, and auto-enroll them
+  app.post("/api/check-roster-enrollment", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Authentication required." });
+      }
+
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      if (!idToken) {
+        return res.status(401).json({ error: "Authentication token missing." });
+      }
+
+      let verifiedUid: string;
+      let userEmail: string | undefined;
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        verifiedUid = decodedToken.uid;
+        userEmail = decodedToken.email?.toLowerCase().trim();
+      } catch (authErr) {
+        return res.status(401).json({ error: "Invalid session." });
+      }
+
+      const userDocRef = adminDb.collection("users").doc(verifiedUid);
+      let userData: any = {};
+      try {
+        const userSnap = await userDocRef.get();
+        userData = userSnap.data() || {};
+      } catch (dbErr: any) {
+        // In sandboxed container environment without Admin SDK IAM credentials, fallback cleanly
+        if (dbErr?.code === 7 || dbErr?.message?.includes('PERMISSION_DENIED')) {
+          return res.json({ autoEnrolled: false });
+        }
+        throw dbErr;
+      }
+
+      // If user was previously auto-enrolled and flag is set
+      if (userData.autoEnrolledFromRoster && userData.classId && userData.autoEnrolledClassName) {
+        return res.json({
+          autoEnrolled: true,
+          className: userData.autoEnrolledClassName,
+          classId: userData.classId,
+        });
+      }
+
+      // If user is already in a class manually, no auto-enrollment needed
+      if (userData.classId) {
+        return res.json({ autoEnrolled: false });
+      }
+
+      // If no email on token, check if user doc has email
+      if (!userEmail && userData.email) {
+        userEmail = String(userData.email).toLowerCase().trim();
+      }
+
+      if (!userEmail) {
+        return res.json({ autoEnrolled: false });
+      }
+
+      // Look up classes where rosterEmails includes this student's email
+      let classesQuery: any;
+      try {
+        classesQuery = await adminDb.collection("classes")
+          .where("rosterEmails", "array-contains", userEmail)
+          .limit(1)
+          .get();
+      } catch (queryErr: any) {
+        if (queryErr?.code === 7 || queryErr?.message?.includes('PERMISSION_DENIED')) {
+          return res.json({ autoEnrolled: false });
+        }
+        throw queryErr;
+      }
+
+      if (classesQuery.empty) {
+        return res.json({ autoEnrolled: false });
+      }
+
+      const matchedClassDoc = classesQuery.docs[0];
+      const classData = matchedClassDoc.data();
+      const classId = matchedClassDoc.id;
+      const className = classData.className || "Class";
+      const teacherId = classData.teacherId;
+
+      try {
+        // Add student to class studentIds array
+        await adminDb.collection("classes").doc(classId).update({
+          studentIds: FieldValue.arrayUnion(verifiedUid)
+        });
+
+        // Update user doc with class affiliation and auto-enrolled flag
+        await userDocRef.set({
+          classId,
+          teacherId,
+          autoEnrolledFromRoster: true,
+          autoEnrolledClassName: className,
+          lastUpdated: new Date().toISOString()
+        }, { merge: true });
+      } catch (updateErr: any) {
+        if (updateErr?.code === 7 || updateErr?.message?.includes('PERMISSION_DENIED')) {
+          return res.json({ autoEnrolled: false });
+        }
+        throw updateErr;
+      }
+
+      return res.json({
+        autoEnrolled: true,
+        className,
+        classId
+      });
+    } catch (err: any) {
+      if (err?.code === 7 || err?.message?.includes('PERMISSION_DENIED')) {
+        return res.json({ autoEnrolled: false });
+      }
+      console.error("Error in check-roster-enrollment:", err?.message || err);
+      return res.status(500).json({ error: "Failed to check roster enrollment." });
+    }
+  });
+
+  // Educator endpoint to sync student roster emails to a class
+  app.post("/api/sync-class-roster", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Authentication required." });
+      }
+
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      if (!idToken) {
+        return res.status(401).json({ error: "Authentication token missing." });
+      }
+
+      let verifiedUid: string;
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        verifiedUid = decodedToken.uid;
+      } catch (authErr) {
+        return res.status(401).json({ error: "Invalid session." });
+      }
+
+      const { classId, rosterEmails } = req.body;
+      if (!classId || !Array.isArray(rosterEmails)) {
+        return res.status(400).json({ error: "Class ID and rosterEmails array are required." });
+      }
+
+      const classDocRef = adminDb.collection("classes").doc(classId);
+      const classSnap = await classDocRef.get();
+      if (!classSnap.exists) {
+        return res.status(404).json({ error: "Class not found." });
+      }
+
+      const classData = classSnap.data() || {};
+      if (classData.teacherId !== verifiedUid) {
+        return res.status(403).json({ error: "Only the class teacher can sync roster emails." });
+      }
+
+      const cleanEmails = rosterEmails
+        .filter((e: any) => typeof e === 'string' && e.includes('@'))
+        .map((e: string) => e.toLowerCase().trim());
+
+      await classDocRef.update({
+        rosterEmails: cleanEmails,
+        rosterSyncedAt: new Date().toISOString()
+      });
+
+      // Find any already-registered users with these emails and auto-enroll them immediately
+      if (cleanEmails.length > 0) {
+        const batchSize = 30;
+        for (let i = 0; i < cleanEmails.length; i += batchSize) {
+          const chunk = cleanEmails.slice(i, i + batchSize);
+          const usersSnap = await adminDb.collection("users")
+            .where("email", "in", chunk)
+            .get();
+
+          for (const uDoc of usersSnap.docs) {
+            const uData = uDoc.data();
+            if (!uData.classId) {
+              await classDocRef.update({
+                studentIds: FieldValue.arrayUnion(uDoc.id)
+              });
+              await uDoc.ref.set({
+                classId,
+                teacherId: verifiedUid,
+                autoEnrolledFromRoster: true,
+                autoEnrolledClassName: classData.className || "Class",
+                lastUpdated: new Date().toISOString()
+              }, { merge: true });
+            }
+          }
+        }
+      }
+
+      return res.json({
+        success: true,
+        count: cleanEmails.length,
+        message: `Successfully synchronized ${cleanEmails.length} students to roster.`
+      });
+    } catch (err: any) {
+      console.error("Error syncing class roster:", err?.message || err);
+      return res.status(500).json({ error: "Failed to sync roster." });
     }
   });
 

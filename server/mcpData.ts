@@ -490,7 +490,7 @@ export const BRAND_BOOK_DATA = {
       'Avoid dry academic jargon, legalisms, and extreme/unverifiable claims.'
     ],
     taglines: [
-      'Financial literacy for all.',
+      'Financial confidence starts here.',
       'Jumpstart your financial confidence, for free.',
       'Financial education shouldn’t be a luxury.',
       'Learn financial literacy. Prove it to the world.',
