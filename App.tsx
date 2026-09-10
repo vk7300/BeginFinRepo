@@ -23,6 +23,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { TermsOfUse } from './components/TermsOfUse';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { CrudQmsView } from './components/CrudQmsView';
+import { BeginFinAdminView } from './components/BeginFinAdminView';
 import { ResourcesView } from './components/ResourcesView';
 import { AboutView } from './components/AboutView';
 import { McpServerView } from './components/McpServerView';
@@ -48,7 +49,7 @@ const orderedModules = [
   modules.find(m => m.id === 'm9')
 ].filter((m): m is Module => !!m);
 
-export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'resources' | 'about' | 'mcp' | 'teacher-mcp' | 'bradley-mcp' | 'tools' | 'status' | 'ap-unit' | 'ap-topic';
+export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'admin' | 'resources' | 'about' | 'mcp' | 'teacher-mcp' | 'bradley-mcp' | 'tools' | 'status' | 'ap-unit' | 'ap-topic';
 
 enum OperationType {
   CREATE = 'create',
@@ -358,7 +359,7 @@ const LoginModalContent: React.FC<{
           Welcome to <span className="font-medium text-indigo-600">BeginFin</span>
         </h3>
         <p className="text-slate-500 font-medium text-sm">
-          Sign in to track your progress and earn your certificate
+          Sign in to track your progress and earn your completion letter
         </p>
       </div>
 
@@ -711,10 +712,18 @@ const App: React.FC = () => {
       path === '/beginfin-mcp'
     ) {
       setCurrentView('mcp');
+    } else if (path === '/guide' || path.startsWith('/guide') || path === '/quickstart') {
+      setCurrentView('guide');
+    } else if (path === '/beginfin-admins' || path.startsWith('/beginfin-admins')) {
+      setCurrentView('admin');
     } else if (path === '/status' || path.startsWith('/status')) {
       setCurrentView('status');
+    } else if (path === '/certificate' || path.startsWith('/certificate') || path === '/completion-letter' || path.startsWith('/completion-letter') || path === '/letter') {
+      setHasStarted(true);
+      setCurrentView('certificate');
     } else if (path === '/crud-qms' || path.startsWith('/crud-qms')) {
-      setCurrentView('crud-qms');
+      navigate('/beginfin-admins', { replace: true });
+      setCurrentView('admin');
     } else if (path === '/onboarding' || path === '/mode' || path === '/choose-mode' || path === '/select-mode') {
       setCurrentView('onboarding');
     } else if (path === '/') {
@@ -722,7 +731,7 @@ const App: React.FC = () => {
       setCurrentView('welcome');
     } else if (path === '/app' || path.startsWith('/app/')) {
       setHasStarted(true);
-      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'resources' || currentView === 'tools' || currentView === 'status' || currentView === 'mcp' || currentView === 'teacher-mcp' || currentView === 'bradley-mcp') {
+      if (currentView === 'welcome' || currentView === 'not-found' || currentView === 'terms' || currentView === 'privacy' || currentView === 'curriculum' || currentView === 'crud-qms' || currentView === 'admin' || currentView === 'guide' || currentView === 'resources' || currentView === 'tools' || currentView === 'status' || currentView === 'mcp' || currentView === 'teacher-mcp' || currentView === 'bradley-mcp') {
         if (user) {
           if (!userRole) {
             setCurrentView('onboarding');
@@ -796,10 +805,11 @@ const App: React.FC = () => {
         sectionTitle = 'Tax Roadmap';
         break;
       case 'certificate':
-        sectionTitle = 'Certificate';
+        sectionTitle = 'Completion Letter · BeginFin';
         break;
       case 'crud-qms':
-        sectionTitle = 'QMS & Certifier';
+      case 'admin':
+        sectionTitle = 'Admin Portal · BeginFin';
         break;
       case 'mcp':
       case 'teacher-mcp':
@@ -1548,7 +1558,7 @@ const App: React.FC = () => {
                 onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
                 onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
                 onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
-                onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+                onOpenGuide={() => { window.scrollTo(0,0); navigate('/guide'); setCurrentView('guide'); }}
                 modules={orderedModules}
               />
             </motion.div>
@@ -1868,17 +1878,17 @@ const App: React.FC = () => {
                 />
               </div>
             </motion.div>
-          ) : currentView === 'crud-qms' ? (
+          ) : currentView === 'admin' || currentView === 'crud-qms' ? (
             <motion.div
-              key={currentView}
+              key="admin-dashboard-view"
               initial="initial"
               animate="animate"
               exit="exit"
               variants={pageVariants}
               transition={pageTransition}
-              className="flex-1 flex flex-col p-6 bg-slate-50 min-h-screen overflow-y-auto"
+              className="flex-1 flex flex-col p-3 sm:p-6 bg-[#F4F8FA] min-h-screen overflow-y-auto"
             >
-              <CrudQmsView 
+              <BeginFinAdminView 
                 user={user}
                 onBack={() => {
                   navigate('/');
@@ -2266,6 +2276,7 @@ const App: React.FC = () => {
                         <button 
                           onClick={() => {
                             setShowMobileDashboardNav(false);
+                            navigate('/guide');
                             setCurrentView('guide');
                           }} 
                           className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-[#e11d48] transition-colors flex items-center gap-3"
@@ -2279,7 +2290,7 @@ const App: React.FC = () => {
                           }} 
                           className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
-                          <Trophy className="w-4 h-4 shrink-0" /> Certificate
+                          <Trophy className="w-4 h-4 shrink-0" /> Completion Letter
                         </button>
                         <button 
                           onClick={() => {
@@ -2331,7 +2342,7 @@ const App: React.FC = () => {
                         user={user!} 
                         onSwitchToStudentView={() => setIsTeacherInStudentMode(true)}
                         triggerLoading={triggerPseudoLoading}
-                        onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+                        onOpenGuide={() => { window.scrollTo(0,0); navigate('/guide'); setCurrentView('guide'); }}
                         language={language}
                       />
                     </motion.div>
@@ -2360,7 +2371,7 @@ const App: React.FC = () => {
                           classId={classId}
                           userRole={userRole}
                           triggerLoading={triggerPseudoLoading}
-                          onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+                          onOpenGuide={() => { window.scrollTo(0,0); navigate('/guide'); setCurrentView('guide'); }}
                           onReturnToTeacherMode={() => setIsTeacherInStudentMode(false)}
                         />
                       )}
@@ -2474,7 +2485,7 @@ const App: React.FC = () => {
                 onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
                 onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
                 onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
-                onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
+                onOpenGuide={() => { window.scrollTo(0,0); navigate('/guide'); setCurrentView('guide'); }}
               />
                 </div>
               )}

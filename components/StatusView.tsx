@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { db, doc, onSnapshot, setDoc, auth, onAuthStateChanged, User } from '../firebase';
 import { DEFAULT_ADMIN_EMAILS, isEmailAdmin, checkIsAdmin } from '../config/adminConfig';
 import { useNavPadding } from './Navbar';
+import { useNavigate } from 'react-router-dom';
 
 export type ServiceStatus = 'Operational' | 'Issues Observed' | 'Not Operational';
 
@@ -122,6 +123,7 @@ interface StatusViewProps {
 }
 
 export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpenLogin }) => {
+  const navigate = useNavigate();
   const [statusData, setStatusData] = useState<SystemStatusData>(DEFAULT_STATUS_DATA);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -298,17 +300,9 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
     }
   };
 
-  // Populate Admin Edit Modal
+  // Navigate to Unified Admin Portal
   const handleOpenAdminModal = () => {
-    setEditServices(JSON.parse(JSON.stringify(statusData.services)));
-    setEditCustomCategory(JSON.parse(JSON.stringify(statusData.customCategory || DEFAULT_STATUS_DATA.customCategory!)));
-    setEditCustomTitle(statusData.customMessageTitle || '');
-    setEditCustomMessage(statusData.customMessage || '');
-    setEditCustomType(statusData.customMessageType || 'info');
-    setEditShowCustom(statusData.showCustomMessage ?? false);
-    setSaveError('');
-    setSaveSuccess(false);
-    setShowAdminModal(true);
+    navigate('/beginfin-admins');
   };
 
   // Save Admin Changes to Firestore
@@ -544,14 +538,14 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
                 <ShieldCheck className="w-3 h-3" /> Admin Mode
               </span>
               <span>
-                Signed in as <strong className="underline">{activeUser?.email}</strong>. You have authorization to manage live service health & notices.
+                Signed in as <strong className="underline">{activeUser?.email}</strong>. You have authorization to manage live service health & notices in the unified Admin Portal.
               </span>
             </div>
             <button
               onClick={handleOpenAdminModal}
-              className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white font-bold text-xs transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+              className="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 rounded-xl text-white font-bold text-xs transition-colors shrink-0 cursor-pointer flex items-center gap-1.5"
             >
-              <Edit3 className="w-3 h-3" /> Edit Statuses &rarr;
+              <Sliders className="w-3.5 h-3.5" /> Admin Portal &rarr;
             </button>
           </div>
         </div>

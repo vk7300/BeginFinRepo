@@ -136,19 +136,43 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
 
     setIsSigningIn(true);
     setConsentError('');
+
+    // Ensure Firebase auth state is ready before attempting sign-in
     try {
-      const credential = GoogleAuthProvider.credential(pendingCredential);
-      const userCredential = await signInWithCredential(auth, credential);
-      if (globalSuccessCallback && userCredential.user) {
-        globalSuccessCallback(userCredential.user);
+      if (typeof (auth as any).authStateReady === 'function') {
+        await (auth as any).authStateReady();
       }
-      setPendingCredential(null);
-    } catch (error) {
-      console.error('Google One Tap credential sign-in error:', error);
-      setConsentError('Sign-in failed. Please try again.');
-    } finally {
-      setIsSigningIn(false);
+    } catch {
+      // Proceed if authStateReady is unsupported or rejected
     }
+
+    let lastError: any = null;
+    const maxAttempts = 2;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const credential = GoogleAuthProvider.credential(pendingCredential);
+        const userCredential = await signInWithCredential(auth, credential);
+        if (globalSuccessCallback && userCredential.user) {
+          globalSuccessCallback(userCredential.user);
+        }
+        setPendingCredential(null);
+        setIsSigningIn(false);
+        return;
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`Google One Tap sign-in attempt ${attempt} failed:`, error?.code || error?.message || error);
+        
+        // If it's the first attempt, wait 350ms before retrying seamlessly
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 350));
+        }
+      }
+    }
+
+    console.error('Google One Tap credential sign-in failed after retries:', lastError);
+    setConsentError('Sign-in failed. Please try again or use the main Sign In button.');
+    setIsSigningIn(false);
   };
 
   const handleCancelConsent = () => {

@@ -851,28 +851,35 @@ export const TeacherDashboard: React.FC<{
       }
       
       try {
+        if (document.fonts && document.fonts.ready) {
+          await document.fonts.ready;
+        }
+
         const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          windowWidth: 816
         });
         
-        const imgData = canvas.toDataURL('image/png');
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
         const pdf = new jsPDF({
-          orientation: 'landscape',
-          unit: 'px',
-          format: [canvas.width, canvas.height]
+          orientation: 'portrait',
+          unit: 'in',
+          format: 'letter'
         });
         
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`Certificate_${student.displayName.replace(/\s+/g, '_')}.pdf`);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+        pdf.save(`BeginFin_Completion_Letter_${student.displayName.replace(/\s+/g, '_')}.pdf`);
       } catch (err) {
-        console.error('Error generating certificate:', err);
+        console.error('Error generating completion letter:', err);
       } finally {
         setIsGeneratingCertificate(null);
       }
-    }, 500);
+    }, 400);
   };
 
   return (
@@ -1230,9 +1237,9 @@ export const TeacherDashboard: React.FC<{
                                                 <button
                                                   onClick={() => handleDownloadCertificate(student)}
                                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#7F7FFA] text-white rounded-md hover:bg-[#5656D4] transition-colors"
-                                                  title="Download Certificate"
+                                                  title="Download Completion Letter"
                                                 >
-                                                  <Award className="w-3.5 h-3.5" /> Certificate
+                                                  <Award className="w-3.5 h-3.5" /> Completion Letter
                                                 </button>
                                               ) : (
                                                 <button disabled className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-100 text-slate-400 rounded-md opacity-50 cursor-not-allowed">
@@ -1980,58 +1987,143 @@ export const TeacherDashboard: React.FC<{
           />
         )}
       </div>
-      {/* Hidden Certificate Component for PDF Generation */}
+      {/* Hidden Completion Letter Component for PDF Generation */}
       {isGeneratingCertificate && (
         <div className="fixed left-[-9999px] top-0">
-          <div id="student-certificate-pdf" className="bg-white border-[20px] border-slate-900 p-12 w-[1123px] h-[794px] flex flex-col items-center justify-center text-slate-900 font-serif relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-              <Award className="w-[500px] h-[500px]" />
-            </div>
-            <div className="border-[1px] border-slate-200 h-full w-full flex flex-col items-center justify-between p-12 text-center relative z-10">
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-3">
-                   <BookOpen className="w-12 h-12 text-slate-900" />
-                   <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase font-sans">BeginFin</span>
+          <div 
+            id="student-certificate-pdf" 
+            className="bg-white p-16 w-[816px] h-[1056px] flex flex-col justify-between text-black font-sans relative select-none"
+            style={{ boxSizing: 'border-box', backgroundColor: '#FFFFFF', color: '#000000' }}
+          >
+            <div>
+              {/* Header */}
+              <div className="flex items-center gap-6">
+                <div className="relative w-12 h-16 flex items-center justify-center shrink-0">
+                  <span 
+                    className="absolute font-bold select-none"
+                    style={{
+                      fontSize: '62px',
+                      lineHeight: 1,
+                      color: '#7F7FFA',
+                      opacity: 0.55,
+                      filter: 'blur(5px)',
+                      transform: 'translate(4px, 4px)'
+                    }}
+                  >
+                    $
+                  </span>
+                  <span 
+                    className="relative font-bold text-black select-none"
+                    style={{ fontSize: '62px', lineHeight: 1 }}
+                  >
+                    $
+                  </span>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-xs font-black text-indigo-600 tracking-[0.4em] uppercase font-sans">Professional Credential</span>
-                  <h1 className="text-6xl font-bold text-slate-900 uppercase tracking-tighter">Certificate</h1>
-                  <h2 className="text-lg font-medium text-slate-400 uppercase tracking-[0.4em]">of Financial Literacy</h2>
+                <div className="flex flex-col justify-center">
+                  <h1 className="text-[21px] font-bold text-black tracking-tight leading-snug">
+                    Personal Finance Fundamentals Certification
+                  </h1>
+                  <p className="text-[16px] text-slate-800 leading-snug mt-0.5">
+                    BeginFin: An Open–Access Financial Literacy Initiative
+                  </p>
                 </div>
               </div>
-              <div className="w-full px-16">
-                <p className="text-slate-400 italic text-xl mb-2">This certificate is proudly awarded to</p>
-                <div className="text-5xl font-bold text-slate-900 border-b-2 border-slate-200 px-16 pb-3 inline-block">
-                  {isGeneratingCertificate.displayName}
-                </div>
+
+              {/* Salutation */}
+              <div className="mt-12 text-[16px] text-black font-normal">
+                To Whom It May Concern,
               </div>
-              <div className="w-full max-w-2xl">
-                <p className="text-slate-900 text-2xl italic">
-                  for demonstrating mastery in personal finance essentials.
-                </p>
-              </div>
-              <div className="flex justify-between w-full max-w-3xl items-end mt-8 px-4">
-                <div className="text-center flex-1">
-                  <div className="text-2xl md:text-3xl text-slate-800 mb-1 font-signature flex items-center justify-center gap-3">
-                    <span>Vishnu Kakarla</span>
-                    <span className="font-sans text-slate-400 text-sm font-normal">&amp;</span>
-                    <span>Kruz Smith</span>
+
+              {/* Attestation Body */}
+              <p className="mt-6 text-[15.5px] text-black leading-[1.68] text-left">
+                This certificate officially attests that <span className="font-bold text-black">{isGeneratingCertificate.displayName.toUpperCase()}</span> has successfully completed the BeginFin Personal Finance Fundamentals certification. Aligned with the National Standards for Personal Finance Education established by the Jump$tart Coalition and the Council for Economic Education, this program demonstrates verified competency across eight mandatory modules: Introduction to Personal Finance Fundamentals, Job Finances and USA Taxes, Debt &amp; Credit Systems, Retirement Planning, Philanthropy, Budgeting, Investing, and Risk Management. Certification requires 100% mastery across all evaluated units.
+              </p>
+
+              {/* Certificant Details */}
+              <div className="mt-10">
+                <h3 className="text-[17px] font-bold" style={{ color: '#7F7FFA' }}>
+                  Certificant Details
+                </h3>
+                <div className="mt-4 flex items-center justify-between text-[15.5px] text-black">
+                  <div>
+                    <span className="font-bold">Name: </span>
+                    <span>
+                      {(() => {
+                        const parts = isGeneratingCertificate.displayName.trim().split(/\s+/);
+                        if (parts.length === 1) return parts[0].toUpperCase();
+                        const last = parts[parts.length - 1].toUpperCase();
+                        const first = parts.slice(0, parts.length - 1).join(' ').toUpperCase();
+                        return `${last}, ${first}`;
+                      })()}
+                    </span>
                   </div>
-                  <div className="h-[2px] bg-slate-900 mb-2" />
-                  <div className="text-xs font-bold text-slate-800 uppercase tracking-widest font-sans">Founders, BeginFin</div>
-                </div>
-                <div className="w-32" />
-                <div className="text-center flex-1">
-                  <div className="text-xl font-bold text-slate-800 mb-1">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-                  <div className="h-[2px] bg-slate-900 mb-2" />
-                  <div className="text-xs font-bold text-slate-800 uppercase tracking-widest font-sans">Validation Date</div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="text-sm font-mono text-slate-500 font-bold tracking-tight">
-                  CREDENTIAL ID: BF-{isGeneratingCertificate.uid.slice(0, 8).toUpperCase()}
+                  <div className="pr-12">
+                    <span className="font-bold">Issue Date: </span>
+                    <span>
+                      {(() => {
+                        const d = new Date();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        return `${mm}/${dd}/${d.getFullYear()}`;
+                      })()}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {/* Signatures */}
+              <div className="mt-14 flex items-start justify-between">
+                <div className="flex flex-col">
+                  <div 
+                    className="font-diploma-script select-none text-black"
+                    style={{
+                      fontSize: '34px',
+                      height: '42px',
+                      lineHeight: 1,
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      fontFamily: "'Dancing Script', 'Great Vibes', cursive",
+                    }}
+                  >
+                    Vishnu Kakarla
+                  </div>
+                  <div className="w-[230px] h-[1.5px] bg-black mt-2 mb-2" />
+                  <div className="text-[16px] font-bold" style={{ color: '#7F7FFA' }}>
+                    Vishnu Kakarla
+                  </div>
+                  <div className="text-[14px] text-black font-normal mt-0.5">
+                    Founder, BeginFin
+                  </div>
+                </div>
+
+                <div className="flex flex-col pr-8">
+                  <div 
+                    className="font-diploma-script select-none text-black"
+                    style={{
+                      fontSize: '34px',
+                      height: '42px',
+                      lineHeight: 1,
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      fontFamily: "'Dancing Script', 'Great Vibes', cursive",
+                    }}
+                  >
+                    Kruz Smith
+                  </div>
+                  <div className="w-[230px] h-[1.5px] bg-black mt-2 mb-2" />
+                  <div className="text-[16px] font-bold" style={{ color: '#7F7FFA' }}>
+                    Kruz Smith
+                  </div>
+                  <div className="text-[14px] text-black font-normal mt-0.5">
+                    Co-Founder, BeginFin
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="w-full text-center text-[13px] font-medium pt-8" style={{ color: '#94A3B8' }}>
+              BeginFin Personal Finance Fundamentals Certification | begin-fin.com | Page 1 of 1
             </div>
           </div>
         </div>

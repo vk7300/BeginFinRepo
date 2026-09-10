@@ -591,7 +591,7 @@ export const Dashboard: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Certificate Action */}
+            {/* Completion Letter Action */}
             <button 
               onClick={onClaimCertificate}
               className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold transition-colors text-xs px-3.5 py-2.5 rounded-xl border cursor-pointer ${
@@ -601,7 +601,7 @@ export const Dashboard: React.FC<Props> = ({
               }`}
             >
               {allCompleted ? <Trophy className="w-3.5 h-3.5 text-white" /> : <FileBadge className="w-3.5 h-3.5" />}
-              {allCompleted ? 'Certificate Ready' : t.viewCertProgress}
+              {allCompleted ? 'Completion Letter Ready' : t.viewCertProgress}
             </button>
 
             {onOpenGuide && (
@@ -632,7 +632,7 @@ export const Dashboard: React.FC<Props> = ({
                 <div>
                   <h3 className="text-lg font-black text-emerald-950 tracking-tight">Mastery Achieved! All Core Units Mastered</h3>
                   <p className="text-xs text-emerald-800 font-medium mt-0.5">
-                    You have built a rigorous foundation in personal finance. Claim your verified certificate or share your credential.
+                    You have built a rigorous foundation in personal finance. Download your official completion letter or share your credential.
                   </p>
                 </div>
               </div>
@@ -641,7 +641,7 @@ export const Dashboard: React.FC<Props> = ({
                   onClick={onClaimCertificate}
                   className="flex-1 sm:flex-none px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <FileBadge className="w-4 h-4" /> Claim Certificate
+                  <FileBadge className="w-4 h-4" /> Claim Completion Letter
                 </button>
                 <button 
                   onClick={handleShare}
