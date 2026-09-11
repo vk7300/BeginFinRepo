@@ -174,12 +174,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           aria-label="System status notice"
           className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[170] max-w-6xl mx-auto top-2 sm:top-2.5 rounded-full border shadow-xl flex items-center justify-between gap-3 px-3.5 sm:px-6 py-2 sm:py-2.5 backdrop-blur-2xl transition-all duration-300 ${
             notice.type === 'alert' 
-              ? 'bg-[#E11D48]/95 text-white border-rose-300/40 shadow-rose-950/25' 
+              ? 'bg-rose-600/95 text-white border-rose-300/40 shadow-rose-950/25' 
               : notice.type === 'warning'
-              ? 'bg-[#F59E0B]/95 text-slate-950 border-amber-300/60 shadow-amber-950/25'
+              ? 'bg-amber-500/95 text-slate-950 border-amber-300/60 shadow-amber-950/25' 
               : notice.type === 'success'
-              ? 'bg-[#10B981]/95 text-white border-emerald-300/40 shadow-emerald-950/25'
-              : 'bg-[#5454E6]/95 text-white border-indigo-300/40 shadow-indigo-950/25'
+              ? 'bg-emerald-600/95 text-white border-emerald-300/40 shadow-emerald-950/25' 
+              : 'bg-[#7F7FFA]/95 text-white border-indigo-200/40 shadow-indigo-950/25'
           }`}
         >
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 overflow-hidden">
@@ -256,10 +256,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               type="button"
               onClick={handleGoHome} 
-              className={`text-[11px] font-extrabold uppercase tracking-widest transition-colors cursor-pointer ${
+              className={`text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
                 effectiveIsScrolled 
-                  ? (isHomeActive ? 'text-[#7F7FFA] font-black' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
-                  : (isHomeActive ? 'text-[#7F7FFA] font-black' : 'text-slate-200 hover:text-white')
+                  ? (isHomeActive ? 'text-[#7F7FFA]' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
+                  : (isHomeActive ? 'text-[#7F7FFA]' : 'text-slate-200 hover:text-white')
               }`}
             >
               HOME
@@ -267,10 +267,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               type="button"
               onClick={handleGoCurriculum} 
-              className={`text-[11px] font-extrabold uppercase tracking-widest transition-colors cursor-pointer ${
+              className={`text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
                 effectiveIsScrolled 
-                  ? (isCurriculumActive ? 'text-[#7F7FFA] font-black' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
-                  : (isCurriculumActive ? 'text-[#7F7FFA] font-black' : 'text-slate-200 hover:text-white')
+                  ? (isCurriculumActive ? 'text-[#7F7FFA]' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
+                  : (isCurriculumActive ? 'text-[#7F7FFA]' : 'text-slate-200 hover:text-white')
               }`}
             >
               CURRICULUM
@@ -278,10 +278,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               type="button"
               onClick={handleGoTools} 
-              className={`text-[11px] font-extrabold uppercase tracking-widest transition-colors cursor-pointer ${
+              className={`text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
                 effectiveIsScrolled 
-                  ? (isToolsActive ? 'text-[#7F7FFA] font-black' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
-                  : (isToolsActive ? 'text-[#7F7FFA] font-black' : 'text-slate-200 hover:text-white')
+                  ? (isToolsActive ? 'text-[#7F7FFA]' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
+                  : (isToolsActive ? 'text-[#7F7FFA]' : 'text-slate-200 hover:text-white')
               }`}
             >
               TOOLS
@@ -289,10 +289,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               type="button"
               onClick={handleGoResources} 
-              className={`text-[11px] font-extrabold uppercase tracking-widest transition-colors cursor-pointer ${
+              className={`text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
                 effectiveIsScrolled 
-                  ? (isResourcesActive ? 'text-[#7F7FFA] font-black' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
-                  : (isResourcesActive ? 'text-[#7F7FFA] font-black' : 'text-slate-200 hover:text-white')
+                  ? (isResourcesActive ? 'text-[#7F7FFA]' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
+                  : (isResourcesActive ? 'text-[#7F7FFA]' : 'text-slate-200 hover:text-white')
               }`}
             >
               RESOURCES
@@ -300,10 +300,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               type="button"
               onClick={handleGoAbout} 
-              className={`text-[11px] font-extrabold uppercase tracking-widest transition-colors cursor-pointer ${
+              className={`text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
                 effectiveIsScrolled 
-                  ? (isAboutActive ? 'text-[#7F7FFA] font-black' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
-                  : (isAboutActive ? 'text-[#7F7FFA] font-black' : 'text-slate-200 hover:text-white')
+                  ? (isAboutActive ? 'text-[#7F7FFA]' : 'text-[#3C3C3C] hover:text-[#7F7FFA]') 
+                  : (isAboutActive ? 'text-[#7F7FFA]' : 'text-slate-200 hover:text-white')
               }`}
             >
               ABOUT
@@ -311,7 +311,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               type="button"
               onClick={handleGoGuide} 
-              className={`text-[11px] font-extrabold uppercase tracking-widest transition-all px-4 py-1.5 rounded-full shadow-xs cursor-pointer ${
+              className={`text-[11px] font-bold uppercase tracking-widest transition-all px-4 py-1.5 rounded-full shadow-xs cursor-pointer ${
                 effectiveIsScrolled 
                   ? (isGuideActive 
                       ? 'text-[#7F7FFA] bg-[#ECECFC] ring-1 ring-[#7F7FFA]/40' 
@@ -331,7 +331,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               id="navbar-cta-btn"
               onClick={handleAuthAction}
-              className="bg-[#7F7FFA] text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold sm:font-extrabold text-[10px] sm:text-[11px] uppercase tracking-wide sm:tracking-wider shadow-md hover:bg-[#6868EB] transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+              className="bg-[#7F7FFA] text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold text-[10px] sm:text-[11px] uppercase tracking-wide sm:tracking-wider shadow-sm hover:bg-[#6868EB] transition-all active:scale-95 whitespace-nowrap cursor-pointer"
             >
               {user ? 'CONTINUE' : 'GET STARTED'}
             </button>
@@ -343,9 +343,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={handleGuestAction}
                 className={`hidden sm:flex items-center px-4 py-2 rounded-full border cursor-pointer ${
                   effectiveIsScrolled 
-                    ? 'border-slate-200 bg-white/80 text-[#3C3C3C] hover:bg-slate-50' 
+                    ? 'border-[#3C3C3C]/10 bg-white text-[#3C3C3C] hover:bg-[#F4F8FA]' 
                     : 'border-white/30 bg-white/10 text-white hover:bg-white/20'
-                } backdrop-blur-md transition-all text-[11px] font-extrabold uppercase tracking-wider`}
+                } backdrop-blur-md transition-all text-[11px] font-bold uppercase tracking-wider`}
               >
                 GUEST MODE
               </button>
@@ -355,13 +355,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   type="button"
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className={`flex items-center gap-2 cursor-pointer ${
-                    effectiveIsScrolled ? 'bg-[#F4F8FA] border-slate-200' : 'bg-[#181b2a] border-white/20'
+                    effectiveIsScrolled ? 'bg-[#F4F8FA] border-[#3C3C3C]/10' : 'bg-[#181b2a] border-white/20'
                   } backdrop-blur-md px-3 py-1.5 rounded-full border hover:bg-white/20 transition-all`}
                 >
                   <div className="w-5 h-5 rounded-full bg-[#7F7FFA] flex items-center justify-center text-[9px] font-bold text-white uppercase shrink-0">
                     {user.displayName?.[0] || 'U'}
                   </div>
-                  <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${
                     effectiveIsScrolled ? 'text-[#3C3C3C]' : 'text-white'
                   } hidden sm:inline max-w-[90px] truncate`}>
                     {user.displayName?.split(' ')[0] || 'User'}
@@ -369,8 +369,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute top-full mt-2 right-0 bg-white border border-slate-100 rounded-2xl shadow-2xl py-2 w-44 z-[160] overflow-hidden">
-                    <div className="px-4 py-1.5 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="absolute top-full mt-2 right-0 bg-white border border-[#3C3C3C]/10 rounded-2xl shadow-md py-2 w-48 z-[160] overflow-hidden">
+                    <div className="px-4 py-1.5 border-b border-[#3C3C3C]/10 text-[10px] font-bold text-[#3C3C3C]/50 uppercase tracking-wider">
                       {user.email || 'My Account'}
                     </div>
                     {isEmailAdmin(user.email) && (
@@ -451,14 +451,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 initial={{ opacity: 0, y: -20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                className={`fixed inset-x-4 ${hasBanner ? 'top-28 sm:top-32' : 'top-20'} z-[145] bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 lg:hidden flex flex-col gap-4 max-h-[85vh] overflow-y-auto`}
+                className={`fixed inset-x-4 ${hasBanner ? 'top-28 sm:top-32' : 'top-20'} z-[145] bg-white rounded-2xl border border-[#3C3C3C]/10 shadow-lg p-6 lg:hidden flex flex-col gap-4 max-h-[85vh] overflow-y-auto`}
               >
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#2c5282]">Navigation Menu</span>
+                <div className="flex items-center justify-between pb-3 border-b border-[#3C3C3C]/10">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#7F7FFA]">Navigation Menu</span>
                   <button 
                     type="button"
                     onClick={() => setShowMobileMenu(false)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="p-1 rounded-lg text-[#3C3C3C]/60 hover:text-[#3C3C3C] hover:bg-[#F4F8FA] transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -468,8 +468,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button 
                     type="button"
                     onClick={handleGoHome} 
-                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
-                      isHomeActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-slate-800 hover:bg-slate-50 hover:text-indigo-600'
+                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
+                      isHomeActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA]'
                     }`}
                   >
                     <Home className="w-4 h-4 shrink-0" /> Home
@@ -477,8 +477,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button 
                     type="button"
                     onClick={handleGoCurriculum} 
-                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
-                      isCurriculumActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-slate-800 hover:bg-slate-50 hover:text-indigo-600'
+                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
+                      isCurriculumActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA]'
                     }`}
                   >
                     <BookOpen className="w-4 h-4 shrink-0" /> Curriculum
@@ -486,8 +486,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button 
                     type="button"
                     onClick={handleGoTools} 
-                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
-                      isToolsActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-slate-800 hover:bg-slate-50 hover:text-indigo-600'
+                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
+                      isToolsActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA]'
                     }`}
                   >
                     <Sparkles className="w-4 h-4 shrink-0" /> Tools & Simulators
@@ -495,8 +495,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button 
                     type="button"
                     onClick={handleGoResources} 
-                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
-                      isResourcesActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-slate-800 hover:bg-slate-50 hover:text-indigo-600'
+                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
+                      isResourcesActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA]'
                     }`}
                   >
                     <Library className="w-4 h-4 shrink-0" /> Resources
@@ -504,8 +504,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button 
                     type="button"
                     onClick={handleGoAbout} 
-                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
-                      isAboutActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-slate-800 hover:bg-slate-50 hover:text-indigo-600'
+                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
+                      isAboutActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA]'
                     }`}
                   >
                     <Users className="w-4 h-4 shrink-0" /> About
@@ -513,7 +513,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button 
                     type="button"
                     onClick={handleGoGuide} 
-                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
+                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-3 cursor-pointer ${
                       isGuideActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-[#7F7FFA] bg-[#F4F8FA] hover:bg-[#7F7FFA]/10'
                     }`}
                   >
@@ -526,7 +526,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       navigate('/mcp');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }} 
-                    className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3 cursor-pointer"
+                    className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <Terminal className="w-4 h-4 shrink-0" /> MCP Server
                   </button>
@@ -537,7 +537,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       navigate('/status');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }} 
-                    className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3 cursor-pointer"
+                    className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <Activity className="w-4 h-4 shrink-0" /> System Status
                   </button>
@@ -549,14 +549,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                         navigate('/beginfin-admins');
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }} 
-                      className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#7F7FFA] bg-[#7F7FFA]/10 hover:bg-[#7F7FFA]/20 transition-colors flex items-center gap-3 cursor-pointer"
+                      className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#7F7FFA] bg-[#7F7FFA]/10 hover:bg-[#7F7FFA]/20 transition-colors flex items-center gap-3 cursor-pointer"
                     >
                       <ShieldCheck className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Admin Portal
                     </button>
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                <div className="pt-3 border-t border-[#3C3C3C]/10 flex flex-col gap-2">
                   <button 
                     type="button"
                     onClick={() => {

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, CheckCircle, ChevronRight, ChevronDown, Award, Globe, BookOpen, Library, ShieldCheck, ArrowRight, DollarSign, Info, Users, Map, Search, Share2, FileText, CreditCard, TrendingUp, Home, Calendar, Clock, Zap, Newspaper, Heart, Menu, Star, Quote, User as UserSilhouette, ArrowUpRight, Gauge, Lightbulb, School, Coins, GraduationCap, Sparkles, AlertTriangle } from 'lucide-react';
+import { X, CheckCircle, ChevronRight, ChevronDown, Award, Globe, BookOpen, Library, ShieldCheck, ArrowRight, DollarSign, Info, Users, Map, Search, Share2, FileText, CreditCard, TrendingUp, Home, Calendar, Clock, Zap, Newspaper, Heart, Menu, Quote, User as UserSilhouette, ArrowUpRight, Gauge, Lightbulb, School, Coins, GraduationCap, Sparkles, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CookieBanner } from './CookieBanner';
 import { Modal } from './Modal';
@@ -105,28 +105,6 @@ export const WelcomeScreen: React.FC<Props> = ({
 
   const contentRef = useRef<HTMLElement>(null);
   const aboutRef = useRef<HTMLElement>(null);
-
-  const reviews = useMemo(() => {
-    const raw = [
-      { text: "I don’t know where I’d be without taking these courses.", connotation: 5, author: "Student from LBHS" },
-      { text: "They taught me how to budget and how to pay my taxes.", connotation: 4, author: "Student from LBHS" },
-      { text: "I now don’t have to depend on my parents to help me with this stuff.", connotation: 5, author: "Student from LBHS" },
-      { text: "Taught me my rights and financial literacy.", connotation: 4, author: "Student from LBHS" },
-      { text: "This is such a great website to help with financial literacy.", connotation: 5, author: "Student from LBHS" },
-      { text: "They taught me how to compute compound interest, budget, and pay my taxes.", connotation: 4, author: "Student from LBHS" },
-    ];
-    return raw.map((r, idx) => {
-      // Connotation determines standard rating, slight variation clamped 3-5
-      const drift = Math.random() < 0.35 ? -1 : 0;
-      const stars = Math.max(3, Math.min(5, r.connotation + drift));
-      return {
-        id: idx,
-        text: r.text,
-        stars,
-        name: r.author
-      };
-    });
-  }, []);
 
   useEffect(() => {
     const fetchFeaturedArticles = async () => {
@@ -314,22 +292,20 @@ export const WelcomeScreen: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Bento Metric 2 - Dark Gradient Featured */}
-            <div className="md:col-span-4 bg-gradient-to-br from-slate-950 via-[#0d1029] to-slate-900 text-white p-8 rounded-[2rem] shadow-xl border border-slate-800 hover:border-[#7F7FFA]/40 transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-[#7F7FFA]/20 rounded-full blur-2xl group-hover:bg-[#7F7FFA]/30 transition-all duration-500" />
-              
+            {/* Bento Metric 2 */}
+            <div className="md:col-span-4 bg-white p-8 rounded-[2rem] border border-[#7F7FFA]/30 shadow-[0_4px_25px_rgba(127,127,250,0.06)] hover:border-[#7F7FFA] hover:shadow-[0_12px_35px_rgba(127,127,250,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
               <div className="space-y-4 relative z-10">
-                <div className="w-11 h-11 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
+                <div className="w-11 h-11 bg-[#F4F8FA] rounded-xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] group-hover:scale-105 transition-transform duration-300">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-4xl md:text-5xl font-normal text-white tracking-tight">8 Units</h3>
-                  <p className="text-xs font-semibold text-indigo-200 mt-1">National Standards Aligned</p>
-                  <p className="text-xs text-slate-400 mt-0.5 font-normal">Aligned with CEE and Jump$tart.</p>
+                  <h3 className="text-4xl md:text-5xl font-normal text-[#3C3C3C] tracking-tight">8 Units</h3>
+                  <p className="text-xs font-semibold text-[#7F7FFA] mt-1">National Standards Aligned</p>
+                  <p className="text-xs text-slate-500 mt-0.5 font-normal">Aligned with CEE and Jump$tart.</p>
                 </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-end relative z-10">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-end relative z-10">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               </div>
             </div>
 
@@ -522,41 +498,6 @@ export const WelcomeScreen: React.FC<Props> = ({
             </div>
 
           </div>
-        </div>
-      </section>
-
-      {/* Student Reviews Bento */}
-      <section className="py-16 md:py-24 px-6 bg-[#F4F8FA] border-t border-slate-200/60">
-        <div className="container mx-auto max-w-6xl space-y-10">
-          
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-normal text-[#3C3C3C] tracking-tight">
-              Real results from real learners.
-            </h2>
-          </div>
-
-          {/* Student Quote Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {reviews.slice(0, 3).map((rev) => (
-              <div key={rev.id} className="bg-white p-7 rounded-[2rem] border border-slate-200/70 shadow-[0_4px_25px_rgba(0,0,0,0.02)] hover:border-[#7F7FFA]/40 transition-all duration-300 flex flex-col justify-between space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-1 text-[#7F7FFA]">
-                    {[...Array(rev.stars)].map((_, idx) => (
-                      <Star key={idx} className="w-3.5 h-3.5 fill-[#7F7FFA] text-[#7F7FFA]" />
-                    ))}
-                  </div>
-                  <p className="text-xs md:text-sm text-[#3C3C3C] font-normal leading-relaxed italic">
-                    "{rev.text}"
-                  </p>
-                </div>
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                  <span>{rev.name}</span>
-                  <span className="text-[#7F7FFA] font-semibold">Verified Learner</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
         </div>
       </section>
 

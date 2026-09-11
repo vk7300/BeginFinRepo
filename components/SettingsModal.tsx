@@ -177,17 +177,17 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl overflow-hidden relative"
+        className="bg-white rounded-3xl w-full max-w-lg p-7 sm:p-8 border border-[#3C3C3C]/10 shadow-lg overflow-hidden relative"
       >
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-xl flex items-center justify-center text-[#7F7FFA]">
               <Shield className="w-5 h-5" />
             </div>
-            <h3 className="text-2xl font-black text-[#3C3C3C] tracking-tight">Account Settings</h3>
+            <h3 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Account Settings</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer">
-            <X className="w-6 h-6 text-slate-400" />
+          <button onClick={onClose} className="p-2 hover:bg-[#F4F8FA] rounded-full transition-colors cursor-pointer text-[#3C3C3C]/60 hover:text-[#3C3C3C]">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -195,7 +195,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
           {/* Email or Phone Section */}
           {isPhoneUser ? (
             <div className="space-y-4">
-              <label htmlFor="settings-phone" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
+              <label htmlFor="settings-phone" className="text-[10px] font-bold uppercase tracking-widest text-[#3C3C3C]/60 ml-1">Phone Number</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -204,7 +204,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                     type="tel" 
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-[#3C3C3C]"
+                    className="w-full pl-12 pr-6 py-4 bg-[#F4F8FA] border border-[#3C3C3C]/10 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-[#3C3C3C]"
                     placeholder="+1234567890"
                   />
                 </div>
@@ -216,13 +216,13 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                   {isUpdatingPhone ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update'}
                 </button>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium italic ml-1">
+              <p className="text-[10px] text-[#3C3C3C]/50 font-normal italic ml-1">
                 Signed up with phone number. Enter full format including country code (e.g. +1234567890).
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              <label htmlFor="settings-email" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
+              <label htmlFor="settings-email" className="text-[10px] font-bold uppercase tracking-widest text-[#3C3C3C]/60 ml-1">Email Address</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -232,7 +232,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     disabled={isGoogleUser}
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none disabled:opacity-50 text-[#3C3C3C]"
+                    className="w-full pl-12 pr-6 py-4 bg-[#F4F8FA] border border-[#3C3C3C]/10 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none disabled:opacity-50 text-[#3C3C3C]"
                     placeholder={isGoogleUser ? 'Managed via Google' : 'Enter new email'}
                   />
                 </div>
@@ -247,7 +247,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                 )}
               </div>
               {isGoogleUser && (
-                <p className="text-[10px] text-slate-400 font-medium italic ml-1">
+                <p className="text-[10px] text-[#3C3C3C]/50 font-normal italic ml-1">
                   Linked to Google Account. Changes must be made in your Google settings.
                 </p>
               )}
@@ -255,10 +255,10 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
           )}
 
           {/* Contact Support & Data Requests */}
-          <div className="p-6 bg-[#F4F8FA] rounded-3xl border border-slate-200/60 flex flex-col items-center text-center gap-4">
+          <div className="p-6 bg-[#F4F8FA] rounded-3xl border border-[#3C3C3C]/10 flex flex-col items-center text-center gap-4">
             <div>
-              <h4 className="text-sm font-black text-[#3C3C3C] mb-1">Data, Privacy & Support</h4>
-              <p className="text-xs text-slate-600 font-medium leading-relaxed">
+              <h4 className="text-sm font-bold text-[#3C3C3C] mb-1">Data, Privacy & Support</h4>
+              <p className="text-xs text-[#3C3C3C]/70 font-normal leading-relaxed">
                 Please email us at support@begin-fin.com for data download and/or deletion requests as well as user support.
               </p>
             </div>
@@ -280,11 +280,11 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-white/95 backdrop-blur-sm z-[210] flex flex-col items-center justify-center p-8 text-center"
             >
-              <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 mb-6">
+              <div className="w-16 h-16 bg-[#F4F8FA] border border-[#3C3C3C]/10 rounded-2xl flex items-center justify-center text-[#3C3C3C] mb-6">
                 <Lock className="w-8 h-8" />
               </div>
-              <h4 className="text-xl font-black text-[#3C3C3C] mb-2">Re-authentication Required</h4>
-              <p className="text-sm text-slate-500 font-medium mb-8">
+              <h4 className="text-xl font-bold text-[#3C3C3C] mb-2">Re-authentication Required</h4>
+              <p className="text-sm text-[#3C3C3C]/70 font-normal mb-8">
                 {isGoogleUser 
                   ? "For security, please sign in with Google again to confirm this action."
                   : "For security, please enter your password to confirm this action."}
@@ -298,14 +298,14 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                   aria-label="Confirm Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-200 focus:border-[#7F7FFA] rounded-xl mb-6 outline-none font-bold text-[#3C3C3C]"
+                  className="w-full px-6 py-4 bg-[#F4F8FA] border border-[#3C3C3C]/10 focus:border-[#7F7FFA] rounded-xl mb-6 outline-none font-bold text-[#3C3C3C]"
                 />
               )}
 
               <div className="flex flex-col w-full gap-3">
                 <button 
                   onClick={handleReauthenticate}
-                  className="w-full py-4 bg-slate-900 text-white font-black rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-[#3C3C3C] text-white font-bold rounded-xl hover:bg-[#252525] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isGoogleUser ? (
                     <><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" /> Confirm with Google</>
@@ -313,7 +313,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
                 </button>
                 <button 
                   onClick={() => setShowReauthModal(null)}
-                  className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+                  className="w-full py-4 text-[#3C3C3C]/60 font-bold hover:text-[#3C3C3C] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

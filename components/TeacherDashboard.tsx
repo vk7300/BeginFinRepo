@@ -226,6 +226,8 @@ export const TeacherDashboard: React.FC<{
       return onSnapshot(q, (snapshot) => {
         const classAlerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AlertData));
         setAlerts(prev => ({ ...prev, [cls.id]: classAlerts }));
+      }, (err) => {
+        console.warn(`Class ${cls.id} alerts snapshot notice:`, err);
       });
     });
 
@@ -470,31 +472,38 @@ export const TeacherDashboard: React.FC<{
 
       if (triggerLoading) triggerLoading(`Adding ${emails.length} student emails to BeginFin class...`, 2500);
 
-      const idToken = await user.getIdToken();
-      const response = await fetch('/api/sync-class-roster', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          classId: rosterSyncClass.id,
-          rosterEmails: emails
-        })
+      // Persist roster directly to Firestore using teacher's client credentials
+      const classDocRef = doc(db, 'classes', rosterSyncClass.id);
+      await updateDoc(classDocRef, {
+        rosterEmails: emails,
+        rosterSyncedAt: new Date().toISOString()
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to sync roster to BeginFin.');
+      // Synchronize with backend for student matching & auto-enrollment
+      try {
+        const idToken = await user.getIdToken();
+        await fetch('/api/sync-class-roster', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({
+            classId: rosterSyncClass.id,
+            rosterEmails: emails
+          })
+        });
+      } catch (backendErr) {
+        console.warn("Backend roster auto-enrollment check notice:", backendErr);
       }
 
-      const resData = await response.json();
-      setRosterSyncSuccess(`Added ${resData.count} students! They will be automatically enrolled and greeted with a notification upon login.`);
+      setRosterSyncSuccess(`Added ${emails.length} students! They will be automatically enrolled and greeted with a notification upon login.`);
       if (triggerLoading) {
-        triggerLoading(`✓ ${resData.count} students added to BeginFin roster!`, 4000);
+        triggerLoading(`✓ ${emails.length} students added to BeginFin roster!`, 4000);
       }
     } catch (err: any) {
       console.error("Error adding roster to BeginFin:", err);
+      handleFirestoreError(err, OperationType.UPDATE, `classes/${rosterSyncClass.id}`);
       if (triggerLoading) triggerLoading(`Failed to add roster: ${err.message}`, 4000);
     } finally {
       setIsAddingRosterToBeginFin(false);
@@ -517,28 +526,34 @@ export const TeacherDashboard: React.FC<{
         return;
       }
 
-      const idToken = await user.getIdToken();
-      const response = await fetch('/api/sync-class-roster', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          classId: manualRosterClass.id,
-          rosterEmails: emails
-        })
+      // Persist directly to Firestore using teacher's client credentials
+      const classDocRef = doc(db, 'classes', manualRosterClass.id);
+      await updateDoc(classDocRef, {
+        rosterEmails: emails,
+        rosterSyncedAt: new Date().toISOString()
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to save roster.');
+      // Synchronize with backend for student matching & auto-enrollment
+      try {
+        const idToken = await user.getIdToken();
+        await fetch('/api/sync-class-roster', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({
+            classId: manualRosterClass.id,
+            rosterEmails: emails
+          })
+        });
+      } catch (backendErr) {
+        console.warn("Backend roster auto-enrollment check notice:", backendErr);
       }
 
-      const resData = await response.json();
-      setManualRosterFeedback(`✓ Saved ${resData.count} students! Enrolled students will receive a one-time notification on their first login.`);
+      setManualRosterFeedback(`✓ Saved ${emails.length} students! Enrolled students will receive a one-time notification on their first login.`);
       if (triggerLoading) {
-        triggerLoading(`✓ Roster updated with ${resData.count} students.`, 3000);
+        triggerLoading(`✓ Roster updated with ${emails.length} students.`, 3000);
       }
       setTimeout(() => {
         setManualRosterClass(null);
@@ -546,6 +561,7 @@ export const TeacherDashboard: React.FC<{
       }, 2000);
     } catch (err: any) {
       console.error("Error saving manual roster:", err);
+      handleFirestoreError(err, OperationType.UPDATE, `classes/${manualRosterClass.id}`);
       setManualRosterFeedback(`Error: ${err.message}`);
     } finally {
       setManualRosterSaving(false);
@@ -851,104 +867,135 @@ export const TeacherDashboard: React.FC<{
       }
       
       try {
-        if (document.fonts && document.fonts.ready) {
-          await document.fonts.ready;
-        }
-
         const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff',
-          windowWidth: 816
+          backgroundColor: '#ffffff'
         });
         
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'in',
-          format: 'letter'
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
         });
         
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-        pdf.save(`BeginFin_Completion_Letter_${student.displayName.replace(/\s+/g, '_')}.pdf`);
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`Certificate_${student.displayName.replace(/\s+/g, '_')}.pdf`);
       } catch (err) {
-        console.error('Error generating completion letter:', err);
+        console.error('Error generating certificate:', err);
       } finally {
         setIsGeneratingCertificate(null);
       }
-    }, 400);
+    }, 500);
   };
 
+  const totalStudentsCount = students.length;
+  const totalClassesCount = classes.length;
+  const totalMasteredCount = students.filter(s => (s.completedModules?.length || 0) >= 6).length;
+  const activeChallengesCount = classes.filter(c => c.challenge?.isActive).length;
+
   return (
-    <div className="min-h-screen bg-[#0A0A0E] p-6 md:p-12 font-sans text-white relative">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
+    <div className="min-h-screen bg-[#F4F8FA] p-4 sm:p-6 md:p-8 font-sans text-[#3C3C3C] relative">
       <div className="max-w-7xl mx-auto space-y-6 relative z-10">
         
         {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">Teacher Dashboard</h1>
-            <p className="text-lg text-white/80 font-light">Bring the power of BeginFin to your classroom.</p>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#3C3C3C] mb-1.5">Classroom Educator Hub</h1>
+            <p className="text-sm sm:text-base text-slate-600 font-medium">Empower your classroom</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2.5">
             <button 
               onClick={() => navigate('/teacher/mcp')} 
-              className="px-5 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm"
+              className="px-4 py-2.5 bg-white hover:bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 font-bold rounded-xl transition-all flex items-center gap-2 shadow-xs text-xs sm:text-sm cursor-pointer"
               title="Integrate BeginFin Lesson Planner with your AI tool via MCP"
             >
-              <Sparkles className="w-4 h-4 text-indigo-400" /> AI Lesson Planner (MCP)
+              <Sparkles className="w-4 h-4 text-[#7F7FFA]" /> AI Lesson Planner (MCP)
             </button>
             {onOpenGuide && (
               <button 
                 onClick={onOpenGuide} 
-                className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-white/10 transition-colors flex items-center gap-2"
+                className="px-4 py-2.5 bg-white hover:bg-[#F4F8FA] text-[#3C3C3C] border border-slate-200 font-bold rounded-xl transition-all flex items-center gap-2 shadow-xs text-xs sm:text-sm cursor-pointer"
               >
                 Quickstart Guide
               </button>
             )}
             <button 
-              onClick={onSwitchToStudentView} 
-              className="px-6 py-2.5 bg-emerald-500 text-white font-bold rounded-full hover:bg-emerald-600 transition-colors flex items-center gap-2 shadow-sm"
-            >
-              <GraduationCap className="w-4 h-4" /> Take Course
-            </button>
-            <button 
               onClick={() => setIsCreatingClass(true)} 
-              className="px-6 py-2.5 bg-[#7F7FFA] text-white font-bold rounded-full hover:bg-[#5656D4] transition-colors flex items-center gap-2 shadow-sm"
+              className="px-5 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-sm text-xs sm:text-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Create Class
+              <Plus className="w-4 h-4" /> Create Classroom
             </button>
           </div>
         </header>
+
+        {/* Quick Metrics Bento Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Classrooms</p>
+              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{totalClassesCount}</h3>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Learners Guided</p>
+              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{totalStudentsCount}</h3>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Certifications</p>
+              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{totalMasteredCount}</h3>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Active Sprints</p>
+              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{activeChallengesCount}</h3>
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Left Column: Classes */}
           <div className="lg:col-span-2 space-y-6">
             {classes.length === 0 && !isCreatingClass ? (
-              <div className="bg-white rounded-[32px] p-12 text-center text-slate-900 h-full flex flex-col items-center justify-center">
-                <div className="w-20 h-20 bg-[#7F7FFA]/10 rounded-3xl flex items-center justify-center mb-6">
-                  <Users className="w-10 h-10 text-[#7F7FFA]" />
+              <div className="bg-white rounded-3xl p-8 sm:p-12 text-center text-[#3C3C3C] border border-slate-200/80 shadow-xs flex flex-col items-center justify-center">
+                <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mb-5 text-[#7F7FFA]">
+                  <Users className="w-8 h-8" />
                 </div>
-                <h3 className="text-2xl font-black mb-2">No classes yet</h3>
-                <p className="text-slate-500 font-medium mb-8 max-w-sm">Create your first class to start tracking student progress.</p>
-                <div className="w-full max-w-sm space-y-4">
+                <h3 className="text-2xl font-black mb-2 text-[#3C3C3C]">No classrooms yet</h3>
+                <p className="text-slate-600 font-medium mb-6 max-w-sm text-sm">Welcome! Create your first classroom section to invite students and guide their financial learning.</p>
+                <div className="w-full max-w-sm space-y-3">
                   <input 
                     type="text" 
-                    placeholder="Enter Class Name (e.g. Economics 101)"
+                    placeholder="Classroom Name (e.g. Period 3 Economics)"
                     value={newClassName}
                     onChange={(e) => setNewClassName(e.target.value)}
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-slate-900"
+                    className="w-full px-5 py-3.5 bg-[#F4F8FA] border border-slate-200 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-[#3C3C3C]"
                   />
                   <button 
                     onClick={handleCreateClass}
                     disabled={!newClassName.trim()}
-                    className="w-full py-4 bg-black text-white font-bold rounded-full hover:bg-gray-900 transition-all disabled:opacity-50"
+                    className="w-full py-3.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-xs"
                   >
-                    Create My First Class
+                    Create My First Classroom
                   </button>
                 </div>
               </div>
@@ -959,19 +1006,19 @@ export const TeacherDashboard: React.FC<{
                 const hasAlerts = alerts[cls.id] && alerts[cls.id].length > 0;
                 
                 return (
-                  <div key={cls.id} className="bg-white rounded-[32px] p-2 relative shadow-2xl shadow-black/20">
-                    {/* Collapsed/Header View */}
-                    <div className="bg-gradient-to-r from-[#44387C] to-black rounded-[24px] p-6 relative overflow-hidden">
-                      <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <div key={cls.id} className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs relative space-y-5">
+                    {/* Class Card Top Section */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                      <div>
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C] tracking-tight">
                             {cls.className}
-                            {cls.linkedCourseName && (
-                              <span className="px-2 py-1 bg-white/20 text-white text-[10px] uppercase font-bold rounded-full backdrop-blur-md">
-                                Google Classroom
-                              </span>
-                            )}
                           </h3>
+                          {cls.linkedCourseName && (
+                            <span className="px-2.5 py-0.5 bg-[#F4F8FA] text-[#7F7FFA] text-[10px] uppercase font-bold rounded-full border border-[#7F7FFA]/30">
+                              Google Classroom
+                            </span>
+                          )}
                           {hasAlerts && (
                             <span className="flex h-3 w-3 relative">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -981,51 +1028,53 @@ export const TeacherDashboard: React.FC<{
                         </div>
 
                         {/* Status Indicators / Active State Badges */}
-                        <div className="flex flex-wrap gap-2 mb-6 items-center">
+                        <div className="flex flex-wrap gap-2 items-center">
                           {cls.isFullScreenLockEnabled && (
-                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-md flex items-center gap-1.5">
-                              <Lock className="w-3.5 h-3.5" /> Screen Lock Active
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#F4F8FA] text-slate-700 border border-slate-200 flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5 text-[#7F7FFA]" /> Focus Lock Active
                             </span>
                           )}
                           {cls.challenge?.isActive && (
-                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 backdrop-blur-md flex items-center gap-1.5">
-                              <Zap className="w-3.5 h-3.5" /> Challenge Active: {cls.challenge.title}
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 flex items-center gap-1.5">
+                              <Zap className="w-3.5 h-3.5 text-[#7F7FFA]" /> Challenge: {cls.challenge.title}
                             </span>
                           )}
                           {cls.rosterEmails && cls.rosterEmails.length > 0 && (
-                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white/90 border border-white/10 backdrop-blur-md flex items-center gap-1.5">
-                              <Users className="w-3.5 h-3.5 text-indigo-300" /> {cls.rosterEmails.length} Enrolled
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20 flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-[#7F7FFA]" /> {cls.rosterEmails.length} Enrolled
                             </span>
                           )}
                           {!cls.isFullScreenLockEnabled && !cls.challenge?.isActive && (!cls.rosterEmails || cls.rosterEmails.length === 0) && (
-                            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 text-white/70 border border-white/10 backdrop-blur-md">
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#F4F8FA] text-slate-500 border border-slate-200">
                               Ready for instruction
                             </span>
                           )}
                         </div>
+                      </div>
 
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                          <div className="bg-white/10 px-6 py-3 rounded-full text-white/90 font-medium tracking-widest text-sm backdrop-blur-md flex items-center gap-3">
-                            <span className="opacity-70">CODE:</span> <span className="font-bold">{cls.joinCode}</span>
-                            <button 
-                              onClick={() => {
-                                navigator.clipboard.writeText(cls.joinCode);
-                                setCopiedCode(cls.id);
-                                setTimeout(() => setCopiedCode(null), 2000);
-                              }}
-                              className="p-1.5 hover:bg-white/20 rounded-full transition-colors ml-2"
-                              title="Copy Class Code"
-                            >
-                              {copiedCode === cls.id ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                            </button>
-                          </div>
+                      <div className="flex items-center gap-2.5">
+                        <div className="bg-[#F4F8FA] border border-[#7F7FFA]/20 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-[#3C3C3C] flex items-center gap-2">
+                          <span className="text-slate-400 font-sans text-xs">CODE:</span>
+                          <span className="text-[#7F7FFA] tracking-wider text-sm font-black">{cls.joinCode}</span>
                           <button 
-                            onClick={() => toggleCollapse(cls.id)}
-                            className="bg-black text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-gray-900 transition-colors w-full sm:w-auto justify-center"
+                            onClick={() => copyToClipboard(cls.joinCode)}
+                            className="p-1 hover:bg-white rounded-lg transition-colors ml-1 cursor-pointer text-slate-400 hover:text-[#7F7FFA]"
+                            title="Copy Class Code"
                           >
-                            {isCollapsed ? 'View Controls & Students' : 'Hide Details'}
+                            {copiedCode === cls.joinCode ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                           </button>
                         </div>
+
+                        <button 
+                          onClick={() => toggleCollapse(cls.id)}
+                          className="px-3.5 py-2 bg-white hover:bg-[#F4F8FA] border border-slate-200 text-[#3C3C3C] rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          {isCollapsed ? (
+                            <><span>View Learners</span> <ChevronDown className="w-3.5 h-3.5 text-slate-400" /></>
+                          ) : (
+                            <><span>Hide Details</span> <ChevronUp className="w-3.5 h-3.5 text-slate-400" /></>
+                          )}
+                        </button>
                       </div>
                     </div>
 
@@ -1038,21 +1087,21 @@ export const TeacherDashboard: React.FC<{
                           exit={{ opacity: 0, height: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="p-6 pt-4 text-slate-900">
+                          <div className="space-y-5 pt-1">
                              
                              {/* Alerts Section inside Class */}
                              {alerts[cls.id]?.length > 0 && (
-                               <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl space-y-2 mb-6">
-                                 <div className="flex items-center gap-2 text-rose-600 mb-2">
-                                   <AlertCircle className="w-5 h-5" />
-                                   <span className="font-black text-xs uppercase tracking-widest">Security Alerts ({alerts[cls.id].length})</span>
+                               <div className="bg-rose-50/80 border border-rose-200/80 p-4 rounded-2xl space-y-2">
+                                 <div className="flex items-center gap-2 text-rose-700 mb-1">
+                                   <AlertCircle className="w-4 h-4" />
+                                   <span className="font-bold text-xs uppercase tracking-wider">Classroom Focus Alerts ({alerts[cls.id].length})</span>
                                  </div>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                    {alerts[cls.id].map(alert => (
-                                     <div key={alert.id} className="bg-white p-3 rounded-xl border border-rose-100 flex justify-between items-center shadow-sm">
+                                     <div key={alert.id} className="bg-white p-3 rounded-xl border border-rose-100 flex justify-between items-center shadow-xs">
                                        <div>
-                                         <p className="text-sm font-bold text-slate-900">
-                                           <span className="text-rose-600">{alert.userName}</span> exited full screen
+                                         <p className="text-xs font-bold text-[#3C3C3C]">
+                                           <span className="text-rose-600 font-bold">{alert.userName}</span> exited full screen
                                          </p>
                                          <p className="text-[10px] text-slate-500 font-medium">
                                            Module: {alert.moduleTitle} • {alert.timestamp?.toDate ? alert.timestamp.toDate().toLocaleTimeString() : 'Just now'}
@@ -1060,9 +1109,9 @@ export const TeacherDashboard: React.FC<{
                                        </div>
                                        <button 
                                          onClick={() => dismissAlert(cls.id, alert.id)}
-                                         className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                                         className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
                                        >
-                                         <X className="w-4 h-4" />
+                                         <X className="w-3.5 h-3.5" />
                                        </button>
                                      </div>
                                    ))}
@@ -1070,125 +1119,129 @@ export const TeacherDashboard: React.FC<{
                                </div>
                              )}
 
-                             {/* Unified Teacher Controls Toolbar */}
-                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                             {/* Action Toolbar */}
+                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                                <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
-                                  <button
-                                    onClick={() => toggleScreenLock(cls.id, !cls.isFullScreenLockEnabled)}
-                                    className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2 whitespace-nowrap ${cls.isFullScreenLockEnabled ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-                                  >
-                                    {cls.isFullScreenLockEnabled ? <Lock className="w-3.5 h-3.5 text-amber-700" /> : <Unlock className="w-3.5 h-3.5 text-slate-500" />}
-                                    {cls.isFullScreenLockEnabled ? 'Screen Lock Active' : 'Enable Screen Lock'}
-                                  </button>
-                                  
-                                  {cls.challenge?.isActive ? (
-                                    <button
-                                      onClick={() => handleEndChallenge(cls.id)}
-                                      className="px-4 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs rounded-full hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
-                                    >
-                                      <X className="w-3.5 h-3.5" /> End Challenge
-                                    </button>
-                                  ) : (
-                                    <button
-                                      onClick={() => { setIsCreatingChallenge(cls.id); }}
-                                      className="px-4 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs rounded-full hover:bg-amber-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
-                                    >
-                                      <Zap className="w-3.5 h-3.5 text-amber-600" /> Launch Challenge
-                                    </button>
-                                  )}
+                                 <button
+                                   onClick={() => toggleScreenLock(cls.id, !cls.isFullScreenLockEnabled)}
+                                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs ${
+                                     cls.isFullScreenLockEnabled 
+                                       ? 'bg-[#F4F8FA] text-slate-800 border-slate-300' 
+                                       : 'bg-white text-slate-700 border-slate-200 hover:bg-[#F4F8FA]'
+                                   }`}
+                                 >
+                                   {cls.isFullScreenLockEnabled ? <Lock className="w-3.5 h-3.5 text-[#7F7FFA]" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
+                                   {cls.isFullScreenLockEnabled ? 'Focus Lock Enabled' : 'Enable Focus Lock'}
+                                 </button>
 
-                                  <button
-                                    onClick={() => handleDownloadReport(cls)}
-                                    disabled={isGeneratingReport === cls.id}
-                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
-                                  >
-                                    {isGeneratingReport === cls.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                                    Download CSV
-                                  </button>
+                                 {cls.challenge?.isActive ? (
+                                   <button
+                                     onClick={() => handleEndChallenge(cls.id)}
+                                     className="px-3.5 py-2 bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl hover:bg-rose-100 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
+                                   >
+                                     <X className="w-3.5 h-3.5" /> Conclude Sprint
+                                   </button>
+                                 ) : (
+                                   <button
+                                     onClick={() => { setIsCreatingChallenge(cls.id); }}
+                                     className="px-3.5 py-2 bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 hover:bg-[#ECECFC] font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
+                                   >
+                                     <Zap className="w-3.5 h-3.5 text-[#7F7FFA]" /> Launch Learning Sprint
+                                   </button>
+                                 )}
 
-                                  <button
-                                    onClick={() => {
-                                      setManualRosterClass(cls);
-                                      setManualRosterText(cls.rosterEmails ? cls.rosterEmails.join('\n') : '');
-                                      setManualRosterFeedback(null);
-                                    }}
-                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
-                                  >
-                                    <Users className="w-3.5 h-3.5 text-indigo-600" />
-                                    {cls.rosterEmails && cls.rosterEmails.length > 0
-                                      ? `Roster (${cls.rosterEmails.length})`
-                                      : 'Manage Roster'}
-                                  </button>
+                                 <button
+                                   onClick={() => handleDownloadReport(cls)}
+                                   disabled={isGeneratingReport === cls.id}
+                                   className="px-3.5 py-2 bg-white text-slate-700 hover:bg-[#F4F8FA] border border-slate-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50 cursor-pointer shadow-xs"
+                                 >
+                                   {isGeneratingReport === cls.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-slate-400" />}
+                                   Export Progress (CSV)
+                                 </button>
+
+                                 <button
+                                   onClick={() => {
+                                     setManualRosterClass(cls);
+                                     setManualRosterText(cls.rosterEmails ? cls.rosterEmails.join('\n') : '');
+                                     setManualRosterFeedback(null);
+                                   }}
+                                   className="px-3.5 py-2 bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20 hover:bg-[#ECECFC] font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
+                                 >
+                                   <Users className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                                   {cls.rosterEmails && cls.rosterEmails.length > 0
+                                     ? `Class Roster (${cls.rosterEmails.length})`
+                                     : 'Enroll Students'}
+                                 </button>
                                </div>
 
                                <div className="flex gap-2 w-full md:w-auto justify-end">
-                                  <button
-                                    onClick={() => { setDeletingClassId(cls.id); setDeleteConfirmationText(''); }}
-                                    className="px-4 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
-                                    title="Delete this class section"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                                    <span>Delete Class</span>
-                                  </button>
+                                 <button
+                                   onClick={() => { setDeletingClassId(cls.id); setDeleteConfirmationText(''); }}
+                                   className="px-3.5 py-2 bg-white text-rose-600 hover:bg-rose-50 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
+                                   title="Remove this class section"
+                                 >
+                                   <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                   <span>Remove Section</span>
+                                 </button>
                                </div>
                              </div>
 
-                             {/* Google Classroom Actions (Inside Expansion) */}
+                             {/* Google Classroom Action Strip */}
                              {isConnectedClassroom && (
-                               <div className="flex flex-wrap items-center gap-2 bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100 mb-6">
+                               <div className="flex flex-wrap items-center gap-2 bg-[#F4F8FA] p-3 rounded-2xl border border-[#7F7FFA]/20">
                                  <button
                                    onClick={() => {
                                      setCourseworkClass(cls);
                                      setCourseworkTitle(`BeginFin Module Assignment - ${cls.className}`);
                                    }}
-                                   className="px-4 py-2 bg-white text-indigo-700 font-bold text-xs rounded-full hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200"
+                                   className="px-3.5 py-2 bg-white text-[#3C3C3C] hover:text-[#7F7FFA] font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5 border border-slate-200 cursor-pointer"
                                  >
-                                   <Send className="w-3.5 h-3.5" /> Post Coursework
+                                   <Send className="w-3.5 h-3.5 text-[#7F7FFA]" /> Post Assignment
                                  </button>
                                  <button
                                    onClick={() => {
                                      setAnnouncementClass(cls);
                                      setAnnouncementText(`📢 Announcement for ${cls.className}: Please check your BeginFin Financial Literacy dashboard for new certification modules!`);
                                    }}
-                                   className="px-4 py-2 bg-white text-indigo-700 font-bold text-xs rounded-full hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200"
+                                   className="px-3.5 py-2 bg-white text-[#3C3C3C] hover:text-[#7F7FFA] font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5 border border-slate-200 cursor-pointer"
                                  >
-                                   <Share2 className="w-3.5 h-3.5" /> Stream Post
+                                   <Share2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Stream Announcement
                                  </button>
                                  {cls.linkedCourseId && (
                                    <>
                                      <button
                                        onClick={() => handleOpenRosterSync(cls)}
-                                       className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-full hover:bg-slate-100 transition-all shadow-sm flex items-center gap-1.5 border border-slate-200"
+                                       className="px-3.5 py-2 bg-white text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all shadow-xs flex items-center gap-1.5 border border-slate-200 cursor-pointer"
                                      >
                                        <Users className="w-3.5 h-3.5 text-[#7F7FFA]" /> Sync Roster
                                      </button>
                                      <button
                                        onClick={() => handleSyncGradesToClassroom(cls)}
-                                       className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-full hover:bg-emerald-100 transition-all shadow-sm flex items-center gap-1.5"
+                                       className="px-3.5 py-2 bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 font-bold text-xs rounded-xl hover:bg-[#ECECFC] transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                                      >
-                                       <RefreshCw className="w-3.5 h-3.5" /> Sync Grades
+                                       <RefreshCw className="w-3.5 h-3.5 text-[#7F7FFA]" /> Sync Grades
                                      </button>
                                    </>
                                  )}
                                </div>
                              )}
 
-                             {/* Student Table */}
+                             {/* Students Roster Table */}
                              {classStudents.length === 0 ? (
-                               <div className="py-12 text-center text-slate-500">
-                                 <UserIcon className="w-8 h-8 mx-auto mb-3 opacity-50" />
-                                 <p className="font-medium text-sm">No students have joined this class yet.</p>
-                                 <p className="text-xs mt-1">Share the code <strong>{cls.joinCode}</strong></p>
+                               <div className="py-10 text-center text-slate-500 bg-[#F4F8FA]/60 rounded-2xl border border-slate-100">
+                                 <UserIcon className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                                 <p className="font-bold text-sm text-[#3C3C3C]">No learners registered yet</p>
+                                 <p className="text-xs text-slate-500 mt-1">Students can join instantly using join code <strong className="text-[#7F7FFA] font-mono font-bold">{cls.joinCode}</strong></p>
                                </div>
                              ) : (
-                               <div className="overflow-x-auto rounded-2xl border border-slate-100">
+                               <div className="overflow-x-auto rounded-2xl border border-slate-200/80">
                                  <table className="w-full text-left border-collapse">
                                    <thead>
-                                     <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-bold">
-                                       <th className="p-4 border-b border-slate-100 rounded-tl-2xl">Student</th>
-                                       <th className="p-4 border-b border-slate-100">Progress</th>
-                                       <th className="p-4 border-b border-slate-100">Status</th>
-                                       <th className="p-4 border-b border-slate-100 rounded-tr-2xl text-right">Actions</th>
+                                     <tr className="bg-[#F4F8FA] text-slate-600 text-[11px] uppercase tracking-wider font-bold">
+                                       <th className="p-3.5 border-b border-slate-200/80">Learner</th>
+                                       <th className="p-3.5 border-b border-slate-200/80">Curriculum Progress</th>
+                                       <th className="p-3.5 border-b border-slate-200/80">Mastery Status</th>
+                                       <th className="p-3.5 border-b border-slate-200/80 text-right">Credential</th>
                                      </tr>
                                    </thead>
                                    <tbody className="divide-y divide-slate-100">
@@ -1200,52 +1253,52 @@ export const TeacherDashboard: React.FC<{
                                        const canDownloadCert = isComplete;
 
                                        return (
-                                         <tr key={student.uid || i} className="hover:bg-slate-50/50 transition-colors">
-                                           <td className="p-4">
+                                         <tr key={student.uid || i} className="hover:bg-[#F4F8FA]/50 transition-colors">
+                                           <td className="p-3.5">
                                              <div className="flex items-center gap-3">
-                                               <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                                               <div className="w-8 h-8 rounded-full bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-xs">
                                                  {student.displayName?.charAt(0).toUpperCase() || '?'}
                                                </div>
                                                <div>
-                                                 <p className="font-bold text-slate-900 text-sm">{student.displayName}</p>
-                                                 <p className="text-xs text-slate-500">{student.email}</p>
+                                                 <p className="font-bold text-[#3C3C3C] text-sm">{student.displayName}</p>
+                                                 <p className="text-xs text-slate-400">{student.email}</p>
                                                </div>
                                              </div>
                                            </td>
-                                           <td className="p-4">
+                                           <td className="p-3.5">
                                              <div className="flex items-center gap-3">
-                                               <div className="w-full bg-slate-100 rounded-full h-2 max-w-[100px]">
+                                               <div className="w-full bg-[#F4F8FA] border border-slate-200 rounded-full h-2 max-w-[120px]">
                                                  <div 
-                                                   className="bg-[#7F7FFA] h-2 rounded-full" 
+                                                   className="bg-[#7F7FFA] h-2 rounded-full transition-all" 
                                                    style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                                                 ></div>
+                                                 />
                                                </div>
-                                               <span className="text-xs font-bold text-slate-600 min-w-[40px]">{progressPercent}%</span>
+                                               <span className="text-xs font-bold text-slate-600 min-w-[36px]">{progressPercent}%</span>
                                              </div>
                                            </td>
-                                           <td className="p-4">
-                                              {isComplete ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
-                                                  <CheckCircle2 className="w-3 h-3" /> Completed
-                                                </span>
-                                              ) : (
-                                               <span className="text-slate-400 text-xs font-medium">In Progress ({completedCount}/{totalModules})</span>
+                                           <td className="p-3.5">
+                                             {isComplete ? (
+                                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F4F8FA] text-[#7F7FFA] text-[10px] font-bold uppercase tracking-wider border border-[#7F7FFA]/30">
+                                                 <CheckCircle2 className="w-3 h-3 text-[#7F7FFA]" /> Certified
+                                               </span>
+                                             ) : (
+                                               <span className="text-slate-500 text-xs font-medium">In Progress ({completedCount}/{totalModules})</span>
                                              )}
                                            </td>
-                                           <td className="p-4 text-right">
-                                              {canDownloadCert ? (
-                                                <button
-                                                  onClick={() => handleDownloadCertificate(student)}
-                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#7F7FFA] text-white rounded-md hover:bg-[#5656D4] transition-colors"
-                                                  title="Download Completion Letter"
-                                                >
-                                                  <Award className="w-3.5 h-3.5" /> Completion Letter
-                                                </button>
-                                              ) : (
-                                                <button disabled className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-100 text-slate-400 rounded-md opacity-50 cursor-not-allowed">
-                                                  <Award className="w-3.5 h-3.5" /> Incomplete
-                                                </button>
-                                              )}
+                                           <td className="p-3.5 text-right">
+                                             {canDownloadCert ? (
+                                               <button
+                                                 onClick={() => handleDownloadCertificate(student)}
+                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-xl transition-colors shadow-xs cursor-pointer"
+                                                 title="Download Certificate"
+                                               >
+                                                 <Award className="w-3.5 h-3.5" /> Certificate
+                                               </button>
+                                             ) : (
+                                               <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-400 bg-slate-50 rounded-lg">
+                                                 In Progress
+                                               </span>
+                                             )}
                                            </td>
                                          </tr>
                                        );
@@ -1264,23 +1317,27 @@ export const TeacherDashboard: React.FC<{
             )}
           </div>
 
-          {/* Right Column: Google Classroom Only */}
+          {/* Right Column: Google Classroom & Educator Ally Bento */}
           <div className="space-y-6">
 
-            <div className="bg-white rounded-[32px] p-8 text-black relative overflow-hidden shadow-xl">
-              <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/30 relative z-10">
-                <Users className="text-white w-8 h-8" />
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs relative overflow-hidden text-[#3C3C3C] space-y-4">
+              <div className="w-12 h-12 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center text-[#7F7FFA]">
+                <Users className="w-6 h-6" />
               </div>
 
               {!isConnectedClassroom ? (
-                <div className="relative z-10">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black mb-1.5 text-[#3C3C3C] tracking-tight">Connect Google® Classroom</h3>
+                  <p className="text-slate-500 leading-relaxed text-xs mb-5">
+                    Empower your classroom workflow. Automatically import courses, sync student rosters, and assign interactive modules with seamless grade tracking.
+                  </p>
                   <button 
                     onClick={handleConnectGoogleClassroom}
                     disabled={isConnectingClassroom}
-                    className="bg-slate-800 text-white px-6 py-3 rounded-full font-medium mb-6 w-auto inline-flex justify-center items-center gap-3 hover:bg-slate-900 transition-colors disabled:opacity-50"
+                    className="w-full bg-[#F4F8FA] hover:bg-slate-100 text-[#3C3C3C] border border-slate-200 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm inline-flex justify-center items-center gap-2.5 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
                   >
                     {isConnectingClassroom ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-white" />
+                      <Loader2 className="w-4 h-4 animate-spin text-[#7F7FFA]" />
                     ) : (
                       <svg className="w-4 h-4" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1291,34 +1348,38 @@ export const TeacherDashboard: React.FC<{
                     )}
                     Sign-In with Google
                   </button>
-                  <h3 className="text-xl font-bold mb-2 text-slate-900 tracking-tight">Connect Google® Classroom</h3>
-                  <p className="text-slate-500 leading-snug text-sm">Assign modules and sync grades directly from BeginFin.</p>
                 </div>
               ) : (
-                <div className="relative z-10">
-                  <div className="px-4 py-2 bg-indigo-50 text-indigo-900 rounded-full flex items-center gap-2 mb-6 w-fit text-sm font-bold border border-indigo-100">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <div>
+                  <div className="px-3.5 py-1.5 bg-[#F4F8FA] text-[#3C3C3C] rounded-full flex items-center gap-2 mb-4 w-fit text-xs font-bold border border-[#7F7FFA]/30">
+                    <span className="w-2 h-2 rounded-full bg-[#7F7FFA]" />
                     {classroomUserEmail || 'Connected'}
                   </div>
-                  <button
-                    onClick={() => setShowCourseImportModal(true)}
-                    className="w-full py-3 bg-black text-white font-medium rounded-full hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 mb-3 text-sm"
-                  >
-                    <Plus className="w-4 h-4" /> Import Course
-                  </button>
-                  <button
-                    onClick={() => fetchClassroomCourses()}
-                    disabled={isFetchingCourses}
-                    className="w-full py-3 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium rounded-full transition-colors flex items-center justify-center gap-2 text-sm"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isFetchingCourses ? 'animate-spin' : ''}`} /> Refresh
-                  </button>
-                  <h3 className="text-xl font-bold mb-2 mt-6 text-slate-900 tracking-tight">Google® Classroom Connected</h3>
-                  <p className="text-slate-500 leading-snug text-sm">Your BeginFin account is linked. Use class actions to sync grades and assignments.</p>
+                  <h3 className="text-lg sm:text-xl font-black mb-1.5 text-[#3C3C3C] tracking-tight">Google® Classroom Linked</h3>
+                  <p className="text-slate-500 leading-relaxed text-xs mb-4">
+                    Your account is synced. Import classes or post assignments to keep your students actively progressing through the curriculum.
+                  </p>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setShowCourseImportModal(true)}
+                      className="w-full py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm shadow-xs cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" /> Import Course
+                    </button>
+                    <button
+                      onClick={() => fetchClassroomCourses()}
+                      disabled={isFetchingCourses}
+                      className="w-full py-2.5 bg-[#F4F8FA] hover:bg-slate-100 text-[#3C3C3C] border border-slate-200 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isFetchingCourses ? 'animate-spin' : ''}`} /> Refresh Courses
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
+
           </div>
+
         </div>
       </div>
       {(isCreatingChallenge || isEditingChallenge) && (
@@ -1436,7 +1497,7 @@ export const TeacherDashboard: React.FC<{
                 <button 
                   onClick={handleCreateClass}
                   disabled={!newClassName.trim()}
-                  className="py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg"
+                  className="py-4 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-all disabled:opacity-50 shadow-md cursor-pointer"
                 >
                   Create Class
                 </button>
@@ -1509,7 +1570,7 @@ export const TeacherDashboard: React.FC<{
                       </div>
                       <button
                         onClick={() => handleImportClassroomCourse(c)}
-                        className="px-4 py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 shadow-sm transition-all"
+                        className="px-4 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
                       >
                         Link & Import
                       </button>
@@ -1625,7 +1686,7 @@ export const TeacherDashboard: React.FC<{
                   <button
                     onClick={() => handleConfirmPublishCoursework(courseworkClass)}
                     disabled={!courseworkTitle.trim() || isSubmittingClassroom}
-                    className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                    className="flex-1 py-3.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl disabled:opacity-50 shadow-md shadow-[#7F7FFA]/20 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Send className="w-4 h-4" /> Publish Assignment
                   </button>
@@ -1693,7 +1754,7 @@ export const TeacherDashboard: React.FC<{
                   <button
                     onClick={() => handleConfirmPublishAnnouncement(announcementClass)}
                     disabled={!announcementText.trim() || isSubmittingClassroom}
-                    className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                    className="flex-1 py-3.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl disabled:opacity-50 shadow-md shadow-[#7F7FFA]/20 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Share2 className="w-4 h-4" /> Post to Stream
                   </button>
@@ -1889,13 +1950,13 @@ export const TeacherDashboard: React.FC<{
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 right-0 h-2 bg-indigo-600" />
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-indigo-600">
+              <div className="absolute top-0 left-0 right-0 h-2 bg-[#7F7FFA]" />
+              <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-[#7F7FFA]">
                 <Send className="w-8 h-8" />
               </div>
               <div className="text-center mb-2">
                 {pendingConfirmation.badgeText && (
-                  <span className="px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full inline-block mb-2">
+                  <span className="px-3 py-1 bg-[#F4F8FA] border border-[#7F7FFA]/30 text-[#7F7FFA] text-[10px] font-black uppercase tracking-widest rounded-full inline-block mb-2">
                     {pendingConfirmation.badgeText}
                   </span>
                 )}
@@ -1909,14 +1970,14 @@ export const TeacherDashboard: React.FC<{
                 <button
                   onClick={() => setPendingConfirmation(null)}
                   disabled={isSubmittingClassroom}
-                  className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                  className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => pendingConfirmation.onConfirm()}
                   disabled={isSubmittingClassroom}
-                  className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 py-4 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-2xl transition-all shadow-md shadow-[#7F7FFA]/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmittingClassroom ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm & Publish'}
                 </button>
@@ -1987,143 +2048,58 @@ export const TeacherDashboard: React.FC<{
           />
         )}
       </div>
-      {/* Hidden Completion Letter Component for PDF Generation */}
+      {/* Hidden Certificate Component for PDF Generation */}
       {isGeneratingCertificate && (
         <div className="fixed left-[-9999px] top-0">
-          <div 
-            id="student-certificate-pdf" 
-            className="bg-white p-16 w-[816px] h-[1056px] flex flex-col justify-between text-black font-sans relative select-none"
-            style={{ boxSizing: 'border-box', backgroundColor: '#FFFFFF', color: '#000000' }}
-          >
-            <div>
-              {/* Header */}
-              <div className="flex items-center gap-6">
-                <div className="relative w-12 h-16 flex items-center justify-center shrink-0">
-                  <span 
-                    className="absolute font-bold select-none"
-                    style={{
-                      fontSize: '62px',
-                      lineHeight: 1,
-                      color: '#7F7FFA',
-                      opacity: 0.55,
-                      filter: 'blur(5px)',
-                      transform: 'translate(4px, 4px)'
-                    }}
-                  >
-                    $
-                  </span>
-                  <span 
-                    className="relative font-bold text-black select-none"
-                    style={{ fontSize: '62px', lineHeight: 1 }}
-                  >
-                    $
-                  </span>
-                </div>
-                <div className="flex flex-col justify-center">
-                  <h1 className="text-[21px] font-bold text-black tracking-tight leading-snug">
-                    Personal Finance Fundamentals Certification
-                  </h1>
-                  <p className="text-[16px] text-slate-800 leading-snug mt-0.5">
-                    BeginFin: An Open–Access Financial Literacy Initiative
-                  </p>
-                </div>
-              </div>
-
-              {/* Salutation */}
-              <div className="mt-12 text-[16px] text-black font-normal">
-                To Whom It May Concern,
-              </div>
-
-              {/* Attestation Body */}
-              <p className="mt-6 text-[15.5px] text-black leading-[1.68] text-left">
-                This certificate officially attests that <span className="font-bold text-black">{isGeneratingCertificate.displayName.toUpperCase()}</span> has successfully completed the BeginFin Personal Finance Fundamentals certification. Aligned with the National Standards for Personal Finance Education established by the Jump$tart Coalition and the Council for Economic Education, this program demonstrates verified competency across eight mandatory modules: Introduction to Personal Finance Fundamentals, Job Finances and USA Taxes, Debt &amp; Credit Systems, Retirement Planning, Philanthropy, Budgeting, Investing, and Risk Management. Certification requires 100% mastery across all evaluated units.
-              </p>
-
-              {/* Certificant Details */}
-              <div className="mt-10">
-                <h3 className="text-[17px] font-bold" style={{ color: '#7F7FFA' }}>
-                  Certificant Details
-                </h3>
-                <div className="mt-4 flex items-center justify-between text-[15.5px] text-black">
-                  <div>
-                    <span className="font-bold">Name: </span>
-                    <span>
-                      {(() => {
-                        const parts = isGeneratingCertificate.displayName.trim().split(/\s+/);
-                        if (parts.length === 1) return parts[0].toUpperCase();
-                        const last = parts[parts.length - 1].toUpperCase();
-                        const first = parts.slice(0, parts.length - 1).join(' ').toUpperCase();
-                        return `${last}, ${first}`;
-                      })()}
-                    </span>
-                  </div>
-                  <div className="pr-12">
-                    <span className="font-bold">Issue Date: </span>
-                    <span>
-                      {(() => {
-                        const d = new Date();
-                        const mm = String(d.getMonth() + 1).padStart(2, '0');
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        return `${mm}/${dd}/${d.getFullYear()}`;
-                      })()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Signatures */}
-              <div className="mt-14 flex items-start justify-between">
-                <div className="flex flex-col">
-                  <div 
-                    className="font-diploma-script select-none text-black"
-                    style={{
-                      fontSize: '34px',
-                      height: '42px',
-                      lineHeight: 1,
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      fontFamily: "'Dancing Script', 'Great Vibes', cursive",
-                    }}
-                  >
-                    Vishnu Kakarla
-                  </div>
-                  <div className="w-[230px] h-[1.5px] bg-black mt-2 mb-2" />
-                  <div className="text-[16px] font-bold" style={{ color: '#7F7FFA' }}>
-                    Vishnu Kakarla
-                  </div>
-                  <div className="text-[14px] text-black font-normal mt-0.5">
-                    Founder, BeginFin
-                  </div>
-                </div>
-
-                <div className="flex flex-col pr-8">
-                  <div 
-                    className="font-diploma-script select-none text-black"
-                    style={{
-                      fontSize: '34px',
-                      height: '42px',
-                      lineHeight: 1,
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      fontFamily: "'Dancing Script', 'Great Vibes', cursive",
-                    }}
-                  >
-                    Kruz Smith
-                  </div>
-                  <div className="w-[230px] h-[1.5px] bg-black mt-2 mb-2" />
-                  <div className="text-[16px] font-bold" style={{ color: '#7F7FFA' }}>
-                    Kruz Smith
-                  </div>
-                  <div className="text-[14px] text-black font-normal mt-0.5">
-                    Co-Founder, BeginFin
-                  </div>
-                </div>
-              </div>
+          <div id="student-certificate-pdf" className="bg-white border-[20px] border-slate-900 p-12 w-[1123px] h-[794px] flex flex-col items-center justify-center text-slate-900 font-serif relative overflow-hidden">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+              <Award className="w-[500px] h-[500px]" />
             </div>
-
-            {/* Footer */}
-            <div className="w-full text-center text-[13px] font-medium pt-8" style={{ color: '#94A3B8' }}>
-              BeginFin Personal Finance Fundamentals Certification | begin-fin.com | Page 1 of 1
+            <div className="border-[1px] border-slate-200 h-full w-full flex flex-col items-center justify-between p-12 text-center relative z-10">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-3">
+                   <BookOpen className="w-12 h-12 text-slate-900" />
+                   <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase font-sans">BeginFin</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs font-black text-indigo-600 tracking-[0.4em] uppercase font-sans">Professional Credential</span>
+                  <h1 className="text-6xl font-bold text-slate-900 uppercase tracking-tighter">Certificate</h1>
+                  <h2 className="text-lg font-medium text-slate-400 uppercase tracking-[0.4em]">of Financial Literacy</h2>
+                </div>
+              </div>
+              <div className="w-full px-16">
+                <p className="text-slate-400 italic text-xl mb-2">This certificate is proudly awarded to</p>
+                <div className="text-5xl font-bold text-slate-900 border-b-2 border-slate-200 px-16 pb-3 inline-block">
+                  {isGeneratingCertificate.displayName}
+                </div>
+              </div>
+              <div className="w-full max-w-2xl">
+                <p className="text-slate-900 text-2xl italic">
+                  for demonstrating mastery in personal finance essentials.
+                </p>
+              </div>
+              <div className="flex justify-between w-full max-w-3xl items-end mt-8 px-4">
+                <div className="text-center flex-1">
+                  <div className="text-2xl md:text-3xl text-slate-800 mb-1 font-signature flex items-center justify-center gap-3">
+                    <span>Vishnu Kakarla</span>
+                    <span className="font-sans text-slate-400 text-sm font-normal">&amp;</span>
+                    <span>Kruz Smith</span>
+                  </div>
+                  <div className="h-[2px] bg-slate-900 mb-2" />
+                  <div className="text-xs font-bold text-slate-800 uppercase tracking-widest font-sans">Founders, BeginFin</div>
+                </div>
+                <div className="w-32" />
+                <div className="text-center flex-1">
+                  <div className="text-xl font-bold text-slate-800 mb-1">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                  <div className="h-[2px] bg-slate-900 mb-2" />
+                  <div className="text-xs font-bold text-slate-800 uppercase tracking-widest font-sans">Validation Date</div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="text-sm font-mono text-slate-500 font-bold tracking-tight">
+                  CREDENTIAL ID: BF-{isGeneratingCertificate.uid.slice(0, 8).toUpperCase()}
+                </div>
+              </div>
             </div>
           </div>
         </div>

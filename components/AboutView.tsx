@@ -35,7 +35,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
         <section className="space-y-4 border-b border-slate-200/80 pb-8 text-center sm:text-left">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7F7FFA]/10 border border-[#7F7FFA]/20 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Two high school students, one mission</span>
+            <span>Founded by Vishnu Kakarla &amp; Kruz Smith</span>
           </div>
           
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
@@ -77,9 +77,9 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
             </h2>
           </div>
 
-          <div className="space-y-4">
-            {/* Value 1 */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Value 1 - Featured Bento Card */}
+            <div className="md:col-span-2 p-5 sm:p-6 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 space-y-2">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Globe2 className="w-4 h-4 text-[#7F7FFA]" />
                 <span>Education belongs to the community, not behind a paywall.</span>
@@ -90,47 +90,55 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
             </div>
 
             {/* Value 2 */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Trust is paramount, especially when navigating personal finance.</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                We operate on a strict data-minimization framework, collecting only what is vital to deliver an excellent learning experience. We never monetize or sell user data, and we offer a seamless Guest Mode so learners can build their financial confidence with even more peace of mind.
-              </p>
+            <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/70 space-y-2 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Trust is paramount in personal finance.</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  We collect only what is vital to deliver an excellent learning experience. We never monetize or sell user data, and our seamless Guest Mode lets learners build financial confidence with peace of mind.
+                </p>
+              </div>
             </div>
 
             {/* Value 3 */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#7F7FFA]" />
-                <span>Learners are at the heart of everything we build.</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                We intentionally design our tools, modules, and quizzes to be deeply practical, intuitive, and engaging. If our technology does not immediately simplify a user's journey or respect their time, we go back to the drawing board.
-              </p>
+            <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/70 space-y-2 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
+                  <Users className="w-4 h-4 text-[#7F7FFA] shrink-0" />
+                  <span>Learners are at the heart of everything.</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  We intentionally design our tools, modules, and quizzes to be deeply practical, intuitive, and engaging. If a tool doesn't immediately simplify a learner's path, we refine it.
+                </p>
+              </div>
             </div>
 
             {/* Value 4 */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Eye className="w-4 h-4 text-[#7F7FFA]" />
-                <span>We answer directly to our learners, not to investors or other stakeholders.</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                Our roadmap is entirely shaped by the real-world needs of the people using our tools. We remain fiercely protective of our users' interests, ensuring our platform evolves solely to empower the public good.
-              </p>
+            <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/70 space-y-2 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
+                  <Eye className="w-4 h-4 text-[#7F7FFA] shrink-0" />
+                  <span>Directly accountable to our community.</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  Our roadmap is shaped entirely by real classroom and student feedback. We evolve purely to empower the public good without investor pressures.
+                </p>
+              </div>
             </div>
 
             {/* Value 5 */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#7F7FFA]" />
-                <span>BeginFin has never generated a single dollar in revenue, and we never plan to.</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                Our work is guided entirely by helping people, not making money. By keeping commercial interests away from our platform, we ensure that our only goal is the success and freedom of our learners.
-              </p>
+            <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/70 space-y-2 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
+                  <Lock className="w-4 h-4 text-[#7F7FFA] shrink-0" />
+                  <span>Zero revenue, zero commercial interest.</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  Our work is guided entirely by helping people. By keeping commercial interests away from our platform, our only benchmark is the success and freedom of our learners.
+                </p>
+              </div>
             </div>
           </div>
         </section>

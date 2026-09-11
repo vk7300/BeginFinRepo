@@ -31,6 +31,19 @@
         "teacherId": { "type": "string", "description": "UID of the teacher who created the class" },
         "joinCode": { "type": "string", "description": "Unique 6-character join code" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "rosterEmails": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of student emails in the class roster"
+        },
+        "rosterSyncedAt": { "type": "string", "format": "date-time", "description": "Timestamp when roster was synced" },
+        "studentIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of enrolled student user IDs"
+        },
+        "isFullScreenLockEnabled": { "type": "boolean", "description": "Whether full screen lock is required" },
+        "linkedCourseId": { "type": "string", "description": "Google Classroom course ID" },
         "challenge": {
           "type": "object",
           "properties": {

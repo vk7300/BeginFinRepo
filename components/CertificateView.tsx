@@ -1,5 +1,18 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle, Printer, RefreshCw, Sparkles, ExternalLink, FileText } from 'lucide-react';
+import { 
+  Download, 
+  ArrowLeft, 
+  Award, 
+  CheckCircle, 
+  Send, 
+  Check, 
+  AlertCircle, 
+  ShieldCheck, 
+  Loader2, 
+  LogIn, 
+  RefreshCw,
+  Linkedin
+} from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { modules } from '../data/courseData';
@@ -30,36 +43,76 @@ export const CertificateView: React.FC<Props> = ({
 
   const [inputName, setInputName] = useState('');
   const [isNameSet, setIsNameSet] = useState(!!userName);
-  const [showIncompleteNotice, setShowIncompleteNotice] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadSuccessNotice, setDownloadSuccessNotice] = useState<string | null>(null);
+  const [logoBase64, setLogoBase64] = useState<string>('/logo.png');
   const hasSyncedRef = useRef(false);
   
-  // Completion Letter container & scaling refs
-  const letterRef = useRef<HTMLDivElement>(null);
+  // Element references for capture
+  const certificateRef = useRef<HTMLDivElement>(null);
   const containerWrapperRef = useRef<HTMLDivElement>(null);
-  const [containerScale, setContainerScale] = useState<number>(1);
+  const [containerScale, setContainerScale] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1;
+    const docW = document.documentElement?.clientWidth || window.innerWidth || 1120;
+    const availableW = Math.max(260, Math.min(1120, docW - 32));
+    return Math.min(1, Math.max(0.25, availableW / 1120));
+  });
 
   const requiredModules = useMemo(() => modules.filter(m => !m.isOptional), []);
   const completedCount = useMemo(() => requiredModules.filter(m => completedIds.includes(m.id)).length, [requiredModules, completedIds]);
   const allCompleted = useMemo(() => completedCount >= requiredModules.length, [completedCount, requiredModules.length]);
 
-  // Handle responsive scaling so preview matches the 816x1056 px (8.5x11 inch) portrait letter at all viewports
+  // Pre-load logo as base64 to ensure 100% taint-free canvas rendering across all browsers
+  useEffect(() => {
+    let isMounted = true;
+    const preloadLogo = async () => {
+      try {
+        const response = await fetch('/logo.png');
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (isMounted && typeof reader.result === 'string') {
+            setLogoBase64(reader.result);
+          }
+        };
+        reader.readAsDataURL(blob);
+      } catch {
+        // Keep fallback relative URL
+      }
+    };
+    preloadLogo();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Handle responsive scaling so preview fits mobile, iPad, and desktop viewports without layout overflow
   useEffect(() => {
     const handleResize = () => {
-      if (!containerWrapperRef.current) return;
-      const availableWidth = containerWrapperRef.current.clientWidth;
-      const targetWidth = 816; // Standard Letter width
-      const calculatedScale = Math.min(1, Math.max(0.32, availableWidth / targetWidth));
+      const docW = document.documentElement?.clientWidth || window.innerWidth || 1120;
+      const visualW = window.visualViewport?.width || docW;
+      const trueWidth = Math.min(docW, visualW);
+      const availableWidth = Math.max(260, Math.min(1120, trueWidth - 32));
+      const calculatedScale = Math.min(1, Math.max(0.25, availableWidth / 1120));
       setContainerScale(calculatedScale);
     };
 
     handleResize();
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
   }, []);
 
-  // Sync credential document when all modules completed and userName is set (only once per session)
+  // Sync credential document when all modules completed and userName is set
   useEffect(() => {
     if (!userId || !userName || !allCompleted || hasSyncedRef.current) return;
 
@@ -98,164 +151,233 @@ export const CertificateView: React.FC<Props> = ({
   }, [userId, userName, allCompleted, completedIds]);
 
   const requestDigitalCredential = () => {
-    if (!allCompleted) {
-      setShowIncompleteNotice(true);
-      return;
-    }
     window.open("https://docs.google.com/forms/d/e/1FAIpQLScSI5QWSR0q6TtTMC9SWeK00cle6_Jmz6zM3rTpAM8YMPG4Zw/viewform?usp=publish-editor", "_blank");
   };
 
-  // Direct PDF download using html2canvas & jsPDF with high DPI portrait 8.5x11 rendering
-  const handleDownloadPDF = async () => {
-    if (!allCompleted) {
-      setShowIncompleteNotice(true);
-      return;
-    }
-    if (!letterRef.current || isDownloading) return;
+  const issueDateString = useMemo(() => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }, []);
 
-    setIsDownloading(true);
+  const credentialId = useMemo(() => {
+    const seed = userId || 'STUDENT';
+    return `BF-${new Date().getFullYear()}-${seed.slice(0, 8).toUpperCase()}`;
+  }, [userId]);
+
+  // Helper for cross-platform PDF file saving on iOS Safari, iPadOS, Android, and Desktop
+  const triggerPdfDownload = (pdf: jsPDF, filename: string) => {
     try {
-      const element = letterRef.current;
-      if (!element) return;
-      
-      // Ensure fonts are ready before rendering
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
+      const isIOSOrIPad = typeof navigator !== 'undefined' && (
+        /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      );
+
+      const blob = pdf.output('blob');
+      const blobUrl = URL.createObjectURL(blob);
+
+      if (isIOSOrIPad) {
+        // iOS and iPad Safari ignore the <a download> attribute on blob URLs.
+        // Opening the blob URL navigates or opens the native PDF viewer and save/share sheet.
+        const win = window.open(blobUrl, '_blank');
+        if (!win) {
+          window.location.href = blobUrl;
+        }
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        return;
       }
 
-      // Render canvas at 2x scale for crisp, publication-grade typography
-      const canvas = await html2canvas(element, {
+      // Android, Windows, macOS Desktop support <a download>
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        if (link.parentNode) link.parentNode.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 8000);
+    } catch {
+      pdf.save(filename);
+    }
+  };
+
+  // Pure Vector PDF fallback for Certificate if html2canvas ever encounters an issue
+  const generateVectorCertificatePDF = (learner: string, safeName: string) => {
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
+    const width = pdf.internal.pageSize.getWidth();
+    const height = pdf.internal.pageSize.getHeight();
+
+    // Borders & Background
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, width, height, 'F');
+    pdf.setDrawColor(127, 127, 250);
+    pdf.setLineWidth(1.5);
+    pdf.rect(8, 8, width - 16, height - 16, 'S');
+    pdf.setDrawColor(203, 213, 225);
+    pdf.setLineWidth(0.5);
+    pdf.rect(12, 12, width - 24, height - 24, 'S');
+
+    // Title
+    pdf.setTextColor(127, 127, 250);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('BEGINFIN', width / 2, 32, { align: 'center' });
+
+    pdf.setTextColor(60, 60, 60);
+    pdf.setFontSize(26);
+    pdf.text('CERTIFICATE OF COMPLETION', width / 2, 45, { align: 'center' });
+
+    // Divider
+    pdf.setDrawColor(127, 127, 250);
+    pdf.setLineWidth(0.8);
+    pdf.line(width / 2 - 30, 50, width / 2 + 30, 50);
+
+    // Presentation text
+    pdf.setFontSize(11);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text('THIS IS PROUDLY PRESENTED TO', width / 2, 65, { align: 'center' });
+
+    // Learner Name
+    pdf.setFontSize(30);
+    pdf.setTextColor(60, 60, 60);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(learner, width / 2, 85, { align: 'center' });
+
+    // Body
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(60, 60, 60);
+    const bodyText = 'has successfully completed all modules in BeginFin, an open-access financial literacy initiative with a curriculum that is vetted for alignment with the National Standards for Personal Finance Education developed by the Jump$tart Coalition and the Council for Economic Education.';
+    const splitBody = pdf.splitTextToSize(bodyText, 200);
+    pdf.text(splitBody, width / 2, 105, { align: 'center' });
+
+    // Signatures
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(12);
+    pdf.text('Vishnu Kakarla', 60, 150, { align: 'center' });
+    pdf.setFontSize(9);
+    pdf.setTextColor(127, 127, 250);
+    pdf.text('FOUNDER', 60, 156, { align: 'center' });
+
+    pdf.setFontSize(12);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text('Kruz Smith', width - 60, 150, { align: 'center' });
+    pdf.setFontSize(9);
+    pdf.setTextColor(127, 127, 250);
+    pdf.text('CO-FOUNDER', width - 60, 156, { align: 'center' });
+
+    // Metadata
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text(`Issued: ${issueDateString}`, 20, height - 16);
+    pdf.text(`Credential ID: ${credentialId}`, width - 20, height - 16, { align: 'right' });
+
+    triggerPdfDownload(pdf, `BeginFin_Certificate_${safeName}.pdf`);
+  };
+
+  // High-DPI export function for Certificate
+  const handleDownloadPDF = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    setDownloadSuccessNotice(null);
+
+    const safeLearner = (userName || 'Learner').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+
+    try {
+      // Certificate rasterization via unscaled off-screen capture
+      const targetElement = certificateRef.current;
+      if (!targetElement) {
+        generateVectorCertificatePDF(userName || 'BeginFin Scholar', safeLearner);
+        setDownloadSuccessNotice('Downloaded PDF Certificate');
+        setIsDownloading(false);
+        return;
+      }
+
+      // 1. Create an unscaled off-screen clone to guarantee pixel-perfect capture regardless of viewport size
+      const clone = targetElement.cloneNode(true) as HTMLElement;
+      clone.style.transform = 'none';
+      clone.style.position = 'fixed';
+      clone.style.left = '-99999px';
+      clone.style.top = '0';
+      clone.style.margin = '0';
+      clone.style.zIndex = '-1000';
+      clone.style.width = '1120px';
+      clone.style.height = '792px';
+      clone.style.display = 'block';
+      document.body.appendChild(clone);
+
+      // 2. Render canvas at 2x scale for crisp typography
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         logging: false,
         backgroundColor: '#FFFFFF',
-        windowWidth: 816,
-        ignoreElements: (el) => {
-          return el.classList ? el.classList.contains('no-print') : false;
-        },
+        width: 1120,
+        height: 792,
         onclone: (clonedDoc) => {
-          // 1. Sanitize all <style> tags to eliminate modern color spaces (oklch, oklab, color-mix) that break html2canvas
+          // Sanitize any modern CSS color strings (oklch, oklab, color-mix) in clone
           clonedDoc.querySelectorAll('style').forEach((styleTag) => {
             if (styleTag.textContent) {
               styleTag.textContent = styleTag.textContent
                 .replace(/oklch\([^)]+\)/gi, '#7F7FFA')
-                .replace(/oklab\([^)]+\)/gi, '#1E293B')
-                .replace(/color-mix\([^)]+\)/gi, '#7F7FFA')
-                .replace(/color\(display-p3[^)]+\)/gi, '#7F7FFA')
-                .replace(/color\(srgb[^)]+\)/gi, '#7F7FFA');
-            }
-          });
-
-          // 2. Fallback color converter using 2D canvas getImageData (guaranteed standard rgb/rgba)
-          const testCanvas = document.createElement('canvas');
-          testCanvas.width = 1;
-          testCanvas.height = 1;
-          const ctx = testCanvas.getContext('2d', { willReadFrequently: true });
-          
-          const convertColor = (colorStr: string): string => {
-            if (!colorStr || (!colorStr.includes('oklab') && !colorStr.includes('oklch') && !colorStr.includes('color(') && !colorStr.includes('color-mix'))) {
-              return colorStr;
-            }
-            if (ctx) {
-              try {
-                ctx.clearRect(0, 0, 1, 1);
-                ctx.fillStyle = '#1E293B';
-                ctx.fillStyle = colorStr;
-                ctx.fillRect(0, 0, 1, 1);
-                const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
-                return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(2)})`;
-              } catch {
-                return '#1E293B';
-              }
-            }
-            return '#1E293B';
-          };
-
-          const targetNodes = Array.from(clonedDoc.querySelectorAll('*'));
-          const colorProps = [
-            'color', 'background-color', 'border-color', 
-            'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
-            'outline-color', 'text-decoration-color', 'fill', 'stroke'
-          ];
-
-          targetNodes.forEach((el) => {
-            const htmlEl = el as HTMLElement;
-            if (htmlEl && htmlEl.style) {
-              try {
-                const computed = window.getComputedStyle(htmlEl);
-                colorProps.forEach((prop) => {
-                  const val = computed.getPropertyValue(prop);
-                  if (val && (val.includes('oklab') || val.includes('oklch') || val.includes('color(') || val.includes('color-mix'))) {
-                    htmlEl.style.setProperty(prop, convertColor(val), 'important');
-                  }
-                });
-                const shadow = computed.getPropertyValue('box-shadow');
-                if (shadow && (shadow.includes('oklab') || shadow.includes('oklch') || shadow.includes('color(') || shadow.includes('color-mix'))) {
-                  htmlEl.style.setProperty('box-shadow', 'none', 'important');
-                }
-              } catch {
-                // ignore
-              }
+                .replace(/oklab\([^)]+\)/gi, '#3C3C3C')
+                .replace(/color-mix\([^)]+\)/gi, '#7F7FFA');
             }
           });
         }
       });
 
+      // Remove the off-screen clone
+      document.body.removeChild(clone);
+
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      // US Letter portrait format (8.5 x 11 inches)
       const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'in',
-        format: 'letter'
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-      
-      const safeGraduate = (userName || 'Student').replace(/[^a-zA-Z0-9_-]/g, '_');
-      pdf.save(`BeginFin_Completion_Letter_${safeGraduate}.pdf`);
+
+      const filename = `BeginFin_Certificate_${safeLearner}.pdf`;
+      triggerPdfDownload(pdf, filename);
+      setDownloadSuccessNotice('Downloaded PDF Certificate');
     } catch (err) {
-      console.error('Error generating completion letter PDF:', err);
-      window.print();
+      console.warn('PDF export notice, using pure vector generator:', err);
+      generateVectorCertificatePDF(userName || 'BeginFin Scholar', safeLearner);
+      setDownloadSuccessNotice('Downloaded PDF Certificate');
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const handlePrint = () => {
-    if (!allCompleted) {
-      setShowIncompleteNotice(true);
-      return;
-    }
-    window.print();
+  const handleAddToLinkedIn = () => {
+    const certName = 'BeginFin Financial Literacy Certificate';
+    const orgName = 'BeginFin';
+    const now = new Date();
+    const issueYear = now.getFullYear();
+    const issueMonth = now.getMonth() + 1;
+    const certUrl = 'https://begin-fin.com';
+    
+    // Official LinkedIn direct Add Certification to Profile URL
+    const linkedInUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(certName)}&organizationName=${encodeURIComponent(orgName)}&issueYear=${issueYear}&issueMonth=${issueMonth}&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(credentialId)}`;
+    
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    setDownloadSuccessNotice('Opened LinkedIn to add credential to profile');
   };
 
-  useEffect(() => {
-    if (userName) {
-      setIsNameSet(true);
-    }
-  }, [userName]);
-
-  // Formatted issue date: MM/DD/YYYY matching exact design
-  const issueDateMMDDYYYY = useMemo(() => {
-    const d = new Date();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
-  }, []);
-
-  // Format name as LAST, FIRST NAME for Certificant Details line
-  const formattedLastFirst = useMemo(() => {
-    if (!userName || !userName.trim()) return 'LAST, FIRST NAME';
-    const parts = userName.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].toUpperCase();
-    const lastName = parts[parts.length - 1].toUpperCase();
-    const firstNames = parts.slice(0, parts.length - 1).join(' ').toUpperCase();
-    return `${lastName}, ${firstNames}`;
-  }, [userName]);
+  const handlePrint = () => {
+    window.print();
+  };
 
   const handleSetName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,30 +434,25 @@ export const CertificateView: React.FC<Props> = ({
       <div className="min-h-[60vh] flex items-center justify-center p-4 sm:p-6 lg:p-8 no-print font-sans">
         <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-slate-100 max-w-lg w-full text-center space-y-6">
           <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mx-auto text-[#7F7FFA]">
-            <FileText className="w-9 h-9" />
+            <AlertCircle className="w-10 h-10" />
           </div>
           
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Account Required for Completion Letter</h2>
+            <h2 className="text-2xl font-black text-[#3C3C3C] tracking-tight">Account Required</h2>
             <p className="text-slate-500 text-sm leading-relaxed">
-              Official institutional completion letters are awarded to registered BeginFin students upon fulfilling all curriculum requirements.
+              Official certificates are awarded to registered BeginFin student accounts.
             </p>
           </div>
 
           <div className="bg-[#F4F8FA] border border-slate-200/80 rounded-2xl p-4 text-left space-y-3">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Account Benefits:</h4>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong className="text-slate-800">Progress Sync:</strong> Current module milestones automatically sync to your permanent account.</span>
+                <span><strong className="text-[#3C3C3C]">Progress Sync:</strong> Current module milestones automatically sync to your permanent account.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong className="text-slate-800">Verifiable Letter:</strong> Download print-ready high-resolution completion letters upon fulfilling all curriculum requirements.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong className="text-slate-800">Certifier.io Infrastructure:</strong> Complements your completion letter with a tamper-proof digital badge verifiable on LinkedIn.</span>
+                <span><strong className="text-[#3C3C3C]">Verifiable Credentials:</strong> Download print-ready certificates and add directly to LinkedIn.</span>
               </li>
             </ul>
           </div>
@@ -359,24 +476,23 @@ export const CertificateView: React.FC<Props> = ({
     );
   }
 
-  // Input view to set name on completion letter
+  // Input view to set name on certificate
   if (!isNameSet) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4 no-print font-sans">
-        <div className="bg-white rounded-3xl shadow-xl p-10 border border-slate-100 max-w-md w-full">
-          <div className="text-center mb-8">
+        <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-slate-100 max-w-md w-full">
+          <div className="text-center mb-6">
             <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#7F7FFA]">
-              <FileText className="w-9 h-9" />
+              <Award className="w-10 h-10" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Claim Your Completion Letter</h2>
-            <p className="text-slate-500 mt-2 text-sm leading-relaxed">
-              Enter your legal name as it should appear on your official BeginFin Completion Letter.
+            <h2 className="text-2xl font-bold text-[#3C3C3C] tracking-tight">Name on Credential</h2>
+            <p className="text-slate-500 mt-1.5 text-sm leading-relaxed">
+              Enter your legal or preferred name as it should appear on your Certificate.
             </p>
           </div>
           
           <form onSubmit={handleSetName} className="space-y-4">
             <div>
-              <label htmlFor="full-name" className="block text-xs font-bold text-slate-800 mb-2 uppercase tracking-widest">Full Name on Letter</label>
               <input 
                 id="full-name"
                 autoFocus
@@ -384,7 +500,7 @@ export const CertificateView: React.FC<Props> = ({
                 value={inputName}
                 onChange={(e) => setInputName(e.target.value)}
                 placeholder="e.g. Eleanor Vance"
-                className="w-full px-5 py-4 rounded-xl border-2 border-slate-200 bg-white focus:border-[#7F7FFA] outline-none transition-all font-medium text-lg text-slate-900 placeholder:text-slate-400 disabled:opacity-60 disabled:bg-slate-50"
+                className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 bg-white focus:border-[#7F7FFA] outline-none transition-all font-medium text-lg text-slate-900 placeholder:text-slate-400"
                 required
               />
             </div>
@@ -392,19 +508,19 @@ export const CertificateView: React.FC<Props> = ({
             <button 
               type="submit"
               disabled={isSaving}
-              className="w-full bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
             >
               {isSaving ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <>Save &amp; Preview Completion Letter <Send className="w-4 h-4" /></>
+                <>Save &amp; View Credential <Send className="w-4 h-4" /></>
               )}
             </button>
           </form>
           
           <button 
             onClick={onBack}
-            className="w-full mt-6 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors cursor-pointer"
+            className="w-full mt-4 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors cursor-pointer"
           >
             I'll do this later
           </button>
@@ -413,389 +529,374 @@ export const CertificateView: React.FC<Props> = ({
     );
   }
 
+  // Target dimensions based on Certificate
+  const targetDocWidth = 1120;
+  const targetDocHeight = 792;
+  const scaledWidth = Math.round(targetDocWidth * containerScale);
+  const scaledHeight = Math.round(targetDocHeight * containerScale);
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto px-4 pb-20 relative font-sans">
-      {/* Top Toolbar */}
-      <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+    <div className="space-y-5 w-full max-w-6xl mx-auto px-2 sm:px-4 pb-20 relative font-sans min-w-0 overflow-x-hidden">
+      
+      {/* Top Navigation */}
+      <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         <button 
           onClick={onBack} 
-          className="flex items-center gap-2 text-slate-700 hover:text-[#7F7FFA] font-bold transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 text-[#3C3C3C] hover:text-[#7F7FFA] font-bold text-sm transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" /> Return to Dashboard
         </button>
-        
-        <div className="flex flex-wrap items-center gap-2.5 relative">
-          {showIncompleteNotice && (
-            <div className="absolute -top-12 right-0 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-xl flex items-center gap-2 z-50">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              Complete all {requiredModules.length} units to unlock download! ({completedCount}/{requiredModules.length} complete)
-              <div className="absolute top-full right-8 border-8 border-transparent border-t-slate-900" />
-            </div>
-          )}
+      </div>
 
-          {/* Complements Certifier.io Digital Badge Infrastructure */}
+      {/* Action Download Bar */}
+      <div className="no-print flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-700">Learner:</span>
+          <span className="text-xs font-bold text-[#7F7FFA] bg-[#F4F8FA] px-2.5 py-1 rounded-lg border border-[#7F7FFA]/20 truncate max-w-[200px]">
+            {userName || 'BeginFin Scholar'}
+          </span>
+          <button
+            onClick={() => setIsNameSet(false)}
+            className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Edit name"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Replaced Print button with LinkedIn logo for adding to LinkedIn */}
+          <button 
+            onClick={handleAddToLinkedIn}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0A66C2] hover:bg-[#004182] text-white transition-all shadow-xs cursor-pointer min-h-[38px]"
+            title="Add certificate directly to your LinkedIn profile"
+          >
+            <Linkedin className="w-4 h-4 fill-current" />
+            <span>Add to LinkedIn</span>
+          </button>
+
+          {/* Replaced Certificate PDF with "Digital Credential" (request form) */}
           <button 
             onClick={requestDigitalCredential}
-            disabled={!allCompleted}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs ${
-              allCompleted 
-                ? 'bg-white text-slate-800 hover:bg-[#F4F8FA] border border-slate-200 cursor-pointer' 
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-            }`}
-            title="Claim your digital verifiable badge via Certifier.io for LinkedIn"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-[#7F7FFA] border border-[#7F7FFA]/40 transition-all shadow-xs cursor-pointer min-h-[38px]"
+            title="Request official digital credential (request form)"
           >
-            <ShieldCheck className="w-4 h-4 text-emerald-600" /> 
-            <span>Request Digital Badge (Certifier.io)</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-[#7F7FFA]" />
+            <span>Digital Credential</span>
+            <span className="text-[10px] font-medium text-slate-400 hidden sm:inline">(request form)</span>
           </button>
 
-          <button 
-            onClick={handlePrint}
-            disabled={!allCompleted}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs ${
-              allCompleted 
-                ? 'bg-white text-slate-800 hover:bg-[#F4F8FA] border border-slate-200 cursor-pointer' 
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-            }`}
-            title="Print completion letter"
-          >
-            <Printer className="w-4 h-4 text-slate-700" /> Print
-          </button>
-
-          {/* Primary In-App Action: High-DPI PDF Download */}
+          {/* Replaced Completion Letter button with "PDF Certificate" */}
           <button 
             onClick={handleDownloadPDF}
-            disabled={!allCompleted || isDownloading}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
-              allCompleted 
-                ? 'bg-[#7F7FFA] hover:bg-[#6868EB] text-white cursor-pointer' 
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-            }`}
-            title={allCompleted ? "Download high-resolution portrait PDF completion letter" : "Complete all units to unlock download"}
+            disabled={isDownloading}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#7F7FFA] hover:bg-[#6868EB] text-white transition-all shadow-sm cursor-pointer min-h-[38px] disabled:opacity-50"
+            title="Download official PDF Certificate"
           >
             {isDownloading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
-                <span>Rendering High-DPI PDF...</span>
-              </>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <>
-                {allCompleted ? <Download className="w-4 h-4 text-white" /> : <Lock className="w-4 h-4 text-slate-400" />}
-                <span>Download Letter (PDF)</span>
-              </>
+              <Download className="w-3.5 h-3.5" />
             )}
+            <span>PDF Certificate</span>
           </button>
         </div>
       </div>
 
-      {/* Completion status notification */}
+      {/* Feedback Notice */}
+      {downloadSuccessNotice && (
+        <div className="no-print p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{downloadSuccessNotice}</span>
+        </div>
+      )}
+
+      {/* Incomplete / Progress notification */}
       {!allCompleted && (
-        <div className="no-print bg-[#FFFBEB] border border-amber-300 rounded-2xl p-4 text-[#78350F] flex items-start sm:items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
-          <div className="text-xs sm:text-sm font-medium">
-            <span className="font-bold">Provisional Preview: </span>
-            You have completed {completedCount} of {requiredModules.length} core units. Finish all units to remove the provisional watermark and unlock official verified PDF downloads.
+        <div className="no-print bg-[#FFFBEB] border border-amber-300 rounded-2xl p-3.5 text-[#78350F] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-medium">
+            <span className="font-bold uppercase tracking-wider text-[11px] bg-amber-200/80 px-2 py-0.5 rounded-md">Provisional:</span>
+            <span>{completedCount} of {requiredModules.length} core units completed. Full completion verifies the permanent digital credential.</span>
           </div>
         </div>
       )}
 
-      {/* Responsive Scaling Wrapper: Centers and scales the 816x1056 px (8.5x11 in) portrait letter on any device */}
+      {/* 
+        Responsive Scaling Wrapper:
+        - Parent calculates the exact scaledWidth and scaledHeight.
+        - The inner element is positioned top-left and scaled with CSS transform.
+        - Result: ZERO horizontal layout overflow on iPad and Mobile!
+      */}
       <div 
         ref={containerWrapperRef} 
-        className="w-full flex justify-center items-start overflow-hidden py-2 select-none"
+        className="w-full max-w-full min-w-0 overflow-hidden flex flex-col items-center justify-start py-2 select-none"
       >
         <div 
           style={{
-            width: '816px',
-            height: '1056px',
-            transform: `scale(${containerScale})`,
-            transformOrigin: 'top center',
-            marginBottom: `${(containerScale - 1) * 1056}px`,
+            width: `${scaledWidth}px`,
+            height: `${scaledHeight}px`,
+            maxWidth: '100%',
+            position: 'relative',
+            overflow: 'hidden',
           }}
-          className="transition-transform duration-100 ease-out shadow-2xl rounded-sm border border-slate-200"
+          className="rounded-2xl shadow-md border border-slate-200/80 bg-white"
         >
-          {/* Main 816x1056 px Official Completion Letter Card: Exact design attached by user */}
-          <div 
-            ref={letterRef}
-            id="beginfin-completion-letter"
-            className="w-[816px] h-[1056px] relative overflow-hidden flex flex-col justify-between p-16 completion-letter-print-card select-none"
+          <div
             style={{
-              boxSizing: 'border-box',
-              backgroundColor: '#FFFFFF',
-              color: '#000000',
-              fontFamily: "'Inter', sans-serif",
+              width: `${targetDocWidth}px`,
+              height: `${targetDocHeight}px`,
+              transform: `scale(${containerScale})`,
+              transformOrigin: 'top left',
+              position: 'absolute',
+              top: 0,
+              left: 0,
             }}
           >
-            {/* Incomplete Provisional Watermark (if not finished) */}
-            {!allCompleted && (
-              <div 
-                className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none select-none"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(1.5px)' }}
-                aria-hidden="true"
-              >
-                <div 
-                  className="px-10 py-5 rounded-2xl text-center shadow-xl"
-                  style={{
-                    border: '2px solid #F59E0B',
-                    backgroundColor: '#FFFFFF',
-                  }}
-                >
-                  <div 
-                    className="text-2xl font-black tracking-widest uppercase"
-                    style={{ color: '#B45309' }}
-                  >
-                    PROVISIONAL PREVIEW
-                  </div>
-                  <div 
-                    className="text-xs font-semibold tracking-wider uppercase mt-1.5"
-                    style={{ color: '#92400E' }}
-                  >
-                    COMPLETE ALL UNITS TO UNLOCK OFFICIAL DOWNLOAD • {completedCount}/{requiredModules.length} UNITS
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Top Content Area */}
-            <div>
-              {/* Top Header: Stylized Dollar Sign Graphic + Initiative Title */}
-              <div className="flex items-center gap-6">
-                {/* Stylized Black Dollar Sign with Soft Iris / Lavender Drop Shadow */}
-                <div className="relative w-12 h-16 flex items-center justify-center shrink-0">
-                  {/* Lavender/Iris soft blurred glow behind dollar sign */}
-                  <span 
-                    className="absolute font-bold select-none"
-                    style={{
-                      fontSize: '62px',
-                      lineHeight: 1,
-                      color: '#7F7FFA',
-                      opacity: 0.55,
-                      filter: 'blur(5px)',
-                      transform: 'translate(4px, 4px)',
-                      fontFamily: "'Inter', sans-serif"
-                    }}
-                    aria-hidden="true"
-                  >
-                    $
-                  </span>
-                  {/* Sharp solid black dollar sign */}
-                  <span 
-                    className="relative font-bold text-black select-none"
-                    style={{
-                      fontSize: '62px',
-                      lineHeight: 1,
-                      fontFamily: "'Inter', sans-serif"
-                    }}
-                  >
-                    $
-                  </span>
-                </div>
-
-                {/* Header Text */}
-                <div className="flex flex-col justify-center">
-                  <h1 
-                    className="text-[21px] font-bold text-black tracking-tight leading-snug"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    Personal Finance Fundamentals Certification
-                  </h1>
-                  <p 
-                    className="text-[16px] text-slate-800 leading-snug mt-0.5"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    BeginFin: An Open–Access Financial Literacy Initiative
-                  </p>
-                </div>
-              </div>
-
-              {/* Salutation */}
-              <div 
-                className="mt-12 text-[16px] text-black font-normal"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
-                To Whom It May Concern,
-              </div>
-
-              {/* Official Attestation Body Paragraph */}
-              <p 
-                className="mt-6 text-[15.5px] text-black leading-[1.68]"
+            {/* 1. DIPLOMA CERTIFICATE VIEW (LANDSCAPE 1120x792) */}
+            <div 
+              ref={certificateRef}
+                id="beginfin-certificate"
+                className="w-[1120px] h-[792px] relative overflow-hidden flex flex-col justify-between p-10 select-none bg-white"
                 style={{
+                  boxSizing: 'border-box',
+                  color: '#3C3C3C',
                   fontFamily: "'Inter', sans-serif",
-                  textAlign: 'left'
+                  border: '3px solid #7F7FFA',
+                  borderRadius: '14px',
                 }}
               >
-                This certificate officially attests that <span className="font-bold text-black">{userName ? userName.toUpperCase() : '[FIRST NAME LAST NAME]'}</span> has successfully completed the BeginFin Personal Finance Fundamentals certification. Aligned with the National Standards for Personal Finance Education established by the Jump$tart Coalition and the Council for Economic Education, this program demonstrates verified competency across eight mandatory modules: Introduction to Personal Finance Fundamentals, Job Finances and USA Taxes, Debt &amp; Credit Systems, Retirement Planning, Philanthropy, Budgeting, Investing, and Risk Management. Certification requires 100% mastery across all evaluated units.
-              </p>
-
-              {/* Certificant Details Section */}
-              <div className="mt-10">
-                <h3 
-                  className="text-[17px] font-bold"
-                  style={{ color: '#7F7FFA', fontFamily: "'Inter', sans-serif" }}
-                >
-                  Certificant Details
-                </h3>
-
-                {/* Details Row: Name and Issue Date */}
+                {/* Background Accent */}
                 <div 
-                  className="mt-4 flex items-center justify-between text-[15.5px] text-black"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                >
-                  <div>
-                    <span className="font-bold">Name: </span>
-                    <span>{formattedLastFirst}</span>
+                  className="absolute inset-0 pointer-events-none" 
+                  style={{
+                    background: 'radial-gradient(ellipse at 50% 45%, #FFFFFF 0%, #FAFCFD 70%, #F4F8FA 100%)',
+                  }}
+                />
+
+                {/* Inset Border */}
+                <div 
+                  className="absolute pointer-events-none"
+                  style={{
+                    inset: '12px',
+                    border: '1.5px solid #CBD5E1',
+                    borderRadius: '10px',
+                  }}
+                />
+
+                {/* Ornate Diploma Corners */}
+                <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute top-3 left-3 pointer-events-none">
+                  <path d="M4 38V12C4 7.58172 7.58172 4 12 4H38" stroke="#7F7FFA" strokeWidth="2.5" />
+                  <circle cx="7" cy="7" r="3" fill="#7F7FFA" />
+                </svg>
+                <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute top-3 right-3 pointer-events-none">
+                  <path d="M38 38V12C38 7.58172 34.4183 4 30 4H4" stroke="#7F7FFA" strokeWidth="2.5" />
+                  <circle cx="35" cy="7" r="3" fill="#7F7FFA" />
+                </svg>
+                <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute bottom-3 left-3 pointer-events-none">
+                  <path d="M4 4V30C4 34.4183 7.58172 38 12 38H38" stroke="#7F7FFA" strokeWidth="2.5" />
+                  <circle cx="7" cy="35" r="3" fill="#7F7FFA" />
+                </svg>
+                <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute bottom-3 right-3 pointer-events-none">
+                  <path d="M38 4V30C38 34.4183 34.4183 38 30 38H4" stroke="#7F7FFA" strokeWidth="2.5" />
+                  <circle cx="35" cy="35" r="3" fill="#7F7FFA" />
+                </svg>
+
+                {/* Provisional Badge if incomplete */}
+                {!allCompleted && (
+                  <div 
+                    className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none select-none rounded-[14px]"
+                    style={{ backgroundColor: 'rgba(244, 248, 250, 0.65)' }}
+                    aria-hidden="true"
+                  >
+                    <div 
+                      className="px-8 py-4 rounded-2xl text-center shadow-lg"
+                      style={{
+                        border: '2px solid #F59E0B',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      <div className="text-xl font-black tracking-widest uppercase" style={{ color: '#B45309' }}>
+                        PROVISIONAL PREVIEW
+                      </div>
+                      <div className="text-xs font-bold tracking-wider uppercase mt-1" style={{ color: '#92400E' }}>
+                        {completedCount}/{requiredModules.length} UNITS COMPLETED
+                      </div>
+                    </div>
                   </div>
-                  <div className="pr-12">
-                    <span className="font-bold">Issue Date: </span>
-                    <span>{issueDateMMDDYYYY}</span>
+                )}
+
+                {/* Certificate Content */}
+                <div className="relative z-10 w-full h-full flex flex-col justify-between items-center text-center px-6 py-2">
+                  
+                  {/* Top Header */}
+                  <div className="flex flex-col items-center">
+                    <img 
+                      src={logoBase64} 
+                      alt="BeginFin Logo" 
+                      className="w-16 h-16 object-contain mb-1.5"
+                    />
+                    <div className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: '#7F7FFA' }}>
+                      BeginFin
+                    </div>
+                    <h1 
+                      className="font-diploma-title text-4xl font-black uppercase tracking-wider mt-1 mb-1.5"
+                      style={{ color: '#3C3C3C', fontFamily: "'Cinzel', serif" }}
+                    >
+                      Certificate of Completion
+                    </h1>
+                    <div className="flex items-center justify-center gap-3 my-1">
+                      <div style={{ width: '70px', height: '1.5px', backgroundColor: '#7F7FFA' }} />
+                      <div style={{ width: '6px', height: '6px', transform: 'rotate(45deg)', backgroundColor: '#7F7FFA' }} />
+                      <div style={{ width: '70px', height: '1.5px', backgroundColor: '#7F7FFA' }} />
+                    </div>
                   </div>
+
+                  {/* Recipient */}
+                  <div className="w-full flex flex-col items-center my-auto">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.28em] mb-1.5" style={{ color: '#64748B' }}>
+                      This is proudly presented to
+                    </div>
+                    <div className="text-[44px] font-black tracking-tight leading-tight px-6 my-1" style={{ color: '#3C3C3C' }}>
+                      {userName || "BeginFin Scholar"}
+                    </div>
+                    <div 
+                      style={{ 
+                        width: '140px', 
+                        height: '2.5px', 
+                        backgroundColor: '#7F7FFA', 
+                        borderRadius: '999px', 
+                        margin: '6px auto 16px auto' 
+                      }} 
+                    />
+                    <p 
+                      style={{
+                        color: '#3C3C3C',
+                        textAlign: 'justify',
+                        textJustify: 'inter-word',
+                        lineHeight: '1.85',
+                        fontSize: '15.5px',
+                        maxWidth: '820px',
+                        margin: '0 auto',
+                        padding: '0 20px',
+                      }}
+                    >
+                      has successfully completed all modules in BeginFin, an open access financial literacy initiative with a curriculum that is vetted for alignment with the National Standards for Personal Finance Education developed by the Jump$tart Coalition and the Council for Economic Education.
+                    </p>
+                  </div>
+
+                  {/* Signatures & Seal */}
+                  <div className="w-full max-w-[880px] flex items-end justify-between px-4 mt-4">
+                    {/* Founder */}
+                    <div className="flex flex-col items-center text-center" style={{ width: '220px' }}>
+                      <div 
+                        className="font-diploma-script select-none" 
+                        style={{ fontSize: '38px', color: '#3C3C3C', lineHeight: 1, height: '42px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+                      >
+                        Vishnu Kakarla
+                      </div>
+                      <div style={{ width: '180px', height: '1.5px', backgroundColor: '#94A3B8', marginTop: '6px', marginBottom: '6px' }} />
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#3C3C3C' }}>Vishnu Kakarla</div>
+                      <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#7F7FFA', marginTop: '2px' }}>Founder</div>
+                    </div>
+
+                    {/* Seal */}
+                    <div className="flex flex-col items-center justify-center">
+                      <div 
+                        style={{
+                          width: '88px',
+                          height: '88px',
+                          borderRadius: '50%',
+                          border: '2.5px solid #7F7FFA',
+                          padding: '3px',
+                          backgroundColor: '#FFFFFF',
+                          boxShadow: '0 4px 12px rgba(127, 127, 250, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <div 
+                          style={{
+                            width: '76px',
+                            height: '76px',
+                            borderRadius: '50%',
+                            border: '1px dashed #7F7FFA',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#F8FAFC',
+                          }}
+                        >
+                          <ShieldCheck style={{ width: '24px', height: '24px', color: '#7F7FFA' }} />
+                          <span 
+                            style={{
+                              fontSize: '7px',
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.14em',
+                              color: '#3C3C3C',
+                              marginTop: '2px',
+                              textAlign: 'center',
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            BEGINFIN<br />VERIFIED
+                          </span>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '8.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#7F7FFA', marginTop: '6px' }}>Official Seal</span>
+                    </div>
+
+                    {/* Co-Founder */}
+                    <div className="flex flex-col items-center text-center" style={{ width: '220px' }}>
+                      <div 
+                        className="font-diploma-script select-none" 
+                        style={{ fontSize: '38px', color: '#3C3C3C', lineHeight: 1, height: '42px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+                      >
+                        Kruz Smith
+                      </div>
+                      <div style={{ width: '180px', height: '1.5px', backgroundColor: '#94A3B8', marginTop: '6px', marginBottom: '6px' }} />
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#3C3C3C' }}>Kruz Smith</div>
+                      <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#7F7FFA', marginTop: '2px' }}>Co-Founder</div>
+                    </div>
+                  </div>
+
+                  {/* Metadata Strip */}
+                  <div 
+                    className="w-full max-w-[960px] flex items-center justify-between pt-3 mt-3" 
+                    style={{ borderTop: '1px solid #E2E8F0', fontSize: '10px', color: '#64748B' }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: 600 }}>Date Issued: </span>
+                      <span style={{ fontWeight: 700, color: '#3C3C3C' }}>{issueDateString}</span>
+                    </div>
+                    <div style={{ fontWeight: 600, color: '#7F7FFA' }}>
+                      National Standards for Personal Finance Education
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: 600 }}>Credential ID: </span>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#3C3C3C' }}>{credentialId}</span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
-
-              {/* Signatures Section: Vishnu Kakarla & Kruz Smith */}
-              <div className="mt-14 flex items-start justify-between">
-                {/* Column 1: Vishnu Kakarla */}
-                <div className="flex flex-col">
-                  {/* Cursive Signature */}
-                  <div 
-                    className="font-diploma-script select-none text-black"
-                    style={{
-                      fontSize: '34px',
-                      height: '42px',
-                      lineHeight: 1,
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      fontFamily: "'Dancing Script', 'Great Vibes', cursive",
-                    }}
-                  >
-                    Vishnu Kakarla
-                  </div>
-                  {/* Horizontal solid line */}
-                  <div 
-                    className="w-[230px] h-[1.5px] bg-black mt-2 mb-2"
-                  />
-                  {/* Name in #7F7FFA */}
-                  <div 
-                    className="text-[16px] font-bold"
-                    style={{ color: '#7F7FFA', fontFamily: "'Inter', sans-serif" }}
-                  >
-                    Vishnu Kakarla
-                  </div>
-                  {/* Title */}
-                  <div 
-                    className="text-[14px] text-black font-normal mt-0.5"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    Founder, BeginFin
-                  </div>
-                </div>
-
-                {/* Column 2: Kruz Smith */}
-                <div className="flex flex-col pr-8">
-                  {/* Cursive Signature */}
-                  <div 
-                    className="font-diploma-script select-none text-black"
-                    style={{
-                      fontSize: '34px',
-                      height: '42px',
-                      lineHeight: 1,
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      fontFamily: "'Dancing Script', 'Great Vibes', cursive",
-                    }}
-                  >
-                    Kruz Smith
-                  </div>
-                  {/* Horizontal solid line */}
-                  <div 
-                    className="w-[230px] h-[1.5px] bg-black mt-2 mb-2"
-                  />
-                  {/* Name in #7F7FFA */}
-                  <div 
-                    className="text-[16px] font-bold"
-                    style={{ color: '#7F7FFA', fontFamily: "'Inter', sans-serif" }}
-                  >
-                    Kruz Smith
-                  </div>
-                  {/* Title */}
-                  <div 
-                    className="text-[14px] text-black font-normal mt-0.5"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    Co-Founder, BeginFin
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Footer: Page marker matching exact design */}
-            <div 
-              className="w-full text-center text-[13px] font-medium pt-8"
-              style={{ color: '#94A3B8', fontFamily: "'Inter', sans-serif" }}
-            >
-              BeginFin Personal Finance Fundamentals Certification | begin-fin.com | Page 1 of 1
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Management & Certifier.io Integration Card */}
-      <div className="no-print flex flex-col items-center gap-4 mt-6">
-        {allCompleted && (
-          <div className="bg-white border border-emerald-200/90 rounded-2xl p-5 max-w-xl w-full shadow-xs">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                <CheckCircle className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-bold text-slate-900">Completion Letter Issued &amp; Verified</h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Your official BeginFin Completion Letter is ready for high-resolution PDF download. To complement this with a tamper-proof digital badge on Certifier.io for LinkedIn sharing, request your badge below.
-                </p>
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                  <button
-                    onClick={requestDigitalCredential}
-                    className="text-xs font-bold text-[#7F7FFA] hover:text-[#6868EB] flex items-center gap-1.5 cursor-pointer underline underline-offset-4"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" /> Request Digital Badge (Certifier.io) &rarr;
-                  </button>
-                  <button 
-                    onClick={() => setIsNameSet(false)}
-                    className="text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer"
-                  >
-                    <RefreshCw className="w-3 h-3" /> Edit Name on Letter
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-bold text-slate-500 pt-1">
-          <button 
-            onClick={() => setIsNameSet(false)}
-            className="hover:text-slate-800 hover:underline underline-offset-4 transition-all cursor-pointer py-1 flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Edit Name on Letter
-          </button>
-          {allCompleted && (
-            <>
-              <span className="text-slate-300">•</span>
-              <button 
-                onClick={requestDigitalCredential}
-                className="text-[#7F7FFA] hover:text-[#6868EB] hover:underline underline-offset-4 transition-all flex items-center gap-1.5 cursor-pointer py-1"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" /> Request Digital Badge (Certifier.io)
-              </button>
-            </>
-          )}
-        </div>
+      {/* Quick Access Badges & Bottom Links */}
+      <div className="no-print flex flex-wrap items-center justify-center gap-4 text-xs font-bold pt-2">
+        <button 
+          onClick={requestDigitalCredential}
+          className="text-[#7F7FFA] hover:text-[#6868EB] hover:underline underline-offset-4 transition-all flex items-center gap-1.5 cursor-pointer py-1"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" /> Request Digital Credential (Certifier.io)
+        </button>
       </div>
       
-      <div className="no-print py-8"></div>
+      <div className="no-print py-4"></div>
     </div>
   );
 };
-
-// Export alias for seamless integration
-export const CompletionLetterView = CertificateView;
-export default CertificateView;

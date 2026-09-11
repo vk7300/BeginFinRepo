@@ -326,7 +326,7 @@ export const Dashboard: React.FC<Props> = ({
                 <div className="space-y-4">
                   {/* One-time notification: added automatically to class by teacher */}
                   {autoEnrolledNotification && (
-                    <div className="p-3.5 bg-indigo-50 border border-[#7F7FFA]/30 rounded-2xl flex items-start justify-between gap-3 text-indigo-950 animate-in fade-in">
+                    <div className="p-3.5 bg-[#F4F8FA] border border-[#7F7FFA]/30 rounded-2xl flex items-start justify-between gap-3 text-[#3C3C3C] animate-in fade-in">
                       <div className="flex items-start gap-2.5">
                         <div className="w-5 h-5 rounded-full bg-[#7F7FFA] text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5 shadow-xs">
                           ✓
@@ -395,21 +395,21 @@ export const Dashboard: React.FC<Props> = ({
                   )}
 
                   {joinFeedback.status === 'joined' && (
-                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5 text-emerald-900 animate-in zoom-in-95">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="p-3.5 bg-[#F4F8FA] border border-[#7F7FFA]/40 rounded-2xl flex items-start gap-2.5 text-[#3C3C3C] animate-in zoom-in-95">
+                      <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0 mt-0.5" />
                       <div className="text-xs">
-                        <p className="font-bold">Joined!</p>
-                        <p className="text-emerald-700 mt-0.5">{joinFeedback.message}</p>
+                        <p className="font-bold text-slate-900">Joined!</p>
+                        <p className="text-slate-600 mt-0.5">{joinFeedback.message}</p>
                       </div>
                     </div>
                   )}
 
                   {joinFeedback.status === 'error' && (
-                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-amber-900">
-                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="p-3.5 bg-[#F4F8FA] border border-slate-300 rounded-2xl flex items-start gap-2.5 text-[#3C3C3C]">
+                      <AlertCircle className="w-4 h-4 text-[#7F7FFA] shrink-0 mt-0.5" />
                       <div className="text-xs">
-                        <p className="font-bold">Notice</p>
-                        <p className="text-amber-800 mt-0.5">{joinFeedback.message}</p>
+                        <p className="font-bold text-slate-900">Notice</p>
+                        <p className="text-slate-600 mt-0.5">{joinFeedback.message}</p>
                       </div>
                     </div>
                   )}
@@ -573,7 +573,7 @@ export const Dashboard: React.FC<Props> = ({
               {autoEnrolledNotification && (
                 <div 
                   id="auto-enrolled-toast"
-                  className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-[#7F7FFA]/30 rounded-xl text-xs text-indigo-950 shadow-xs animate-in fade-in"
+                  className="flex items-center gap-2 px-3 py-2 bg-[#F4F8FA] border border-[#7F7FFA]/30 rounded-xl text-xs text-[#3C3C3C] shadow-xs animate-in fade-in"
                 >
                   <span className="w-2 h-2 rounded-full bg-[#7F7FFA] shrink-0" />
                   <span className="text-slate-700 font-medium">
@@ -591,17 +591,17 @@ export const Dashboard: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Completion Letter Action */}
+            {/* Certificate Action */}
             <button 
               onClick={onClaimCertificate}
               className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold transition-colors text-xs px-3.5 py-2.5 rounded-xl border cursor-pointer ${
                 allCompleted 
-                  ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-sm' 
+                  ? 'bg-[#7F7FFA] text-white border-[#7F7FFA] hover:bg-[#6868EB] shadow-sm' 
                   : 'text-[#7F7FFA] bg-[#F4F8FA] border-[#7F7FFA]/20 hover:bg-[#ECECFC]'
               }`}
             >
               {allCompleted ? <Trophy className="w-3.5 h-3.5 text-white" /> : <FileBadge className="w-3.5 h-3.5" />}
-              {allCompleted ? 'Completion Letter Ready' : t.viewCertProgress}
+              {allCompleted ? 'Certificate Ready' : t.viewCertProgress}
             </button>
 
             {onOpenGuide && (
@@ -623,29 +623,29 @@ export const Dashboard: React.FC<Props> = ({
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-emerald-50 via-[#F4F8FA] to-emerald-50/60 rounded-2xl p-5 border border-emerald-200/90 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4"
+              className="col-span-1 md:col-span-2 lg:col-span-3 bg-white rounded-3xl p-6 sm:p-7 border-2 border-[#7F7FFA] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4"
             >
               <div className="flex items-center gap-4 text-center sm:text-left">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
-                  <Trophy className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl bg-[#7F7FFA] text-white flex items-center justify-center shadow-md shrink-0">
+                  <Trophy className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-emerald-950 tracking-tight">Mastery Achieved! All Core Units Mastered</h3>
-                  <p className="text-xs text-emerald-800 font-medium mt-0.5">
-                    You have built a rigorous foundation in personal finance. Download your official completion letter or share your credential.
+                  <h3 className="text-lg font-black text-[#3C3C3C] tracking-tight">Mastery Achieved!</h3>
+                  <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
+                    You have built a rigorous foundation in personal finance. Claim your verified certificate or share your credential.
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
                 <button 
                   onClick={onClaimCertificate}
-                  className="flex-1 sm:flex-none px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 sm:flex-none px-5 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <FileBadge className="w-4 h-4" /> Claim Completion Letter
+                  <FileBadge className="w-4 h-4" /> Claim Certificate
                 </button>
                 <button 
                   onClick={handleShare}
-                  className="flex-1 sm:flex-none px-4 py-2.5 bg-white text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 sm:flex-none px-4 py-2.5 bg-[#F4F8FA] text-[#3C3C3C] border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Share2 className="w-4 h-4" /> Share
                 </button>
@@ -739,27 +739,27 @@ export const Dashboard: React.FC<Props> = ({
                   key={m.id}
                   type="button"
                   onClick={() => onSelect(m)}
-                  className="col-span-1 text-left p-4 rounded-2xl border border-emerald-200/90 bg-emerald-50/40 hover:bg-emerald-50/90 hover:border-emerald-300 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group cursor-pointer min-h-[110px]"
+                  className="col-span-1 text-left p-4 rounded-2xl border border-slate-200/80 bg-white hover:bg-[#F4F8FA] hover:border-[#7F7FFA]/60 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group cursor-pointer min-h-[110px]"
                 >
                   <div className="flex items-center justify-between w-full gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7F7FFA] bg-[#F4F8FA] px-2.5 py-0.5 rounded-full border border-[#7F7FFA]/20 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-[#7F7FFA]" />
                       Unit {idx + 1} · Mastered
                     </span>
-                    <span className="text-[10px] font-bold text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                    <span className="text-[10px] font-bold text-[#7F7FFA] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
                       Review <ChevronRight className="w-3 h-3" />
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                      {getModuleIcon(m.id, "w-4.5 h-4.5 text-white")}
+                    <div className="w-9 h-9 rounded-xl bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20 group-hover:bg-[#7F7FFA] group-hover:text-white transition-colors flex items-center justify-center shrink-0 shadow-xs">
+                      {getModuleIcon(m.id, "w-4.5 h-4.5")}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-xs sm:text-sm text-emerald-950 line-clamp-1">
+                      <h4 className="font-bold text-xs sm:text-sm text-[#3C3C3C] group-hover:text-[#7F7FFA] transition-colors line-clamp-1">
                         {rawTitle}
                       </h4>
-                      <p className="text-[11px] text-emerald-700 line-clamp-1 mt-0.5">
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                         {moduleData.description}
                       </p>
                     </div>
@@ -807,7 +807,7 @@ export const Dashboard: React.FC<Props> = ({
                       Unit {idx + 1}
                     </span>
                     {isOptional && (
-                      <span className="text-[8px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded border border-teal-200">
+                      <span className="text-[8px] font-bold uppercase tracking-wider bg-[#F4F8FA] text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
                         Optional
                       </span>
                     )}
