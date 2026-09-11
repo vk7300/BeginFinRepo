@@ -464,7 +464,13 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
   return (
     <div className={`min-h-screen bg-[#F4F8FA] text-[#3C3C3C] selection:bg-[#7F7FFA]/20 pb-20 ${navPadding}`}>
       {/* Top Status Sub-Bar */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-2 flex items-center justify-end gap-3">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2.5 py-1 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] font-extrabold uppercase tracking-wider">
+            Live System Health
+          </span>
+        </div>
+
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Refresh Button */}
           <button
@@ -553,7 +559,14 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
           <div className={`absolute inset-0 bg-gradient-to-r ${overallMeta.bgGradient} pointer-events-none`} />
           
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-white/80 border border-slate-200/80 shadow-2xs">
+                  <span className={`w-2.5 h-2.5 rounded-full ${overallMeta.dotColor} animate-pulse`} />
+                  {overallMeta.badgeText}
+                </span>
+              </div>
+              
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#3C3C3C]">
                 {overallMeta.title}
               </h1>

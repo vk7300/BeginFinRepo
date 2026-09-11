@@ -23,11 +23,12 @@ if (!firebaseConfig.apiKey && typeof window !== 'undefined') {
 // Initialize Firebase SDK
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Ensure Firestore is initialized with auto-detect long-polling to work reliably across sandboxed iframe previews, proxies, and mobile networks
+// Ensure Firestore is initialized with long-polling to work reliably in sandboxed iframe previews and proxies
 let dbInstance;
 try {
   dbInstance = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
+    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: false,
   }, firebaseConfig.firestoreDatabaseId || "(default)");
 } catch (error) {
   // If already initialized, fetch the existing instance which should already have been configured

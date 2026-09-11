@@ -247,6 +247,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-3xl mx-auto mb-12"
         >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider mb-4 border border-[#7F7FFA]/20">
+            <GraduationCap className="w-3.5 h-3.5" />
+            <span>Structured Financial Learning</span>
+          </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-5 leading-[1.1]">
             Curriculum
           </h1>
@@ -254,14 +258,14 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
             Every module is engineered to build lasting financial independence through practical, real-world applications.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <p className="text-xs text-slate-500 font-medium bg-[#F4F8FA] border border-slate-200/80 rounded-full px-4 py-2 inline-block">
+            <p className="text-xs text-slate-500 font-medium bg-slate-100 border border-slate-200/80 rounded-full px-4 py-2 inline-block">
               BeginFin's curriculum is open-source and free for anyone to use for non-commercial purposes.
             </p>
             <button
               onClick={generatePDF}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer group"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0b0f19] hover:bg-[#7F7FFA] text-white rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer group"
             >
-              <FileText className="w-3.5 h-3.5 text-white" />
+              <FileText className="w-3.5 h-3.5 text-[#7F7FFA] group-hover:text-white transition-colors" />
               <span>Export PDF Curriculum</span>
             </button>
           </div>
@@ -276,12 +280,12 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
             transition={{ duration: 0.4 }}
             className="md:col-span-8 bg-[#0b0f19] text-white p-8 md:p-10 rounded-[32px] border border-white/10 relative overflow-hidden shadow-2xl flex flex-col justify-between group"
           >
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#7F7FFA]/20 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#7F7FFA]/30 transition-all duration-700" />
-            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[#7F7FFA]/10 rounded-full blur-[90px] pointer-events-none" />
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/30 rounded-full blur-[100px] pointer-events-none group-hover:bg-indigo-500/40 transition-all duration-700" />
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-violet-600/20 rounded-full blur-[90px] pointer-events-none" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-between gap-4 mb-8">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-[#7F7FFA]">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-indigo-300">
                   <GraduationCap className="w-6 h-6" />
                 </div>
                 <div className="flex items-center gap-2">
@@ -358,7 +362,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
             className="md:col-span-8 bg-gradient-to-br from-[#0a0d18] via-[#0f1426] to-[#070912] p-8 md:p-10 rounded-[32px] border border-white/10 text-white relative overflow-hidden shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6"
           >
             <div className="relative z-10 max-w-xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white text-xs font-medium mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-indigo-200 text-xs font-medium mb-4">
                 <Globe className="w-3.5 h-3.5 text-[#7F7FFA]" />
                 <span>Global Reach</span>
               </div>
@@ -411,7 +415,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
                       <div className="flex items-center gap-3">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                           isDarkCard
-                            ? 'bg-white/10 text-white border border-white/10'
+                            ? 'bg-white/10 text-indigo-200 border border-white/10'
                             : 'bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20'
                         }`}>
                           UNIT {index + 1}
@@ -483,7 +487,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
           animate={{ opacity: 1, y: 0 }}
           className="mt-20 p-10 md:p-12 bg-gradient-to-br from-[#0b0f19] via-[#0d1222] to-[#080b14] rounded-[32px] border border-white/10 text-center relative overflow-hidden shadow-2xl no-print"
         >
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#7F7FFA]/20 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none" />
           <div className="relative z-10 max-w-xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
               Ready to build financial confidence?

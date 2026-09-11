@@ -870,7 +870,6 @@ const App: React.FC = () => {
       setIsAuthReady(true);
       if (currentUser) {
         setUserName(currentUser.displayName || '');
-        setShowLoginModal(false);
       }
     });
     return () => unsubscribe();
@@ -1038,8 +1037,6 @@ const App: React.FC = () => {
         if (snapshot.exists()) {
             setIsFullScreenLockEnabled(snapshot.data().isFullScreenLockEnabled || false);
         }
-    }, (err) => {
-        console.warn('Class lock snapshot error:', err);
     });
     return () => unsubscribe();
   }, [classId]);
@@ -1092,14 +1089,10 @@ const App: React.FC = () => {
                 return t2.getTime() - t1.getTime();
               });
             });
-          }, (err) => {
-            console.warn('Class alerts snapshot notice:', err);
           });
           innerUnsubscribes.set(cid, unsub);
         }
       });
-    }, (err) => {
-      console.warn('Teacher classes snapshot notice:', err);
     });
 
     return () => {
@@ -1129,6 +1122,12 @@ const App: React.FC = () => {
     if (typeof agreed === 'boolean') {
       userAgreedConsentRef.current = agreed;
     }
+    // 1. Cancel any active Google One Tap prompt to prevent concurrent GIS collisions
+    try {
+      window.google?.accounts?.id?.cancel();
+    } catch {
+      // ignore
+    }
 
     try {
       await triggerGoogleSignIn();
@@ -1142,6 +1141,23 @@ const App: React.FC = () => {
       }
       
       console.warn("Google sign-in error note:", error?.message || error);
+
+      // If popup was blocked or interrupted, attempt redirect fallback IF top-level window
+      const isIframe = typeof window !== 'undefined' && window.self !== window.top;
+      if (!isIframe && (
+        error.code === 'auth/popup-blocked' ||
+        error.code === 'auth/cancelled-popup-request' ||
+        error.code === 'auth/network-request-failed'
+      )) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          console.error("Redirect fallback error:", redirectErr);
+          throw redirectErr;
+        }
+      }
+
       // Rethrow to surface to LoginModalContent UI
       throw error;
     }
@@ -2211,13 +2227,13 @@ const App: React.FC = () => {
                       initial={{ opacity: 0, y: -20, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                      className="fixed inset-x-4 top-20 z-50 bg-white rounded-2xl border border-[#3C3C3C]/10 shadow-lg p-6 md:hidden flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
+                      className="fixed inset-x-4 top-20 z-50 bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 md:hidden flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
                     >
-                      <div className="flex items-center justify-between pb-3 border-b border-[#3C3C3C]/10">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#7F7FFA]">Dashboard Menu</span>
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-50">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#2c5282]">Dashboard Menu</span>
                         <button 
                           onClick={() => setShowMobileDashboardNav(false)}
-                          className="p-1 rounded-lg text-[#3C3C3C]/60 hover:text-[#3C3C3C] hover:bg-[#F4F8FA] transition-colors cursor-pointer"
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -2230,7 +2246,7 @@ const App: React.FC = () => {
                             setCurrentView('dashboard');
                             navigate('/');
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
                           <Home className="w-4 h-4 shrink-0" /> Dashboard
                         </button>
@@ -2240,7 +2256,7 @@ const App: React.FC = () => {
                             setCurrentView('curriculum');
                             navigate('/curriculum');
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
                           <BookOpen className="w-4 h-4 shrink-0" /> Curriculum
                         </button>
@@ -2250,7 +2266,7 @@ const App: React.FC = () => {
                             setCurrentView('tools');
                             navigate('/tools');
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
                           <Sparkles className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Tools & Simulators
                         </button>
@@ -2260,16 +2276,16 @@ const App: React.FC = () => {
                             navigate('/guide');
                             setCurrentView('guide');
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-[#e11d48] transition-colors flex items-center gap-3"
                         >
-                          <BookOpen className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Quick Guide
+                          <BookOpen className="w-4 h-4 shrink-0 text-[#e11d48]" /> Quick Guide
                         </button>
                         <button 
                           onClick={() => {
                             setShowMobileDashboardNav(false);
                             setCurrentView('certificate');
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
                           <Trophy className="w-4 h-4 shrink-0" /> Certificate
                         </button>
@@ -2279,7 +2295,7 @@ const App: React.FC = () => {
                             setCurrentView('about');
                             navigate('/about');
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
                           <Users className="w-4 h-4 shrink-0" /> About
                         </button>
@@ -2288,7 +2304,7 @@ const App: React.FC = () => {
                             setShowMobileDashboardNav(false);
                             setShowSettingsModal(true);
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-[#3C3C3C] hover:bg-[#F4F8FA] hover:text-[#7F7FFA] transition-colors flex items-center gap-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
                           <Settings className="w-4 h-4 shrink-0" /> Settings
                         </button>
@@ -2297,7 +2313,7 @@ const App: React.FC = () => {
                             setShowMobileDashboardNav(false);
                             handleLogout();
                           }} 
-                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-rose-500 hover:bg-rose-50 transition-colors flex items-center gap-3 border-t border-[#3C3C3C]/10 pt-3 cursor-pointer"
+                          className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 transition-colors flex items-center gap-3 border-t border-slate-50 pt-3"
                         >
                           <LogOut className="w-4 h-4 shrink-0" /> Sign Out
                         </button>

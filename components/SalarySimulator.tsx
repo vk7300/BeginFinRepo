@@ -248,6 +248,10 @@ export const SalarySimulator: React.FC = () => {
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7F7FFA]/10 border border-[#7F7FFA]/20 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider mb-2">
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Interactive Career & Budgeting Tool</span>
+            </div>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Entry Salary & Living Cost Simulator
             </h2>
@@ -258,9 +262,9 @@ export const SalarySimulator: React.FC = () => {
 
           <button
             onClick={handleResetToDefaults}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-[#F4F8FA] hover:bg-slate-100 text-[#3C3C3C] text-xs font-bold transition-colors shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors shrink-0"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-[#7F7FFA]" />
+            <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Defaults</span>
           </button>
         </div>
@@ -380,7 +384,7 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="flex items-center gap-1.5">
-                    <Utensils className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                    <Utensils className="w-3.5 h-3.5 text-emerald-600" />
                     Groceries & Household Essentials
                   </span>
                   <div className="flex items-center gap-1">
@@ -410,7 +414,7 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="flex items-center gap-1.5">
-                    <Car className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                    <Car className="w-3.5 h-3.5 text-blue-600" />
                     Transportation (Auto loan, gas, transit, auto insurance)
                   </span>
                   <div className="flex items-center gap-1">
@@ -440,7 +444,7 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="flex items-center gap-1.5">
-                    <Wifi className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                    <Wifi className="w-3.5 h-3.5 text-amber-600" />
                     Utilities, Electricity, Water & Mobile Phone
                   </span>
                   <div className="flex items-center gap-1">
@@ -530,7 +534,7 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="flex items-center gap-1.5">
-                    <Film className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                    <Film className="w-3.5 h-3.5 text-indigo-500" />
                     Discretionary Spending, Dining Out & Entertainment
                   </span>
                   <div className="flex items-center gap-1">
@@ -560,7 +564,7 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="flex items-center gap-1.5">
-                    <PiggyBank className="w-3.5 h-3.5 text-[#7F7FFA]" />
+                    <PiggyBank className="w-3.5 h-3.5 text-emerald-600" />
                     Emergency Savings, HYSA & Retirement (401k/IRA)
                   </span>
                   <div className="flex items-center gap-1">
@@ -629,31 +633,25 @@ export const SalarySimulator: React.FC = () => {
           {/* Cash Flow Outcome Card */}
           <div className={`p-6 rounded-3xl border shadow-xs space-y-3 transition-colors ${
             netCashFlow >= 0 
-              ? 'bg-[#F4F8FA] border-[#7F7FFA]/40 text-[#3C3C3C]' 
-              : 'bg-[#F4F8FA] border-rose-300 text-[#3C3C3C]'
+              ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950' 
+              : 'bg-rose-50/70 border-rose-200/80 text-rose-950'
           }`}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              <span className="text-xs font-bold uppercase tracking-wider">
                 {netCashFlow >= 0 ? 'Monthly Net Surplus' : 'Monthly Net Deficit'}
               </span>
               {netCashFlow >= 0 ? (
-                <div className="w-6 h-6 rounded-full bg-[#7F7FFA]/15 flex items-center justify-center text-[#7F7FFA]">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
-                  <AlertTriangle className="w-4 h-4" />
-                </div>
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
               )}
             </div>
 
-            <div className={`text-2xl sm:text-3xl font-black tracking-tight ${
-              netCashFlow >= 0 ? 'text-[#7F7FFA]' : 'text-rose-600'
-            }`}>
+            <div className="text-2xl sm:text-3xl font-black tracking-tight">
               {netCashFlow >= 0 ? '+' : '-'}${Math.abs(Math.round(netCashFlow)).toLocaleString()}/mo
             </div>
 
-            <p className="text-xs leading-relaxed text-slate-600">
+            <p className="text-xs leading-relaxed opacity-90">
               {netCashFlow >= 0 
                 ? 'Your simulated take-home income comfortably covers all planned monthly living expenses and savings goals.'
                 : 'Living expenses exceed your net take-home pay. Consider reducing discretionary costs or exploring shared housing.'}
@@ -674,13 +672,15 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex justify-between font-bold">
                   <span className="text-slate-700">Needs (Target ≤50%)</span>
-                  <span className={needsPercent > 50 ? 'text-rose-600' : 'text-slate-900'}>
+                  <span className={needsPercent > 50 ? 'text-amber-600' : 'text-slate-900'}>
                     ${totalNeeds.toLocaleString()} ({needsPercent.toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-[#F4F8FA] border border-slate-200/60 h-2.5 rounded-full overflow-hidden p-0.5">
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                   <div 
-                    className="h-full rounded-full transition-all duration-300 bg-[#7F7FFA]"
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      needsPercent > 50 ? 'bg-amber-500' : 'bg-[#7F7FFA]'
+                    }`}
                     style={{ width: `${Math.min(100, needsPercent)}%` }}
                   />
                 </div>
@@ -690,13 +690,15 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex justify-between font-bold">
                   <span className="text-slate-700">Wants (Target ≤30%)</span>
-                  <span className={wantsPercent > 30 ? 'text-rose-600' : 'text-slate-900'}>
+                  <span className={wantsPercent > 30 ? 'text-amber-600' : 'text-slate-900'}>
                     ${totalWants.toLocaleString()} ({wantsPercent.toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-[#F4F8FA] border border-slate-200/60 h-2.5 rounded-full overflow-hidden p-0.5">
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                   <div 
-                    className="h-full rounded-full transition-all duration-300 bg-[#7F7FFA]/70"
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      wantsPercent > 30 ? 'bg-amber-500' : 'bg-indigo-400'
+                    }`}
                     style={{ width: `${Math.min(100, wantsPercent)}%` }}
                   />
                 </div>
@@ -706,14 +708,14 @@ export const SalarySimulator: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex justify-between font-bold">
                   <span className="text-slate-700">Savings & Investing (Target ≥20%)</span>
-                  <span className={savingsPercent < 20 ? 'text-slate-500' : 'text-[#7F7FFA]'}>
+                  <span className={savingsPercent < 20 ? 'text-amber-600' : 'text-emerald-600'}>
                     ${totalSavings.toLocaleString()} ({savingsPercent.toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-[#F4F8FA] border border-slate-200/60 h-2.5 rounded-full overflow-hidden p-0.5">
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                   <div 
                     className={`h-full rounded-full transition-all duration-300 ${
-                      savingsPercent >= 20 ? 'bg-[#7F7FFA]' : 'bg-slate-300'
+                      savingsPercent >= 20 ? 'bg-emerald-500' : 'bg-slate-300'
                     }`}
                     style={{ width: `${Math.min(100, savingsPercent)}%` }}
                   />

@@ -139,30 +139,31 @@ export const CurriculumModal: React.FC<{ isOpen: boolean; onClose: () => void }>
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-      <div className="bg-white rounded-3xl w-full max-w-4xl my-8 border border-[#3C3C3C]/10 shadow-xl flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-4xl my-8 shadow-2xl animate-in zoom-in duration-300 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 sm:p-8 border-b border-[#3C3C3C]/10 flex justify-between items-center bg-white rounded-t-3xl text-[#3C3C3C] relative">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[#F4F8FA] rounded-2xl border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA]">
+        <div className="p-8 border-b border-white/10 flex justify-between items-center bg-[#0b0f19] rounded-t-[2.5rem] text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full blur-[80px] pointer-events-none" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center text-indigo-300">
               <BookOpen className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-[#3C3C3C]">Core Curriculum Syllabus</h2>
-              <p className="text-[#3C3C3C]/60 font-normal text-xs tracking-wide">Open-source curriculum free for non-commercial use</p>
+              <h2 className="text-2xl font-bold tracking-tight text-white">Core Curriculum Syllabus</h2>
+              <p className="text-slate-400 font-medium text-xs tracking-wide">Open-source curriculum free for non-commercial use</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative z-10">
             <button 
               onClick={handleExportPDF}
               disabled={isExporting}
-              className="flex items-center gap-2 px-4 py-2 bg-[#7F7FFA] text-white hover:bg-[#6868EB] rounded-full transition-all font-bold text-xs cursor-pointer shadow-xs"
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 hover:bg-slate-100 rounded-full transition-all font-semibold text-xs cursor-pointer shadow-md"
             >
-              {isExporting ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Download className="w-4 h-4 text-white" />}
+              {isExporting ? <Loader2 className="w-4 h-4 animate-spin text-slate-900" /> : <Download className="w-4 h-4 text-slate-700" />}
               <span>Export PDF</span>
             </button>
             <button 
               onClick={onClose}
-              className="p-2.5 hover:bg-[#F4F8FA] rounded-full text-[#3C3C3C]/60 hover:text-[#3C3C3C] transition-colors cursor-pointer"
+              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -170,41 +171,41 @@ export const CurriculumModal: React.FC<{ isOpen: boolean; onClose: () => void }>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 bg-[#F4F8FA]/50">
+        <div className="flex-1 overflow-y-auto p-8 space-y-10">
           {/* Alignment & Sources Section */}
-          <section className="bg-white border border-[#3C3C3C]/10 rounded-3xl p-6 sm:p-8 shadow-xs">
+          <section className="bg-indigo-50 border border-indigo-100 rounded-3xl p-8">
             <div className="flex flex-col md:flex-row gap-8 items-start">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-6 h-6 text-[#7F7FFA]" />
-                  <h3 className="text-xl font-bold text-[#3C3C3C]">Standardized Rigor</h3>
+                  <ShieldCheck className="w-6 h-6 text-indigo-600" />
+                  <h3 className="text-xl font-black text-slate-900">Standardized Rigor</h3>
                 </div>
-                <p className="text-[#3C3C3C]/80 font-normal leading-relaxed text-sm">
-                  The BeginFin curriculum is designed for alignment with and fully vetted against the <span className="text-[#7F7FFA] font-bold">National Standards for Personal Finance Education (NSPFE)</span>.
+                <p className="text-slate-600 font-medium leading-relaxed">
+                  The BeginFin curriculum is designed for alignment with and fully vetted against the <span className="text-indigo-600 font-black">National Standards for Personal Finance Education (NSPFE)</span>.
                 </p>
-                <div className="p-4 bg-[#F4F8FA] border border-[#3C3C3C]/10 rounded-2xl">
-                  <p className="text-[11px] text-[#3C3C3C]/60 font-medium leading-relaxed italic">
+                <div className="p-4 bg-white/50 border border-indigo-100 rounded-2xl">
+                  <p className="text-[10px] text-slate-500 font-bold leading-relaxed italic">
                     BeginFin is a student-led educational initiative. While we are vetted for alignment with national financial education standards, BeginFin is provided on an "as-is" basis and does not claim official statutory certification.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="px-3 py-1 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#7F7FFA]">National Standards Goal</span>
-                  <span className="px-3 py-1 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#7F7FFA]">NSPFE Vetted &amp; Aligned</span>
+                  <span className="px-3 py-1 bg-white border border-indigo-100 rounded-full text-[9px] font-black uppercase tracking-widest text-indigo-600">National Standards Goal</span>
+                  <span className="px-3 py-1 bg-white border border-indigo-100 rounded-full text-[9px] font-black uppercase tracking-widest text-indigo-600">NSPFE Vetted & Aligned</span>
                 </div>
               </div>
-              <div className="w-full md:w-1/3 bg-[#F4F8FA] p-6 rounded-2xl border border-[#3C3C3C]/10 shadow-xs">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#3C3C3C]/60 mb-3">Primary Sources</p>
+              <div className="w-full md:w-1/3 bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Primary Sources</p>
                 <ul className="space-y-3">
-                  <li className="text-xs font-semibold text-[#3C3C3C]/80 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#7F7FFA]" />
+                  <li className="text-[11px] font-bold text-slate-600 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                     National Standards Frameworks
                   </li>
-                  <li className="text-xs font-semibold text-[#3C3C3C]/80 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#7F7FFA]" />
+                  <li className="text-[11px] font-bold text-slate-600 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                     Jump$tart Coalition / CEE
                   </li>
-                  <li className="text-xs font-semibold text-[#3C3C3C]/80 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#7F7FFA]" />
+                  <li className="text-[11px] font-bold text-slate-600 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                     Internal Revenue Service (IRS.gov)
                   </li>
                 </ul>
@@ -215,27 +216,27 @@ export const CurriculumModal: React.FC<{ isOpen: boolean; onClose: () => void }>
           {/* Units Grid */}
           <div className="grid md:grid-cols-2 gap-6">
             {curriculumData.map((unit, idx) => (
-              <div key={idx} className="group bg-white rounded-3xl p-6 sm:p-8 border border-[#3C3C3C]/10 shadow-xs hover:border-[#7F7FFA]/30 transition-all duration-300">
+              <div key={idx} className="group bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-xl flex items-center justify-center text-[#7F7FFA] font-bold text-xs">
+                    <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 font-black text-xs">
                       {idx + 1}
                     </div>
-                    <h4 className="text-base font-bold text-[#3C3C3C] leading-tight">{unit.title}</h4>
+                    <h4 className="text-lg font-black text-slate-900 leading-tight">{unit.title}</h4>
                   </div>
                 </div>
                 
                 <div className="mb-6">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#7F7FFA] mb-1">Focus Area</p>
-                  <p className="text-[#3C3C3C]/70 font-normal text-xs sm:text-sm leading-relaxed">{unit.focus}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Focus Area</p>
+                  <p className="text-slate-600 font-medium text-sm leading-relaxed">{unit.focus}</p>
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#3C3C3C]/50 mb-2">Competency Outcomes</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Competency Outcomes</p>
                   {unit.outcomes.map((outcome, oIdx) => (
                     <div key={oIdx} className="flex gap-3 items-start">
-                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#7F7FFA] flex-shrink-0" />
-                      <p className="text-[#3C3C3C]/80 text-xs font-normal leading-relaxed">{outcome}</p>
+                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-300 flex-shrink-0" />
+                      <p className="text-slate-600 text-xs font-medium leading-relaxed">{outcome}</p>
                     </div>
                   ))}
                 </div>
@@ -244,22 +245,22 @@ export const CurriculumModal: React.FC<{ isOpen: boolean; onClose: () => void }>
           </div>
 
           {/* Remediation Policy */}
-          <section className="bg-white p-6 sm:p-8 rounded-3xl border border-[#3C3C3C]/10 shadow-xs">
+          <section className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
             <div className="flex items-center gap-3 mb-4">
-              <Award className="w-6 h-6 text-[#7F7FFA]" />
-              <h3 className="text-xl font-bold text-[#3C3C3C]">Mastery-Based Assessment</h3>
+              <Award className="w-6 h-6 text-indigo-600" />
+              <h3 className="text-xl font-black text-slate-900">Mastery-Based Assessment</h3>
             </div>
-            <p className="text-[#3C3C3C]/70 font-normal leading-relaxed text-sm">
-              BeginFin follows a strict <span className="text-[#3C3C3C] font-bold">100% Mastery Required</span> policy. Users must achieve a perfect score on module quizzes to progress, ensuring no foundational concepts are missed. If a user fails, the platform identifies the missed standard and provides targeted remediation options.
+            <p className="text-slate-500 font-medium leading-relaxed">
+              BeginFin follows a strict <span className="text-slate-900 font-bold">100% Mastery Required</span> policy. Users must achieve a perfect score on module quizzes to progress, ensuring no foundational concepts are missed. If a user fails, the platform identifies the missed standard and provides targeted remediation options.
             </p>
           </section>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-[#3C3C3C]/10 bg-white rounded-b-3xl flex justify-center">
+        <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-[2.5rem] flex justify-center">
           <button 
             onClick={onClose}
-            className="px-10 py-3.5 bg-[#7F7FFA] text-white font-bold rounded-xl hover:bg-[#6868EB] transition-all active:scale-95 shadow-xs cursor-pointer"
+            className="px-10 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all active:scale-95 shadow-lg"
           >
             Acknowledge Curriculum
           </button>

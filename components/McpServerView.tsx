@@ -167,18 +167,17 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
               {/* Top Pill Badge */}
               <div className="inline-flex items-center gap-2 px-6 py-2 bg-[#F4F8FA] text-[#3C3C3C] border border-[#7F7FFA]/20 rounded-full font-bold text-xs sm:text-sm shadow-lg tracking-tight">
                 <Sparkles className="w-4 h-4 text-[#7F7FFA]" />
-                <span>Personal Finance AI Assistant Tools</span>
+                <span>Unified Model Context Protocol Server</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-snug sm:leading-tight text-center max-w-3xl">
-                Personal finance tutoring &amp; teaching,<br className="hidden sm:inline" />{' '}
-                <span className="italic font-normal">now directly in your AI tools.</span>
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight text-center max-w-4xl">
+                Personal finance tutoring & teaching, <span className="italic font-normal">now directly in your AI tools.</span>
               </h1>
 
               {/* Subtitle */}
               <p className="text-sm sm:text-base text-slate-200/90 max-w-2xl mx-auto font-normal leading-relaxed">
-                Connect your AI assistant to BeginFin. Learn with an encouraging AI tutor, calculate paychecks and 50/30/20 budgets, practice quizzes, create classroom lesson plans, and explore National Standards.
+                One cohesive, all-purpose MCP server. Access personal finance tutoring, compute paychecks and 50/30/20 budgets, practice quizzes, generate classroom lesson plans, and explore National Standards.
               </p>
 
               {/* Segmented Capsule for Server URL Copying */}
@@ -359,10 +358,10 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-normal text-[#3C3C3C] tracking-tight">
-                  15 Built-in Learning Tools
+                  Unified Toolset (15 Built-in Tools)
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Everything learners and teachers need to explore personal finance with confidence.
+                  Everything both students and teachers need, accessible in a single server connection.
                 </p>
               </div>
 
@@ -553,30 +552,30 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
               <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
                 <div className="flex items-center gap-2 text-[#7F7FFA] font-bold text-sm">
                   <HelpCircle className="w-4 h-4" />
-                  <span>Why does BeginFin offer learning tools through MCP?</span>
+                  <span>Why does BeginFin offer an MCP server instead of an in-app chatbot?</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  We believe personal finance should meet you wherever you learn best! Instead of keeping you inside a locked webpage, BeginFin connects directly with the AI assistants and study apps you already love—like Claude, Cursor, Windsurf, or ChatGPT. You get immediate access to our verified 9-unit curriculum, practical budgeting tools, and lesson plans with zero paywalls, zero ads, and zero daily limits.
+                  Rather than confining learners to a walled-garden web chatbot, BeginFin's Model Context Protocol (MCP) server integrates natively into whatever AI environment you already use—Claude Desktop, Cursor, Windsurf, ChatGPT, or custom agents. You get direct access to BeginFin's verified 9-unit curriculum, financial calculators, and lesson planning tools with zero paywalls, zero ads, and zero daily caps.
                 </p>
               </div>
 
               <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
                 <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Is your personal information or student data tracked?</span>
+                  <span>Is any user, student, or personal financial data collected or tracked?</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Never. We operate as a trusted community ally and respect your privacy completely. Our tools share only open educational lessons and mathematical formulas. We never collect, track, or save your questions, budget numbers, student rosters, or private chats.
+                  No. The MCP server is completely stateless and exchanges only open educational curriculum data and calculations. BeginFin never tracks, collects, or logs your prompts, personal figures, student rosters, or private chats.
                 </p>
               </div>
 
               <div className="bg-white p-6 sm:p-7 rounded-[2rem] border border-slate-200/70 shadow-xs space-y-2">
                 <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Does BeginFin provide personalized financial advice?</span>
+                  <span>Does BeginFin provide individualized financial advice?</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Our goal is to help you build lasting financial confidence through practical education! We explain core financial concepts clearly so you can make informed decisions for your own future. We do not offer individualized stock picks, legal advice, or tax filing services.
+                  No. BeginFin provides objective financial literacy education and explains foundational principles so learners can make their own informed decisions. We never provide stock picks, legal advice, or individualized tax preparation.
                 </p>
               </div>
             </div>

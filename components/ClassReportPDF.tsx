@@ -75,7 +75,7 @@ export const ClassReportPDF: React.FC<Props> = ({ className, students, modules }
           <div className="mt-4 text-xs font-bold text-slate-400">Total Students</div>
         </div>
         <div className="bg-[#F4F8FA] p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:bg-white hover:shadow-xl transition-all">
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Total Learners</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Total Graduates</p>
           <p className="text-7xl font-black text-[#7F7FFA] tracking-tighter">
             {students.filter(s => s.completedModules.length === modules.length).length}
           </p>

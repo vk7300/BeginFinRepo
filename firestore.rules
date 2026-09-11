@@ -168,14 +168,14 @@ service cloud.firestore {
       // Only the class teacher can update or delete the class
       // Note: Class joining is securely handled via the server /api/join-class endpoint with join code verification
       // Students leaving a class or deleting their account can only remove their own UID from studentIds
-      allow update: if (isAuthenticated() && resource.data.teacherId == request.auth.uid) || isClassTeacher(classId) || isAdmin() || (
+      allow update: if isClassTeacher(classId) || isAdmin() || (
         isAuthenticated() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentIds']) &&
         request.resource.data.studentIds is list &&
         !(request.auth.uid in request.resource.data.studentIds) &&
         (resource.data.get('studentIds', []) is list && request.auth.uid in resource.data.studentIds)
       );
-      allow delete: if (isAuthenticated() && resource.data.teacherId == request.auth.uid) || isClassTeacher(classId) || isAdmin();
+      allow delete: if isClassTeacher(classId) || isAdmin();
 
       match /alerts/{alertId} {
         // Teachers can read and delete alerts for their own classes

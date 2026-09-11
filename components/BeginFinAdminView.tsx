@@ -710,142 +710,194 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-[#7F7FFA]" />
-            Admin Portal
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="truncate max-w-[180px] font-mono text-[11px]">{user?.email || 'admin'}</span>
+      {/* Top Header Card (Mirrors SalarySimulator Header) */}
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7F7FFA]/10 border border-[#7F7FFA]/20 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider mb-2">
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Unified Administrator Governance</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              BeginFin Platform Control
+            </h1>
+            <p className="text-sm text-slate-600 leading-relaxed mt-1">
+              Consolidated command center managing real-time system status, curriculum question databases (QMS), Certifier.io graduate requests, and administrative security.
+            </p>
           </div>
 
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Exit Portal</span>
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="truncate max-w-[180px] font-mono text-[11px]">{user?.email || 'admin'}</span>
+            </div>
+
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Exit Portal</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Informational Disclaimer Banner */}
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 text-xs text-[#3C3C3C] leading-relaxed">
+          <AlertCircle className="w-4 h-4 text-[#7F7FFA] shrink-0 mt-0.5" />
+          <p>
+            <strong>Operational Governance:</strong> Changes committed here write directly to production Firestore database collections (<code>system/status</code>, <code>customQuestions</code>, and <code>certifierRequests</code>). Modifications propagate instantly to learners, educators, and API consumers.
+          </p>
         </div>
       </div>
 
-      {/* Quick Metrics */}
+      {/* High-Level Operational Metrics Bento Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Metric 1: System Health */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">System Health</span>
+            <Activity className="w-4 h-4 text-[#7F7FFA]" />
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className={`w-2.5 h-2.5 rounded-full ${
+              editStatusData.overall === 'Operational' ? 'bg-emerald-500' :
+              editStatusData.overall === 'Issues Observed' ? 'bg-amber-500' : 'bg-rose-500'
+            }`}></span>
+            <span className="text-lg sm:text-xl font-black text-slate-900">{editStatusData.overall}</span>
+          </div>
+          <span className="text-[11px] text-slate-500 mt-1">5 Core services monitored</span>
+        </div>
+
+        {/* Metric 2: Live QMS Questions */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Module Qs</span>
+            <BookOpen className="w-4 h-4 text-[#7F7FFA]" />
+          </div>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-black text-slate-900">{questions.length}</span>
+            <span className="text-xs text-slate-500 ml-1">in {selectedModuleId.toUpperCase()} ({LANGUAGE_NAMES[selectedLanguage] || selectedLanguage})</span>
+          </div>
+          <span className="text-[11px] text-slate-500 mt-1">{questions.filter(q => q.isPublished).length} published live</span>
+        </div>
+
+        {/* Metric 3: Certifier Requests */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Graduate Certs</span>
+            <Award className="w-4 h-4 text-[#7F7FFA]" />
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-xl sm:text-2xl font-black text-slate-900">{certifierRequests.length}</span>
+            {pendingCertifierCount > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                {pendingCertifierCount} Pending
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] text-slate-500 mt-1">{certifierRequests.length - pendingCertifierCount} fulfilled</span>
+        </div>
+
+        {/* Metric 4: Admin Directory */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Designated Admins</span>
+            <ShieldCheck className="w-4 h-4 text-[#7F7FFA]" />
+          </div>
+          <div className="mt-3">
+            <span className="text-xl sm:text-2xl font-black text-slate-900">{DEFAULT_ADMIN_EMAILS.length}</span>
+            <span className="text-xs text-slate-500 ml-1">accounts</span>
+          </div>
+          <span className="text-[11px] text-emerald-600 font-semibold mt-1">RBAC Enforced</span>
+        </div>
+      </div>
+
+      {/* Navigation Control Tabs (Profession Card Selector style from Living Costs Simulator) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`w-2.5 h-2.5 rounded-full ${
-                editStatusData.overall === 'Operational' ? 'bg-emerald-500' :
-                editStatusData.overall === 'Issues Observed' ? 'bg-amber-500' : 'bg-rose-500'
-              }`} />
-              <span className="text-base font-bold text-slate-900">{editStatusData.overall}</span>
-            </div>
-          </div>
-          <Activity className="w-5 h-5 text-[#7F7FFA]/60" />
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Questions</span>
-            <div className="text-base font-bold text-slate-900 mt-1">
-              {questions.length} <span className="text-xs font-normal text-slate-500">({questions.filter(q => q.isPublished).length} live)</span>
-            </div>
-          </div>
-          <BookOpen className="w-5 h-5 text-[#7F7FFA]/60" />
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Badge Queue</span>
-            <div className="text-base font-bold text-slate-900 mt-1 flex items-center gap-2">
-              {certifierRequests.length}
-              {pendingCertifierCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
-                  {pendingCertifierCount} pending
-                </span>
-              )}
-            </div>
-          </div>
-          <Award className="w-5 h-5 text-[#7F7FFA]/60" />
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Admins</span>
-            <div className="text-base font-bold text-slate-900 mt-1">
-              {DEFAULT_ADMIN_EMAILS.length} accounts
-            </div>
-          </div>
-          <ShieldCheck className="w-5 h-5 text-[#7F7FFA]/60" />
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/80">
         <button
           type="button"
           onClick={() => setActiveTab('status')}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl text-left border-2 transition-all flex flex-col justify-between gap-1.5 cursor-pointer ${
             activeTab === 'status'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'border-[#7F7FFA] bg-[#7F7FFA]/5 shadow-xs'
+              : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50'
           }`}
         >
-          <Activity className="w-4 h-4 text-[#7F7FFA]" />
-          <span>System Status</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">Section 1</span>
+            {activeTab === 'status' && <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0" />}
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">System Status & Notices</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Control live services, alerts, and public notices</p>
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('qms')}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl text-left border-2 transition-all flex flex-col justify-between gap-1.5 cursor-pointer ${
             activeTab === 'qms'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'border-[#7F7FFA] bg-[#7F7FFA]/5 shadow-xs'
+              : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50'
           }`}
         >
-          <BookOpen className="w-4 h-4 text-[#7F7FFA]" />
-          <span>Curriculum Questions</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">Section 2</span>
+            {activeTab === 'qms' && <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0" />}
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">Curriculum & QMS</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Manage quiz questions across 18 languages</p>
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('certifier')}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl text-left border-2 transition-all flex flex-col justify-between gap-1.5 cursor-pointer ${
             activeTab === 'certifier'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'border-[#7F7FFA] bg-[#7F7FFA]/5 shadow-xs'
+              : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50'
           }`}
         >
-          <Award className="w-4 h-4 text-[#7F7FFA]" />
-          <span>Badge Requests</span>
-          {pendingCertifierCount > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
-              {pendingCertifierCount}
-            </span>
-          )}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">Section 3</span>
+            {activeTab === 'certifier' && <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0" />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900">Certifier.io Queue</h3>
+              {pendingCertifierCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                  {pendingCertifierCount}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">Verify graduate requests and export Excel</p>
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('security')}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl text-left border-2 transition-all flex flex-col justify-between gap-1.5 cursor-pointer ${
             activeTab === 'security'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'border-[#7F7FFA] bg-[#7F7FFA]/5 shadow-xs'
+              : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50'
           }`}
         >
-          <ShieldCheck className="w-4 h-4 text-[#7F7FFA]" />
-          <span>Security & Access</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">Section 4</span>
+            {activeTab === 'security' && <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0" />}
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">Security & Diagnostics</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Admin whitelist, cache tools, and links</p>
+          </div>
         </button>
       </div>
 
@@ -856,9 +908,14 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         <div className="space-y-6">
           <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                System Status
-              </h2>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                  System Health & Incident Notice Configuration
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Update individual infrastructure components and publish global banner announcements.
+                </p>
+              </div>
 
               <div className="flex items-center gap-3">
                 <a
@@ -1148,9 +1205,14 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         <div className="space-y-6">
           <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                Curriculum Questions
-              </h2>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Curriculum Quiz Management System (QMS)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Create, translate, edit, and publish end-of-module assessment questions with real-time student sync.
+                </p>
+              </div>
 
               <div className="flex items-center gap-2">
                 <button
@@ -1385,9 +1447,14 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         <div className="space-y-6">
           <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                Badge Requests
-              </h2>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Certifier.io Official Credential Delivery Queue
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review and fulfill certified certificate requests submitted by graduating learners with verified standards.
+                </p>
+              </div>
 
               <div className="flex items-center gap-2">
                 <button
@@ -1534,16 +1601,19 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         <div className="space-y-6">
           <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
             <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                Security & Diagnostics
-              </h2>
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                Platform Security, Whitelist & Diagnostics
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Overview of designated administrator accounts, database connection settings, and system utilities.
+              </p>
             </div>
 
             {/* Admin Whitelist */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Admin Whitelist
-              </h3>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Designated Administrator Whitelist
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {DEFAULT_ADMIN_EMAILS.map((adminEmail) => {
                   const isCurrent = user?.email?.toLowerCase().trim() === adminEmail.toLowerCase().trim();
@@ -1573,12 +1643,12 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
               </div>
             </div>
 
-            {/* Connected Infrastructure */}
+            {/* Environment & Database Diagnostics */}
             <div className="p-5 rounded-2xl bg-[#F4F8FA] border border-slate-200/80 space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
                 <Database className="w-4 h-4 text-[#7F7FFA]" />
-                <span>Diagnostics</span>
-              </h3>
+                <span>Connected Infrastructure Diagnostics</span>
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="p-3 rounded-xl bg-white border border-slate-200">
                   <span className="text-[10px] font-bold uppercase text-slate-400">Firestore Database ID</span>
@@ -1591,11 +1661,11 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
               </div>
             </div>
 
-            {/* Platform Utilities */}
+            {/* Quick Diagnostic Actions */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Platform Utilities
-              </h3>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Platform Utilities & Quick Links
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   type="button"
@@ -1606,7 +1676,8 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
                   className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-left transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-4 h-4 text-slate-500 mb-1" />
-                  <h4 className="text-xs font-bold text-slate-900">Reset Local Storage Cache</h4>
+                  <h5 className="text-xs font-bold text-slate-900">Reset Local Storage Cache</h5>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Flush client-side simulated student test state</p>
                 </button>
 
                 <a
@@ -1616,7 +1687,8 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
                   className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-left transition-colors"
                 >
                   <Sliders className="w-4 h-4 text-[#7F7FFA] mb-1" />
-                  <h4 className="text-xs font-bold text-slate-900">Living Costs & Wage Tool</h4>
+                  <h5 className="text-xs font-bold text-slate-900">Living Costs & Wage Tool</h5>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Open interactive salary simulation model</p>
                 </a>
 
                 <a
@@ -1626,7 +1698,8 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
                   className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-left transition-colors"
                 >
                   <ExternalLink className="w-4 h-4 text-indigo-500 mb-1" />
-                  <h4 className="text-xs font-bold text-slate-900">MCP Protocol Hub</h4>
+                  <h5 className="text-xs font-bold text-slate-900">MCP Protocol Hub</h5>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Inspect Claude, Cursor, and AI tool endpoints</p>
                 </a>
               </div>
             </div>

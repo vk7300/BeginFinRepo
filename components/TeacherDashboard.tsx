@@ -226,8 +226,6 @@ export const TeacherDashboard: React.FC<{
       return onSnapshot(q, (snapshot) => {
         const classAlerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AlertData));
         setAlerts(prev => ({ ...prev, [cls.id]: classAlerts }));
-      }, (err) => {
-        console.warn(`Class ${cls.id} alerts snapshot notice:`, err);
       });
     });
 
@@ -472,38 +470,31 @@ export const TeacherDashboard: React.FC<{
 
       if (triggerLoading) triggerLoading(`Adding ${emails.length} student emails to BeginFin class...`, 2500);
 
-      // Persist roster directly to Firestore using teacher's client credentials
-      const classDocRef = doc(db, 'classes', rosterSyncClass.id);
-      await updateDoc(classDocRef, {
-        rosterEmails: emails,
-        rosterSyncedAt: new Date().toISOString()
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/sync-class-roster', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          classId: rosterSyncClass.id,
+          rosterEmails: emails
+        })
       });
 
-      // Synchronize with backend for student matching & auto-enrollment
-      try {
-        const idToken = await user.getIdToken();
-        await fetch('/api/sync-class-roster', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
-          },
-          body: JSON.stringify({
-            classId: rosterSyncClass.id,
-            rosterEmails: emails
-          })
-        });
-      } catch (backendErr) {
-        console.warn("Backend roster auto-enrollment check notice:", backendErr);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to sync roster to BeginFin.');
       }
 
-      setRosterSyncSuccess(`Added ${emails.length} students! They will be automatically enrolled and greeted with a notification upon login.`);
+      const resData = await response.json();
+      setRosterSyncSuccess(`Added ${resData.count} students! They will be automatically enrolled and greeted with a notification upon login.`);
       if (triggerLoading) {
-        triggerLoading(`✓ ${emails.length} students added to BeginFin roster!`, 4000);
+        triggerLoading(`✓ ${resData.count} students added to BeginFin roster!`, 4000);
       }
     } catch (err: any) {
       console.error("Error adding roster to BeginFin:", err);
-      handleFirestoreError(err, OperationType.UPDATE, `classes/${rosterSyncClass.id}`);
       if (triggerLoading) triggerLoading(`Failed to add roster: ${err.message}`, 4000);
     } finally {
       setIsAddingRosterToBeginFin(false);
@@ -526,34 +517,28 @@ export const TeacherDashboard: React.FC<{
         return;
       }
 
-      // Persist directly to Firestore using teacher's client credentials
-      const classDocRef = doc(db, 'classes', manualRosterClass.id);
-      await updateDoc(classDocRef, {
-        rosterEmails: emails,
-        rosterSyncedAt: new Date().toISOString()
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/sync-class-roster', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          classId: manualRosterClass.id,
+          rosterEmails: emails
+        })
       });
 
-      // Synchronize with backend for student matching & auto-enrollment
-      try {
-        const idToken = await user.getIdToken();
-        await fetch('/api/sync-class-roster', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
-          },
-          body: JSON.stringify({
-            classId: manualRosterClass.id,
-            rosterEmails: emails
-          })
-        });
-      } catch (backendErr) {
-        console.warn("Backend roster auto-enrollment check notice:", backendErr);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save roster.');
       }
 
-      setManualRosterFeedback(`✓ Saved ${emails.length} students! Enrolled students will receive a one-time notification on their first login.`);
+      const resData = await response.json();
+      setManualRosterFeedback(`✓ Saved ${resData.count} students! Enrolled students will receive a one-time notification on their first login.`);
       if (triggerLoading) {
-        triggerLoading(`✓ Roster updated with ${emails.length} students.`, 3000);
+        triggerLoading(`✓ Roster updated with ${resData.count} students.`, 3000);
       }
       setTimeout(() => {
         setManualRosterClass(null);
@@ -561,7 +546,6 @@ export const TeacherDashboard: React.FC<{
       }, 2000);
     } catch (err: any) {
       console.error("Error saving manual roster:", err);
-      handleFirestoreError(err, OperationType.UPDATE, `classes/${manualRosterClass.id}`);
       setManualRosterFeedback(`Error: ${err.message}`);
     } finally {
       setManualRosterSaving(false);
@@ -891,111 +875,73 @@ export const TeacherDashboard: React.FC<{
     }, 500);
   };
 
-  const totalStudentsCount = students.length;
-  const totalClassesCount = classes.length;
-  const totalMasteredCount = students.filter(s => (s.completedModules?.length || 0) >= 6).length;
-  const activeChallengesCount = classes.filter(c => c.challenge?.isActive).length;
-
   return (
-    <div className="min-h-screen bg-[#F4F8FA] p-4 sm:p-6 md:p-8 font-sans text-[#3C3C3C] relative">
+    <div className="min-h-screen bg-[#0A0A0E] p-6 md:p-12 font-sans text-white relative">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
       <div className="max-w-7xl mx-auto space-y-6 relative z-10">
         
         {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#3C3C3C] mb-1.5">Classroom Educator Hub</h1>
-            <p className="text-sm sm:text-base text-slate-600 font-medium">Empower your classroom</p>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">Teacher Dashboard</h1>
+            <p className="text-lg text-white/80 font-light">Bring the power of BeginFin to your classroom.</p>
           </div>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex flex-wrap gap-3">
             <button 
               onClick={() => navigate('/teacher/mcp')} 
-              className="px-4 py-2.5 bg-white hover:bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 font-bold rounded-xl transition-all flex items-center gap-2 shadow-xs text-xs sm:text-sm cursor-pointer"
+              className="px-5 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm"
               title="Integrate BeginFin Lesson Planner with your AI tool via MCP"
             >
-              <Sparkles className="w-4 h-4 text-[#7F7FFA]" /> AI Lesson Planner (MCP)
+              <Sparkles className="w-4 h-4 text-indigo-400" /> AI Lesson Planner (MCP)
             </button>
             {onOpenGuide && (
               <button 
                 onClick={onOpenGuide} 
-                className="px-4 py-2.5 bg-white hover:bg-[#F4F8FA] text-[#3C3C3C] border border-slate-200 font-bold rounded-xl transition-all flex items-center gap-2 shadow-xs text-xs sm:text-sm cursor-pointer"
+                className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-white/10 transition-colors flex items-center gap-2"
               >
                 Quickstart Guide
               </button>
             )}
             <button 
-              onClick={() => setIsCreatingClass(true)} 
-              className="px-5 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-sm text-xs sm:text-sm cursor-pointer"
+              onClick={onSwitchToStudentView} 
+              className="px-6 py-2.5 bg-emerald-500 text-white font-bold rounded-full hover:bg-emerald-600 transition-colors flex items-center gap-2 shadow-sm"
             >
-              <Plus className="w-4 h-4" /> Create Classroom
+              <GraduationCap className="w-4 h-4" /> Take Course
+            </button>
+            <button 
+              onClick={() => setIsCreatingClass(true)} 
+              className="px-6 py-2.5 bg-[#7F7FFA] text-white font-bold rounded-full hover:bg-[#5656D4] transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Create Class
             </button>
           </div>
         </header>
-
-        {/* Quick Metrics Bento Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Classrooms</p>
-              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{totalClassesCount}</h3>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Learners Guided</p>
-              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{totalStudentsCount}</h3>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
-              <Trophy className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Certifications</p>
-              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{totalMasteredCount}</h3>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] shrink-0">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Active Sprints</p>
-              <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C]">{activeChallengesCount}</h3>
-            </div>
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Left Column: Classes */}
           <div className="lg:col-span-2 space-y-6">
             {classes.length === 0 && !isCreatingClass ? (
-              <div className="bg-white rounded-3xl p-8 sm:p-12 text-center text-[#3C3C3C] border border-slate-200/80 shadow-xs flex flex-col items-center justify-center">
-                <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mb-5 text-[#7F7FFA]">
-                  <Users className="w-8 h-8" />
+              <div className="bg-white rounded-[32px] p-12 text-center text-slate-900 h-full flex flex-col items-center justify-center">
+                <div className="w-20 h-20 bg-[#7F7FFA]/10 rounded-3xl flex items-center justify-center mb-6">
+                  <Users className="w-10 h-10 text-[#7F7FFA]" />
                 </div>
-                <h3 className="text-2xl font-black mb-2 text-[#3C3C3C]">No classrooms yet</h3>
-                <p className="text-slate-600 font-medium mb-6 max-w-sm text-sm">Welcome! Create your first classroom section to invite students and guide their financial learning.</p>
-                <div className="w-full max-w-sm space-y-3">
+                <h3 className="text-2xl font-black mb-2">No classes yet</h3>
+                <p className="text-slate-500 font-medium mb-8 max-w-sm">Create your first class to start tracking student progress.</p>
+                <div className="w-full max-w-sm space-y-4">
                   <input 
                     type="text" 
-                    placeholder="Classroom Name (e.g. Period 3 Economics)"
+                    placeholder="Enter Class Name (e.g. Economics 101)"
                     value={newClassName}
                     onChange={(e) => setNewClassName(e.target.value)}
-                    className="w-full px-5 py-3.5 bg-[#F4F8FA] border border-slate-200 rounded-xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-[#3C3C3C]"
+                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:border-[#7F7FFA] focus:bg-white transition-all outline-none text-slate-900"
                   />
                   <button 
                     onClick={handleCreateClass}
                     disabled={!newClassName.trim()}
-                    className="w-full py-3.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-xs"
+                    className="w-full py-4 bg-black text-white font-bold rounded-full hover:bg-gray-900 transition-all disabled:opacity-50"
                   >
-                    Create My First Classroom
+                    Create My First Class
                   </button>
                 </div>
               </div>
@@ -1006,19 +952,19 @@ export const TeacherDashboard: React.FC<{
                 const hasAlerts = alerts[cls.id] && alerts[cls.id].length > 0;
                 
                 return (
-                  <div key={cls.id} className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs relative space-y-5">
-                    {/* Class Card Top Section */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <h3 className="text-xl sm:text-2xl font-black text-[#3C3C3C] tracking-tight">
+                  <div key={cls.id} className="bg-white rounded-[32px] p-2 relative shadow-2xl shadow-black/20">
+                    {/* Collapsed/Header View */}
+                    <div className="bg-gradient-to-r from-[#44387C] to-black rounded-[24px] p-6 relative overflow-hidden">
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                          <h3 className="text-2xl font-bold text-white flex items-center gap-2">
                             {cls.className}
+                            {cls.linkedCourseName && (
+                              <span className="px-2 py-1 bg-white/20 text-white text-[10px] uppercase font-bold rounded-full backdrop-blur-md">
+                                Google Classroom
+                              </span>
+                            )}
                           </h3>
-                          {cls.linkedCourseName && (
-                            <span className="px-2.5 py-0.5 bg-[#F4F8FA] text-[#7F7FFA] text-[10px] uppercase font-bold rounded-full border border-[#7F7FFA]/30">
-                              Google Classroom
-                            </span>
-                          )}
                           {hasAlerts && (
                             <span className="flex h-3 w-3 relative">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -1028,53 +974,51 @@ export const TeacherDashboard: React.FC<{
                         </div>
 
                         {/* Status Indicators / Active State Badges */}
-                        <div className="flex flex-wrap gap-2 items-center">
+                        <div className="flex flex-wrap gap-2 mb-6 items-center">
                           {cls.isFullScreenLockEnabled && (
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#F4F8FA] text-slate-700 border border-slate-200 flex items-center gap-1.5">
-                              <Lock className="w-3.5 h-3.5 text-[#7F7FFA]" /> Focus Lock Active
+                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-md flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5" /> Screen Lock Active
                             </span>
                           )}
                           {cls.challenge?.isActive && (
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 flex items-center gap-1.5">
-                              <Zap className="w-3.5 h-3.5 text-[#7F7FFA]" /> Challenge: {cls.challenge.title}
+                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 backdrop-blur-md flex items-center gap-1.5">
+                              <Zap className="w-3.5 h-3.5" /> Challenge Active: {cls.challenge.title}
                             </span>
                           )}
                           {cls.rosterEmails && cls.rosterEmails.length > 0 && (
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20 flex items-center gap-1.5">
-                              <Users className="w-3.5 h-3.5 text-[#7F7FFA]" /> {cls.rosterEmails.length} Enrolled
+                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white/90 border border-white/10 backdrop-blur-md flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-indigo-300" /> {cls.rosterEmails.length} Enrolled
                             </span>
                           )}
                           {!cls.isFullScreenLockEnabled && !cls.challenge?.isActive && (!cls.rosterEmails || cls.rosterEmails.length === 0) && (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#F4F8FA] text-slate-500 border border-slate-200">
+                            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 text-white/70 border border-white/10 backdrop-blur-md">
                               Ready for instruction
                             </span>
                           )}
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2.5">
-                        <div className="bg-[#F4F8FA] border border-[#7F7FFA]/20 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-[#3C3C3C] flex items-center gap-2">
-                          <span className="text-slate-400 font-sans text-xs">CODE:</span>
-                          <span className="text-[#7F7FFA] tracking-wider text-sm font-black">{cls.joinCode}</span>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                          <div className="bg-white/10 px-6 py-3 rounded-full text-white/90 font-medium tracking-widest text-sm backdrop-blur-md flex items-center gap-3">
+                            <span className="opacity-70">CODE:</span> <span className="font-bold">{cls.joinCode}</span>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(cls.joinCode);
+                                setCopiedCode(cls.id);
+                                setTimeout(() => setCopiedCode(null), 2000);
+                              }}
+                              className="p-1.5 hover:bg-white/20 rounded-full transition-colors ml-2"
+                              title="Copy Class Code"
+                            >
+                              {copiedCode === cls.id ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                          </div>
                           <button 
-                            onClick={() => copyToClipboard(cls.joinCode)}
-                            className="p-1 hover:bg-white rounded-lg transition-colors ml-1 cursor-pointer text-slate-400 hover:text-[#7F7FFA]"
-                            title="Copy Class Code"
+                            onClick={() => toggleCollapse(cls.id)}
+                            className="bg-black text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-gray-900 transition-colors w-full sm:w-auto justify-center"
                           >
-                            {copiedCode === cls.joinCode ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                            {isCollapsed ? 'View Controls & Students' : 'Hide Details'}
                           </button>
                         </div>
-
-                        <button 
-                          onClick={() => toggleCollapse(cls.id)}
-                          className="px-3.5 py-2 bg-white hover:bg-[#F4F8FA] border border-slate-200 text-[#3C3C3C] rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                        >
-                          {isCollapsed ? (
-                            <><span>View Learners</span> <ChevronDown className="w-3.5 h-3.5 text-slate-400" /></>
-                          ) : (
-                            <><span>Hide Details</span> <ChevronUp className="w-3.5 h-3.5 text-slate-400" /></>
-                          )}
-                        </button>
                       </div>
                     </div>
 
@@ -1087,21 +1031,21 @@ export const TeacherDashboard: React.FC<{
                           exit={{ opacity: 0, height: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="space-y-5 pt-1">
+                          <div className="p-6 pt-4 text-slate-900">
                              
                              {/* Alerts Section inside Class */}
                              {alerts[cls.id]?.length > 0 && (
-                               <div className="bg-rose-50/80 border border-rose-200/80 p-4 rounded-2xl space-y-2">
-                                 <div className="flex items-center gap-2 text-rose-700 mb-1">
-                                   <AlertCircle className="w-4 h-4" />
-                                   <span className="font-bold text-xs uppercase tracking-wider">Classroom Focus Alerts ({alerts[cls.id].length})</span>
+                               <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl space-y-2 mb-6">
+                                 <div className="flex items-center gap-2 text-rose-600 mb-2">
+                                   <AlertCircle className="w-5 h-5" />
+                                   <span className="font-black text-xs uppercase tracking-widest">Security Alerts ({alerts[cls.id].length})</span>
                                  </div>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                    {alerts[cls.id].map(alert => (
-                                     <div key={alert.id} className="bg-white p-3 rounded-xl border border-rose-100 flex justify-between items-center shadow-xs">
+                                     <div key={alert.id} className="bg-white p-3 rounded-xl border border-rose-100 flex justify-between items-center shadow-sm">
                                        <div>
-                                         <p className="text-xs font-bold text-[#3C3C3C]">
-                                           <span className="text-rose-600 font-bold">{alert.userName}</span> exited full screen
+                                         <p className="text-sm font-bold text-slate-900">
+                                           <span className="text-rose-600">{alert.userName}</span> exited full screen
                                          </p>
                                          <p className="text-[10px] text-slate-500 font-medium">
                                            Module: {alert.moduleTitle} • {alert.timestamp?.toDate ? alert.timestamp.toDate().toLocaleTimeString() : 'Just now'}
@@ -1109,9 +1053,9 @@ export const TeacherDashboard: React.FC<{
                                        </div>
                                        <button 
                                          onClick={() => dismissAlert(cls.id, alert.id)}
-                                         className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                                         className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
                                        >
-                                         <X className="w-3.5 h-3.5" />
+                                         <X className="w-4 h-4" />
                                        </button>
                                      </div>
                                    ))}
@@ -1119,129 +1063,125 @@ export const TeacherDashboard: React.FC<{
                                </div>
                              )}
 
-                             {/* Action Toolbar */}
-                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                             {/* Unified Teacher Controls Toolbar */}
+                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                                <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
-                                 <button
-                                   onClick={() => toggleScreenLock(cls.id, !cls.isFullScreenLockEnabled)}
-                                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs ${
-                                     cls.isFullScreenLockEnabled 
-                                       ? 'bg-[#F4F8FA] text-slate-800 border-slate-300' 
-                                       : 'bg-white text-slate-700 border-slate-200 hover:bg-[#F4F8FA]'
-                                   }`}
-                                 >
-                                   {cls.isFullScreenLockEnabled ? <Lock className="w-3.5 h-3.5 text-[#7F7FFA]" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
-                                   {cls.isFullScreenLockEnabled ? 'Focus Lock Enabled' : 'Enable Focus Lock'}
-                                 </button>
+                                  <button
+                                    onClick={() => toggleScreenLock(cls.id, !cls.isFullScreenLockEnabled)}
+                                    className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2 whitespace-nowrap ${cls.isFullScreenLockEnabled ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                                  >
+                                    {cls.isFullScreenLockEnabled ? <Lock className="w-3.5 h-3.5 text-amber-700" /> : <Unlock className="w-3.5 h-3.5 text-slate-500" />}
+                                    {cls.isFullScreenLockEnabled ? 'Screen Lock Active' : 'Enable Screen Lock'}
+                                  </button>
+                                  
+                                  {cls.challenge?.isActive ? (
+                                    <button
+                                      onClick={() => handleEndChallenge(cls.id)}
+                                      className="px-4 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs rounded-full hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                    >
+                                      <X className="w-3.5 h-3.5" /> End Challenge
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => { setIsCreatingChallenge(cls.id); }}
+                                      className="px-4 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs rounded-full hover:bg-amber-100 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                    >
+                                      <Zap className="w-3.5 h-3.5 text-amber-600" /> Launch Challenge
+                                    </button>
+                                  )}
 
-                                 {cls.challenge?.isActive ? (
-                                   <button
-                                     onClick={() => handleEndChallenge(cls.id)}
-                                     className="px-3.5 py-2 bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl hover:bg-rose-100 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
-                                   >
-                                     <X className="w-3.5 h-3.5" /> Conclude Sprint
-                                   </button>
-                                 ) : (
-                                   <button
-                                     onClick={() => { setIsCreatingChallenge(cls.id); }}
-                                     className="px-3.5 py-2 bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 hover:bg-[#ECECFC] font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
-                                   >
-                                     <Zap className="w-3.5 h-3.5 text-[#7F7FFA]" /> Launch Learning Sprint
-                                   </button>
-                                 )}
+                                  <button
+                                    onClick={() => handleDownloadReport(cls)}
+                                    disabled={isGeneratingReport === cls.id}
+                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
+                                  >
+                                    {isGeneratingReport === cls.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                    Download CSV
+                                  </button>
 
-                                 <button
-                                   onClick={() => handleDownloadReport(cls)}
-                                   disabled={isGeneratingReport === cls.id}
-                                   className="px-3.5 py-2 bg-white text-slate-700 hover:bg-[#F4F8FA] border border-slate-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50 cursor-pointer shadow-xs"
-                                 >
-                                   {isGeneratingReport === cls.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-slate-400" />}
-                                   Export Progress (CSV)
-                                 </button>
-
-                                 <button
-                                   onClick={() => {
-                                     setManualRosterClass(cls);
-                                     setManualRosterText(cls.rosterEmails ? cls.rosterEmails.join('\n') : '');
-                                     setManualRosterFeedback(null);
-                                   }}
-                                   className="px-3.5 py-2 bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/20 hover:bg-[#ECECFC] font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
-                                 >
-                                   <Users className="w-3.5 h-3.5 text-[#7F7FFA]" />
-                                   {cls.rosterEmails && cls.rosterEmails.length > 0
-                                     ? `Class Roster (${cls.rosterEmails.length})`
-                                     : 'Enroll Students'}
-                                 </button>
+                                  <button
+                                    onClick={() => {
+                                      setManualRosterClass(cls);
+                                      setManualRosterText(cls.rosterEmails ? cls.rosterEmails.join('\n') : '');
+                                      setManualRosterFeedback(null);
+                                    }}
+                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                  >
+                                    <Users className="w-3.5 h-3.5 text-indigo-600" />
+                                    {cls.rosterEmails && cls.rosterEmails.length > 0
+                                      ? `Roster (${cls.rosterEmails.length})`
+                                      : 'Manage Roster'}
+                                  </button>
                                </div>
 
                                <div className="flex gap-2 w-full md:w-auto justify-end">
-                                 <button
-                                   onClick={() => { setDeletingClassId(cls.id); setDeleteConfirmationText(''); }}
-                                   className="px-3.5 py-2 bg-white text-rose-600 hover:bg-rose-50 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
-                                   title="Remove this class section"
-                                 >
-                                   <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                                   <span>Remove Section</span>
-                                 </button>
+                                  <button
+                                    onClick={() => { setDeletingClassId(cls.id); setDeleteConfirmationText(''); }}
+                                    className="px-4 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 font-bold text-xs rounded-full transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+                                    title="Delete this class section"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                    <span>Delete Class</span>
+                                  </button>
                                </div>
                              </div>
 
-                             {/* Google Classroom Action Strip */}
+                             {/* Google Classroom Actions (Inside Expansion) */}
                              {isConnectedClassroom && (
-                               <div className="flex flex-wrap items-center gap-2 bg-[#F4F8FA] p-3 rounded-2xl border border-[#7F7FFA]/20">
+                               <div className="flex flex-wrap items-center gap-2 bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100 mb-6">
                                  <button
                                    onClick={() => {
                                      setCourseworkClass(cls);
                                      setCourseworkTitle(`BeginFin Module Assignment - ${cls.className}`);
                                    }}
-                                   className="px-3.5 py-2 bg-white text-[#3C3C3C] hover:text-[#7F7FFA] font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5 border border-slate-200 cursor-pointer"
+                                   className="px-4 py-2 bg-white text-indigo-700 font-bold text-xs rounded-full hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200"
                                  >
-                                   <Send className="w-3.5 h-3.5 text-[#7F7FFA]" /> Post Assignment
+                                   <Send className="w-3.5 h-3.5" /> Post Coursework
                                  </button>
                                  <button
                                    onClick={() => {
                                      setAnnouncementClass(cls);
                                      setAnnouncementText(`📢 Announcement for ${cls.className}: Please check your BeginFin Financial Literacy dashboard for new certification modules!`);
                                    }}
-                                   className="px-3.5 py-2 bg-white text-[#3C3C3C] hover:text-[#7F7FFA] font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5 border border-slate-200 cursor-pointer"
+                                   className="px-4 py-2 bg-white text-indigo-700 font-bold text-xs rounded-full hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-1.5 border border-indigo-200"
                                  >
-                                   <Share2 className="w-3.5 h-3.5 text-[#7F7FFA]" /> Stream Announcement
+                                   <Share2 className="w-3.5 h-3.5" /> Stream Post
                                  </button>
                                  {cls.linkedCourseId && (
                                    <>
                                      <button
                                        onClick={() => handleOpenRosterSync(cls)}
-                                       className="px-3.5 py-2 bg-white text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all shadow-xs flex items-center gap-1.5 border border-slate-200 cursor-pointer"
+                                       className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-full hover:bg-slate-100 transition-all shadow-sm flex items-center gap-1.5 border border-slate-200"
                                      >
                                        <Users className="w-3.5 h-3.5 text-[#7F7FFA]" /> Sync Roster
                                      </button>
                                      <button
                                        onClick={() => handleSyncGradesToClassroom(cls)}
-                                       className="px-3.5 py-2 bg-[#F4F8FA] text-[#7F7FFA] border border-[#7F7FFA]/30 font-bold text-xs rounded-xl hover:bg-[#ECECFC] transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                       className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-full hover:bg-emerald-100 transition-all shadow-sm flex items-center gap-1.5"
                                      >
-                                       <RefreshCw className="w-3.5 h-3.5 text-[#7F7FFA]" /> Sync Grades
+                                       <RefreshCw className="w-3.5 h-3.5" /> Sync Grades
                                      </button>
                                    </>
                                  )}
                                </div>
                              )}
 
-                             {/* Students Roster Table */}
+                             {/* Student Table */}
                              {classStudents.length === 0 ? (
-                               <div className="py-10 text-center text-slate-500 bg-[#F4F8FA]/60 rounded-2xl border border-slate-100">
-                                 <UserIcon className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                                 <p className="font-bold text-sm text-[#3C3C3C]">No learners registered yet</p>
-                                 <p className="text-xs text-slate-500 mt-1">Students can join instantly using join code <strong className="text-[#7F7FFA] font-mono font-bold">{cls.joinCode}</strong></p>
+                               <div className="py-12 text-center text-slate-500">
+                                 <UserIcon className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                                 <p className="font-medium text-sm">No students have joined this class yet.</p>
+                                 <p className="text-xs mt-1">Share the code <strong>{cls.joinCode}</strong></p>
                                </div>
                              ) : (
-                               <div className="overflow-x-auto rounded-2xl border border-slate-200/80">
+                               <div className="overflow-x-auto rounded-2xl border border-slate-100">
                                  <table className="w-full text-left border-collapse">
                                    <thead>
-                                     <tr className="bg-[#F4F8FA] text-slate-600 text-[11px] uppercase tracking-wider font-bold">
-                                       <th className="p-3.5 border-b border-slate-200/80">Learner</th>
-                                       <th className="p-3.5 border-b border-slate-200/80">Curriculum Progress</th>
-                                       <th className="p-3.5 border-b border-slate-200/80">Mastery Status</th>
-                                       <th className="p-3.5 border-b border-slate-200/80 text-right">Credential</th>
+                                     <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-bold">
+                                       <th className="p-4 border-b border-slate-100 rounded-tl-2xl">Student</th>
+                                       <th className="p-4 border-b border-slate-100">Progress</th>
+                                       <th className="p-4 border-b border-slate-100">Status</th>
+                                       <th className="p-4 border-b border-slate-100 rounded-tr-2xl text-right">Actions</th>
                                      </tr>
                                    </thead>
                                    <tbody className="divide-y divide-slate-100">
@@ -1253,52 +1193,52 @@ export const TeacherDashboard: React.FC<{
                                        const canDownloadCert = isComplete;
 
                                        return (
-                                         <tr key={student.uid || i} className="hover:bg-[#F4F8FA]/50 transition-colors">
-                                           <td className="p-3.5">
+                                         <tr key={student.uid || i} className="hover:bg-slate-50/50 transition-colors">
+                                           <td className="p-4">
                                              <div className="flex items-center gap-3">
-                                               <div className="w-8 h-8 rounded-full bg-[#F4F8FA] border border-[#7F7FFA]/20 flex items-center justify-center text-[#7F7FFA] font-bold text-xs">
+                                               <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
                                                  {student.displayName?.charAt(0).toUpperCase() || '?'}
                                                </div>
                                                <div>
-                                                 <p className="font-bold text-[#3C3C3C] text-sm">{student.displayName}</p>
-                                                 <p className="text-xs text-slate-400">{student.email}</p>
+                                                 <p className="font-bold text-slate-900 text-sm">{student.displayName}</p>
+                                                 <p className="text-xs text-slate-500">{student.email}</p>
                                                </div>
                                              </div>
                                            </td>
-                                           <td className="p-3.5">
+                                           <td className="p-4">
                                              <div className="flex items-center gap-3">
-                                               <div className="w-full bg-[#F4F8FA] border border-slate-200 rounded-full h-2 max-w-[120px]">
+                                               <div className="w-full bg-slate-100 rounded-full h-2 max-w-[100px]">
                                                  <div 
-                                                   className="bg-[#7F7FFA] h-2 rounded-full transition-all" 
+                                                   className="bg-[#7F7FFA] h-2 rounded-full" 
                                                    style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                                                 />
+                                                 ></div>
                                                </div>
-                                               <span className="text-xs font-bold text-slate-600 min-w-[36px]">{progressPercent}%</span>
+                                               <span className="text-xs font-bold text-slate-600 min-w-[40px]">{progressPercent}%</span>
                                              </div>
                                            </td>
-                                           <td className="p-3.5">
-                                             {isComplete ? (
-                                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F4F8FA] text-[#7F7FFA] text-[10px] font-bold uppercase tracking-wider border border-[#7F7FFA]/30">
-                                                 <CheckCircle2 className="w-3 h-3 text-[#7F7FFA]" /> Certified
-                                               </span>
-                                             ) : (
-                                               <span className="text-slate-500 text-xs font-medium">In Progress ({completedCount}/{totalModules})</span>
+                                           <td className="p-4">
+                                              {isComplete ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
+                                                  <CheckCircle2 className="w-3 h-3" /> Completed
+                                                </span>
+                                              ) : (
+                                               <span className="text-slate-400 text-xs font-medium">In Progress ({completedCount}/{totalModules})</span>
                                              )}
                                            </td>
-                                           <td className="p-3.5 text-right">
-                                             {canDownloadCert ? (
-                                               <button
-                                                 onClick={() => handleDownloadCertificate(student)}
-                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#7F7FFA] hover:bg-[#6868EB] text-white rounded-xl transition-colors shadow-xs cursor-pointer"
-                                                 title="Download Certificate"
-                                               >
-                                                 <Award className="w-3.5 h-3.5" /> Certificate
-                                               </button>
-                                             ) : (
-                                               <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-400 bg-slate-50 rounded-lg">
-                                                 In Progress
-                                               </span>
-                                             )}
+                                           <td className="p-4 text-right">
+                                              {canDownloadCert ? (
+                                                <button
+                                                  onClick={() => handleDownloadCertificate(student)}
+                                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#7F7FFA] text-white rounded-md hover:bg-[#5656D4] transition-colors"
+                                                  title="Download Certificate"
+                                                >
+                                                  <Award className="w-3.5 h-3.5" /> Certificate
+                                                </button>
+                                              ) : (
+                                                <button disabled className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-100 text-slate-400 rounded-md opacity-50 cursor-not-allowed">
+                                                  <Award className="w-3.5 h-3.5" /> Incomplete
+                                                </button>
+                                              )}
                                            </td>
                                          </tr>
                                        );
@@ -1317,27 +1257,23 @@ export const TeacherDashboard: React.FC<{
             )}
           </div>
 
-          {/* Right Column: Google Classroom & Educator Ally Bento */}
+          {/* Right Column: Google Classroom Only */}
           <div className="space-y-6">
 
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs relative overflow-hidden text-[#3C3C3C] space-y-4">
-              <div className="w-12 h-12 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center text-[#7F7FFA]">
-                <Users className="w-6 h-6" />
+            <div className="bg-white rounded-[32px] p-8 text-black relative overflow-hidden shadow-xl">
+              <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/30 relative z-10">
+                <Users className="text-white w-8 h-8" />
               </div>
 
               {!isConnectedClassroom ? (
-                <div>
-                  <h3 className="text-lg sm:text-xl font-black mb-1.5 text-[#3C3C3C] tracking-tight">Connect Google® Classroom</h3>
-                  <p className="text-slate-500 leading-relaxed text-xs mb-5">
-                    Empower your classroom workflow. Automatically import courses, sync student rosters, and assign interactive modules with seamless grade tracking.
-                  </p>
+                <div className="relative z-10">
                   <button 
                     onClick={handleConnectGoogleClassroom}
                     disabled={isConnectingClassroom}
-                    className="w-full bg-[#F4F8FA] hover:bg-slate-100 text-[#3C3C3C] border border-slate-200 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm inline-flex justify-center items-center gap-2.5 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                    className="bg-slate-800 text-white px-6 py-3 rounded-full font-medium mb-6 w-auto inline-flex justify-center items-center gap-3 hover:bg-slate-900 transition-colors disabled:opacity-50"
                   >
                     {isConnectingClassroom ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-[#7F7FFA]" />
+                      <Loader2 className="w-5 h-5 animate-spin text-white" />
                     ) : (
                       <svg className="w-4 h-4" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1348,38 +1284,34 @@ export const TeacherDashboard: React.FC<{
                     )}
                     Sign-In with Google
                   </button>
+                  <h3 className="text-xl font-bold mb-2 text-slate-900 tracking-tight">Connect Google® Classroom</h3>
+                  <p className="text-slate-500 leading-snug text-sm">Assign modules and sync grades directly from BeginFin.</p>
                 </div>
               ) : (
-                <div>
-                  <div className="px-3.5 py-1.5 bg-[#F4F8FA] text-[#3C3C3C] rounded-full flex items-center gap-2 mb-4 w-fit text-xs font-bold border border-[#7F7FFA]/30">
-                    <span className="w-2 h-2 rounded-full bg-[#7F7FFA]" />
+                <div className="relative z-10">
+                  <div className="px-4 py-2 bg-indigo-50 text-indigo-900 rounded-full flex items-center gap-2 mb-6 w-fit text-sm font-bold border border-indigo-100">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
                     {classroomUserEmail || 'Connected'}
                   </div>
-                  <h3 className="text-lg sm:text-xl font-black mb-1.5 text-[#3C3C3C] tracking-tight">Google® Classroom Linked</h3>
-                  <p className="text-slate-500 leading-relaxed text-xs mb-4">
-                    Your account is synced. Import classes or post assignments to keep your students actively progressing through the curriculum.
-                  </p>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => setShowCourseImportModal(true)}
-                      className="w-full py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm shadow-xs cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" /> Import Course
-                    </button>
-                    <button
-                      onClick={() => fetchClassroomCourses()}
-                      disabled={isFetchingCourses}
-                      className="w-full py-2.5 bg-[#F4F8FA] hover:bg-slate-100 text-[#3C3C3C] border border-slate-200 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isFetchingCourses ? 'animate-spin' : ''}`} /> Refresh Courses
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setShowCourseImportModal(true)}
+                    className="w-full py-3 bg-black text-white font-medium rounded-full hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 mb-3 text-sm"
+                  >
+                    <Plus className="w-4 h-4" /> Import Course
+                  </button>
+                  <button
+                    onClick={() => fetchClassroomCourses()}
+                    disabled={isFetchingCourses}
+                    className="w-full py-3 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium rounded-full transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isFetchingCourses ? 'animate-spin' : ''}`} /> Refresh
+                  </button>
+                  <h3 className="text-xl font-bold mb-2 mt-6 text-slate-900 tracking-tight">Google® Classroom Connected</h3>
+                  <p className="text-slate-500 leading-snug text-sm">Your BeginFin account is linked. Use class actions to sync grades and assignments.</p>
                 </div>
               )}
             </div>
-
           </div>
-
         </div>
       </div>
       {(isCreatingChallenge || isEditingChallenge) && (
@@ -1497,7 +1429,7 @@ export const TeacherDashboard: React.FC<{
                 <button 
                   onClick={handleCreateClass}
                   disabled={!newClassName.trim()}
-                  className="py-4 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl transition-all disabled:opacity-50 shadow-md cursor-pointer"
+                  className="py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg"
                 >
                   Create Class
                 </button>
@@ -1570,7 +1502,7 @@ export const TeacherDashboard: React.FC<{
                       </div>
                       <button
                         onClick={() => handleImportClassroomCourse(c)}
-                        className="px-4 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                        className="px-4 py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 shadow-sm transition-all"
                       >
                         Link & Import
                       </button>
@@ -1686,7 +1618,7 @@ export const TeacherDashboard: React.FC<{
                   <button
                     onClick={() => handleConfirmPublishCoursework(courseworkClass)}
                     disabled={!courseworkTitle.trim() || isSubmittingClassroom}
-                    className="flex-1 py-3.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl disabled:opacity-50 shadow-md shadow-[#7F7FFA]/20 flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" /> Publish Assignment
                   </button>
@@ -1754,7 +1686,7 @@ export const TeacherDashboard: React.FC<{
                   <button
                     onClick={() => handleConfirmPublishAnnouncement(announcementClass)}
                     disabled={!announcementText.trim() || isSubmittingClassroom}
-                    className="flex-1 py-3.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-xl disabled:opacity-50 shadow-md shadow-[#7F7FFA]/20 flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
                   >
                     <Share2 className="w-4 h-4" /> Post to Stream
                   </button>
@@ -1950,13 +1882,13 @@ export const TeacherDashboard: React.FC<{
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 right-0 h-2 bg-[#7F7FFA]" />
-              <div className="w-16 h-16 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-[#7F7FFA]">
+              <div className="absolute top-0 left-0 right-0 h-2 bg-indigo-600" />
+              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-indigo-600">
                 <Send className="w-8 h-8" />
               </div>
               <div className="text-center mb-2">
                 {pendingConfirmation.badgeText && (
-                  <span className="px-3 py-1 bg-[#F4F8FA] border border-[#7F7FFA]/30 text-[#7F7FFA] text-[10px] font-black uppercase tracking-widest rounded-full inline-block mb-2">
+                  <span className="px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full inline-block mb-2">
                     {pendingConfirmation.badgeText}
                   </span>
                 )}
@@ -1970,14 +1902,14 @@ export const TeacherDashboard: React.FC<{
                 <button
                   onClick={() => setPendingConfirmation(null)}
                   disabled={isSubmittingClassroom}
-                  className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all cursor-pointer"
+                  className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => pendingConfirmation.onConfirm()}
                   disabled={isSubmittingClassroom}
-                  className="flex-1 py-4 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-2xl transition-all shadow-md shadow-[#7F7FFA]/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isSubmittingClassroom ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm & Publish'}
                 </button>

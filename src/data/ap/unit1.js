@@ -223,7 +223,7 @@ export const apUnit1 = {
         },
         {
           term: "code of conduct",
-          plain: "A guide specifying expected behaviors and respectful rules within an organization or school."
+          plain: "A formal written policy specifying expected behaviors and rules within an organization."
         },
         {
           term: "internal stakeholders",
@@ -266,7 +266,7 @@ export const apUnit1 = {
         },
         {
           term: "limited liability company (LLC)",
-          plain: "A business structure protecting owners from personal liability for company obligations and debts."
+          plain: "A corporate structure protecting owners from personal liability for company obligations and debts."
         },
         {
           term: "corporation",
