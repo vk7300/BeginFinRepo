@@ -250,10 +250,10 @@ export const WelcomeScreen: React.FC<Props> = ({
           {/* Main Headline */}
           <h1 
             id="hero-tagline"
-            className="text-2xl min-[380px]:text-3xl sm:text-[1.85rem] md:text-4xl lg:text-[2.85rem] xl:text-[3.65rem] font-bold text-white mb-8 md:mb-10 tracking-tight leading-[1.2] sm:leading-tight md:leading-normal text-center w-full max-w-5xl mx-auto font-sans sm:whitespace-nowrap"
+            className="text-2xl min-[380px]:text-3xl sm:text-[1.85rem] md:text-4xl lg:text-[2.85rem] xl:text-[3.65rem] font-normal text-white mb-8 md:mb-10 tracking-tight leading-[1.2] sm:leading-tight md:leading-normal text-center w-full max-w-5xl mx-auto sm:whitespace-nowrap"
           >
             <span className="block sm:inline">Financial confidence </span>
-            <span className="block sm:inline">starts here.</span>
+            <span className="block sm:inline italic">starts here.</span>
           </h1>
 
           {/* Segmented Button Capsule */}

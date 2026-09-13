@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
 
 :root {
   --iris-pulse: #7F7FFA;
@@ -8,7 +9,8 @@
 
 @theme {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, Cambria, "Times New Roman", serif;
+  --font-heading: "Source Serif 4", Georgia, Cambria, "Times New Roman", serif;
   --font-cursive: "Dancing Script", "Great Vibes", cursive;
   --font-mono: "Inter", monospace;
 
@@ -71,9 +73,63 @@
 
 @layer base {
   html, body {
-    @apply font-sans;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: #F4F8FA;
     color: #3C3C3C;
+  }
+
+  /* Headings & Subheadings: Source Serif 4 (Never bold; normal or italicized based on need) */
+  h1:not(.font-diploma-title),
+  h2:not(.font-diploma-title),
+  h3:not(.font-diploma-title),
+  h4:not(.font-diploma-title),
+  h5:not(.font-diploma-title),
+  h6:not(.font-diploma-title),
+  .heading,
+  .subheading,
+  .font-serif:not(.font-diploma-title),
+  .font-heading:not(.font-diploma-title) {
+    font-family: "Source Serif 4", Georgia, Cambria, "Times New Roman", serif !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.01em;
+  }
+
+  /* Black Color for Headings & Subheadings by default (preserving explicit light/white/accent text) */
+  h1:not([class*="text-white"]):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-brand"]):not([class*="text-purple"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-gray-400"]):not([class*="text-slate-400"]):not(.font-diploma-title),
+  h2:not([class*="text-white"]):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-brand"]):not([class*="text-purple"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-gray-400"]):not([class*="text-slate-400"]):not(.font-diploma-title),
+  h3:not([class*="text-white"]):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-brand"]):not([class*="text-purple"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-gray-400"]):not([class*="text-slate-400"]):not(.font-diploma-title),
+  h4:not([class*="text-white"]):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-brand"]):not([class*="text-purple"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-gray-400"]):not([class*="text-slate-400"]):not(.font-diploma-title),
+  h5:not([class*="text-white"]):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-brand"]):not([class*="text-purple"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-gray-400"]):not([class*="text-slate-400"]):not(.font-diploma-title),
+  h6:not([class*="text-white"]):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-brand"]):not([class*="text-purple"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-gray-400"]):not([class*="text-slate-400"]):not(.font-diploma-title),
+  .heading:not([class*="text-white"]),
+  .subheading:not([class*="text-white"]) {
+    color: #000000 !important;
+  }
+
+  /* Keep Inter for buttons, controls, and UI interactions */
+  button,
+  input,
+  optgroup,
+  select,
+  textarea,
+  label,
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  }
+
+  /* Keep Inter for content, normal text, body copy, and lists */
+  p,
+  article,
+  li,
+  blockquote,
+  figcaption,
+  table,
+  td,
+  th {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
   ::selection {

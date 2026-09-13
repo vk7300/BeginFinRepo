@@ -33,10 +33,8 @@ import {
   ArrowLeft,
   ChevronRight,
   Database,
-  Radio,
-  FileSpreadsheet
+  Radio
 } from 'lucide-react';
-import ExcelJS from 'exceljs';
 import { 
   db, 
   auth, 
@@ -90,17 +88,6 @@ export interface CustomQuestion {
   updatedAt: string;
 }
 
-export interface CertifierRequestItem {
-  id: string;
-  graduateName: string;
-  email: string;
-  serialNumber: string;
-  consent: boolean;
-  userId: string;
-  requestedAt: string;
-  status: 'pending' | 'fulfilled' | string;
-}
-
 const DEFAULT_STATUS_DATA: SystemStatusData = {
   overall: 'Operational',
   lastUpdated: new Date().toISOString(),
@@ -142,7 +129,7 @@ const DEFAULT_STATUS_DATA: SystemStatusData = {
       name: 'Certificate Generation & Verification',
       category: 'Credentials & Verifications',
       status: 'Operational',
-      description: 'PDF issuance, serial number verification, and Certifier.io credential delivery.'
+      description: 'PDF issuance, serial number verification, and graduate credential delivery.'
     }
   },
   customCategory: {
@@ -171,7 +158,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
   const [isVerifyingAdmin, setIsVerifyingAdmin] = useState(true);
 
   // Active Admin Tab
-  const [activeTab, setActiveTab] = useState<'status' | 'qms' | 'certifier' | 'security'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'qms' | 'security'>('status');
 
   // Notification Toast
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -312,8 +299,8 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
   const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAdmin) return;
-    const qCol = collection(db, 'customQuestions');
+    if (!isAdmin || isVerifyingAdmin) return;
+    const qCol = collection(db, 'questions');
     const q = query(
       qCol,
       where('moduleId', '==', selectedModuleId),
@@ -344,7 +331,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
     });
 
     return () => unsubscribe();
-  }, [isAdmin, selectedModuleId, selectedLanguage]);
+  }, [isAdmin, isVerifyingAdmin, selectedModuleId, selectedLanguage]);
 
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
@@ -399,7 +386,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
 
     try {
       const now = new Date().toISOString();
-      const questionId = editingQuestion.id || doc(collection(db, 'customQuestions')).id;
+      const questionId = editingQuestion.id || doc(collection(db, 'questions')).id;
 
       const payload: CustomQuestion = {
         id: questionId,
@@ -413,7 +400,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         updatedAt: now
       };
 
-      await setDoc(doc(db, 'customQuestions', questionId), payload);
+      await setDoc(doc(db, 'questions', questionId), payload);
       setIsEditingQuestion(false);
       setEditingQuestion(null);
       showToast('success', editingQuestion.id ? 'Question updated successfully.' : 'New question published to curriculum.');
@@ -427,7 +414,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
 
   const handleDeleteQuestion = async (id: string) => {
     try {
-      await deleteDoc(doc(db, 'customQuestions', id));
+      await deleteDoc(doc(db, 'questions', id));
       setDeletingQuestionId(null);
       showToast('success', 'Question deleted.');
     } catch (err: any) {
@@ -438,7 +425,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
 
   const handleTogglePublishQuestion = async (q: CustomQuestion) => {
     try {
-      await setDoc(doc(db, 'customQuestions', q.id), {
+      await setDoc(doc(db, 'questions', q.id), {
         isPublished: !q.isPublished,
         updatedAt: new Date().toISOString()
       }, { merge: true });
@@ -454,7 +441,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
     setIsBulkDeleting(true);
     try {
       await Promise.all(
-        selectedQuestionIds.map((id) => deleteDoc(doc(db, 'customQuestions', id)))
+        selectedQuestionIds.map((id) => deleteDoc(doc(db, 'questions', id)))
       );
       setSelectedQuestionIds([]);
       setShowBulkDeleteConfirm(false);
@@ -464,135 +451,6 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
       showToast('error', 'Bulk deletion encountered an error.');
     } finally {
       setIsBulkDeleting(false);
-    }
-  };
-
-  // -------------------------------------------------------------
-  // 4. CERTIFIER.IO REQUESTS STATE & SYNC
-  // -------------------------------------------------------------
-  const [certifierRequests, setCertifierRequests] = useState<CertifierRequestItem[]>([]);
-  const [certifierFilter, setCertifierFilter] = useState<'all' | 'pending' | 'fulfilled'>('all');
-  const [certifierSearch, setCertifierSearch] = useState('');
-  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
-  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    const reqRef = collection(db, 'certifierRequests');
-    const unsubscribe = onSnapshot(reqRef, (snapshot) => {
-      const list: CertifierRequestItem[] = [];
-      snapshot.forEach((d) => {
-        const data = d.data();
-        list.push({
-          id: d.id,
-          graduateName: data.graduateName || 'Graduate',
-          email: data.email || '',
-          serialNumber: data.serialNumber || 'N/A',
-          consent: !!data.consent,
-          userId: data.userId || '',
-          requestedAt: data.requestedAt || new Date().toISOString(),
-          status: data.status || 'pending'
-        });
-      });
-      list.sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
-      setCertifierRequests(list);
-    }, (err) => {
-      console.warn("Certifier sync notice:", err);
-    });
-
-    return () => unsubscribe();
-  }, [isAdmin]);
-
-  const filteredRequests = useMemo(() => {
-    return certifierRequests.filter((r) => {
-      if (certifierFilter === 'pending' && r.status !== 'pending') return false;
-      if (certifierFilter === 'fulfilled' && r.status !== 'fulfilled') return false;
-      if (certifierSearch.trim()) {
-        const q = certifierSearch.toLowerCase();
-        return (
-          r.graduateName.toLowerCase().includes(q) ||
-          r.email.toLowerCase().includes(q) ||
-          r.serialNumber.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [certifierRequests, certifierFilter, certifierSearch]);
-
-  const handleToggleRequestStatus = async (item: CertifierRequestItem) => {
-    const nextStatus = item.status === 'fulfilled' ? 'pending' : 'fulfilled';
-    try {
-      await setDoc(doc(db, 'certifierRequests', item.id), {
-        status: nextStatus
-      }, { merge: true });
-      showToast('success', `Request marked as ${nextStatus.toUpperCase()}.`);
-    } catch (err) {
-      console.error("Error updating request status:", err);
-      showToast('error', 'Failed to update request status.');
-    }
-  };
-
-  const handleDeleteRequest = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'certifierRequests', id));
-      setDeletingRequestId(null);
-      showToast('success', 'Certifier request deleted.');
-    } catch (err) {
-      console.error("Error deleting request:", err);
-      showToast('error', 'Failed to delete record.');
-    }
-  };
-
-  const handleCopyEmail = (email: string) => {
-    navigator.clipboard.writeText(email);
-    setCopiedEmail(email);
-    setTimeout(() => setCopiedEmail(null), 2500);
-  };
-
-  const handleExportExcel = async () => {
-    try {
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Certifier_Requests');
-
-      worksheet.columns = [
-        { header: 'Graduate Name', key: 'graduateName', width: 26 },
-        { header: 'Student Email', key: 'email', width: 32 },
-        { header: 'Credential Serial #', key: 'serialNumber', width: 22 },
-        { header: 'Status', key: 'status', width: 16 },
-        { header: 'Request Date (UTC)', key: 'requestedAt', width: 24 }
-      ];
-
-      filteredRequests.forEach((r) => {
-        worksheet.addRow({
-          graduateName: r.graduateName,
-          email: r.email,
-          serialNumber: r.serialNumber,
-          status: r.status.toUpperCase(),
-          requestedAt: new Date(r.requestedAt).toLocaleString()
-        });
-      });
-
-      // Style header row
-      const headerRow = worksheet.getRow(1);
-      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      headerRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF7F7FFA' }
-      };
-
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `BeginFin_Certifier_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('success', 'Certifier records exported to Excel.');
-    } catch (err) {
-      console.error("Excel export error:", err);
-      showToast('error', 'Failed to generate Excel file.');
     }
   };
 
@@ -679,10 +537,8 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
   }
 
   // -------------------------------------------------------------
-  // 6. AUTHORIZED ADMIN MAIN VIEW (LIVING COSTS SIMULATOR FEEL)
+  // 6. AUTHORIZED ADMIN MAIN VIEW
   // -------------------------------------------------------------
-  const pendingCertifierCount = certifierRequests.filter((r) => r.status === 'pending').length;
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
@@ -710,20 +566,13 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         </div>
       )}
 
-      {/* Top Header Card (Mirrors SalarySimulator Header) */}
+      {/* Top Header Card */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7F7FFA]/10 border border-[#7F7FFA]/20 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider mb-2">
-              <Sliders className="w-3.5 h-3.5" />
-              <span>Unified Administrator Governance</span>
-            </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              BeginFin Platform Control
+              Admin Portal
             </h1>
-            <p className="text-sm text-slate-600 leading-relaxed mt-1">
-              Consolidated command center managing real-time system status, curriculum question databases (QMS), Certifier.io graduate requests, and administrative security.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -743,18 +592,10 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
             )}
           </div>
         </div>
-
-        {/* Informational Disclaimer Banner */}
-        <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#F4F8FA] border border-[#7F7FFA]/20 text-xs text-[#3C3C3C] leading-relaxed">
-          <AlertCircle className="w-4 h-4 text-[#7F7FFA] shrink-0 mt-0.5" />
-          <p>
-            <strong>Operational Governance:</strong> Changes committed here write directly to production Firestore database collections (<code>system/status</code>, <code>customQuestions</code>, and <code>certifierRequests</code>). Modifications propagate instantly to learners, educators, and API consumers.
-          </p>
-        </div>
       </div>
 
       {/* High-Level Operational Metrics Bento Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {/* Metric 1: System Health */}
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
@@ -784,24 +625,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
           <span className="text-[11px] text-slate-500 mt-1">{questions.filter(q => q.isPublished).length} published live</span>
         </div>
 
-        {/* Metric 3: Certifier Requests */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Graduate Certs</span>
-            <Award className="w-4 h-4 text-[#7F7FFA]" />
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-xl sm:text-2xl font-black text-slate-900">{certifierRequests.length}</span>
-            {pendingCertifierCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
-                {pendingCertifierCount} Pending
-              </span>
-            )}
-          </div>
-          <span className="text-[11px] text-slate-500 mt-1">{certifierRequests.length - pendingCertifierCount} fulfilled</span>
-        </div>
-
-        {/* Metric 4: Admin Directory */}
+        {/* Metric 3: Admin Directory */}
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Designated Admins</span>
@@ -815,8 +639,8 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
         </div>
       </div>
 
-      {/* Navigation Control Tabs (Profession Card Selector style from Living Costs Simulator) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Navigation Control Tabs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
           type="button"
           onClick={() => setActiveTab('status')}
@@ -857,32 +681,6 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
 
         <button
           type="button"
-          onClick={() => setActiveTab('certifier')}
-          className={`p-4 rounded-2xl text-left border-2 transition-all flex flex-col justify-between gap-1.5 cursor-pointer ${
-            activeTab === 'certifier'
-              ? 'border-[#7F7FFA] bg-[#7F7FFA]/5 shadow-xs'
-              : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Section 3</span>
-            {activeTab === 'certifier' && <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm sm:text-base font-bold text-slate-900">Certifier.io Queue</h3>
-              {pendingCertifierCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
-                  {pendingCertifierCount}
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Verify graduate requests and export Excel</p>
-          </div>
-        </button>
-
-        <button
-          type="button"
           onClick={() => setActiveTab('security')}
           className={`p-4 rounded-2xl text-left border-2 transition-all flex flex-col justify-between gap-1.5 cursor-pointer ${
             activeTab === 'security'
@@ -891,7 +689,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Section 4</span>
+            <span className="text-xs font-semibold text-slate-500">Section 3</span>
             {activeTab === 'security' && <CheckCircle2 className="w-4 h-4 text-[#7F7FFA] shrink-0" />}
           </div>
           <div>
@@ -1441,161 +1239,7 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
       )}
 
       {/* ============================================================= */}
-      {/* TAB 3: CERTIFIER.IO GRADUATE VERIFICATION QUEUE               */}
-      {/* ============================================================= */}
-      {activeTab === 'certifier' && (
-        <div className="space-y-6">
-          <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
-                  Certifier.io Official Credential Delivery Queue
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Review and fulfill certified certificate requests submitted by graduating learners with verified standards.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleExportExcel}
-                  disabled={filteredRequests.length === 0}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Export Excel (.xlsx)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Filters Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                {(['all', 'pending', 'fulfilled'] as const).map((filter) => (
-                  <button
-                    key={filter}
-                    type="button"
-                    onClick={() => setCertifierFilter(filter)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
-                      certifierFilter === filter
-                        ? 'bg-[#7F7FFA] text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {filter === 'all' ? `All (${certifierRequests.length})` :
-                     filter === 'pending' ? `Pending (${pendingCertifierCount})` :
-                     `Fulfilled (${certifierRequests.length - pendingCertifierCount})`}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative w-full sm:w-64">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-                <input
-                  type="text"
-                  value={certifierSearch}
-                  onChange={(e) => setCertifierSearch(e.target.value)}
-                  placeholder="Search graduate name, email, or serial..."
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800"
-                />
-              </div>
-            </div>
-
-            {/* Requests Table */}
-            {filteredRequests.length === 0 ? (
-              <div className="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-slate-200 space-y-2">
-                <Award className="w-8 h-8 text-slate-300 mx-auto" />
-                <p className="text-xs font-semibold text-slate-500">
-                  No certificate requests found matching current filter.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                <table className="w-full text-left text-xs text-slate-700">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase font-bold text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3">Graduate Name</th>
-                      <th className="px-4 py-3">Email Address</th>
-                      <th className="px-4 py-3">Serial #</th>
-                      <th className="px-4 py-3">Date Requested</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredRequests.map((r) => (
-                      <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-3 font-bold text-slate-900">
-                          {r.graduateName}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                            <span>{r.email}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyEmail(r.email)}
-                              title="Copy email to clipboard"
-                              className="text-slate-400 hover:text-slate-700 p-0.5"
-                            >
-                              {copiedEmail === r.email ? (
-                                <Check className="w-3 h-3 text-emerald-600" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-mono text-[11px] text-slate-500">
-                          {r.serialNumber}
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 text-[11px]">
-                          {new Date(r.requestedAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            r.status === 'fulfilled'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {r.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleRequestStatus(r)}
-                              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors cursor-pointer ${
-                                r.status === 'fulfilled'
-                                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                  : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
-                              }`}
-                            >
-                              {r.status === 'fulfilled' ? 'Mark Pending' : 'Mark Fulfilled'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeletingRequestId(r.id)}
-                              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                              title="Delete record"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================= */}
-      {/* TAB 4: SECURITY & PLATFORM DIAGNOSTICS                         */}
+      {/* TAB 3: SECURITY & PLATFORM DIAGNOSTICS                         */}
       {/* ============================================================= */}
       {activeTab === 'security' && (
         <div className="space-y-6">
@@ -1945,41 +1589,6 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
                 className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {isBulkDeleting ? 'Deleting...' : `Confirm Delete (${selectedQuestionIds.length})`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================= */}
-      {/* MODAL: CONFIRM CERTIFIER REQUEST DELETE                       */}
-      {/* ============================================================= */}
-      {deletingRequestId && (
-        <div className="fixed inset-0 z-[250] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl border border-slate-200 shadow-2xl p-6 text-center space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
-              <Trash2 className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-base font-bold text-slate-900">Delete Graduate Record?</h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Remove this graduate verification request from the Certifier.io processing queue.
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeletingRequestId(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteRequest(deletingRequestId)}
-                className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer"
-              >
-                Confirm Delete
               </button>
             </div>
           </div>

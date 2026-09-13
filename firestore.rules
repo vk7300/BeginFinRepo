@@ -60,7 +60,13 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.get('admin', false) == true ||
-        request.auth.token.get('email', '') in ['vishnukakarla108@gmail.com', 'kv303157@gmail.com', 'kruzksmith@gmail.com'] ||
+        request.auth.token.get('role', '') == 'admin' ||
+        (request.auth.token.email != null && request.auth.token.email.lower() in [
+          'vishnukakarla108@gmail.com', 
+          'kv303157@gmail.com', 
+          'kruzksmith@gmail.com',
+          'vishnuprasad.kakarla@mybisd.net'
+        ]) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
       );
@@ -231,6 +237,10 @@ service cloud.firestore {
       }
 
       // Admin-only read, create, update, delete
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /customQuestions/{questionId} {
       allow read, create, update, delete: if isAdmin();
     }
 
