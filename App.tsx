@@ -723,6 +723,15 @@ const App: React.FC = () => {
       setCurrentView('admin');
     } else if (path === '/onboarding' || path === '/mode' || path === '/choose-mode' || path === '/select-mode') {
       setCurrentView('onboarding');
+    } else if (path === '/teacher' || path === '/teachers' || path === '/teacher-portal') {
+      if (user) {
+        setUserRole('teacher');
+        setIsTeacherInStudentMode(false);
+        try { localStorage.setItem('beginfin-user-role', 'teacher'); } catch(e) {}
+        setCurrentView('dashboard');
+      } else {
+        setCurrentView('onboarding');
+      }
     } else if (path === '/') {
       setHasStarted(false);
       setCurrentView('welcome');

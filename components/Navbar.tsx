@@ -172,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {hasBanner && notice && (
         <aside 
           aria-label="System status notice"
-          className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[170] max-w-6xl mx-auto top-2 sm:top-2.5 rounded-full border shadow-xl flex items-center justify-between gap-3 px-3.5 sm:px-6 py-2 sm:py-2.5 backdrop-blur-2xl transition-all duration-300 ${
+          className={`font-sans fixed left-3 right-3 sm:left-4 sm:right-4 z-[170] max-w-6xl mx-auto top-2 sm:top-2.5 rounded-full border shadow-xl flex items-center justify-between gap-3 px-3.5 sm:px-6 py-2 sm:py-2.5 backdrop-blur-2xl transition-all duration-300 ${
             notice.type === 'alert' 
               ? 'bg-[#E11D48]/95 text-white border-rose-300/40 shadow-rose-950/25' 
               : notice.type === 'warning'
@@ -221,7 +221,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header aria-label="Main Site Navigation">
         <nav 
           id="main-nav-bar"
-          className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[150] max-w-6xl mx-auto transition-all duration-300 transform-gpu ${
+          className={`font-sans fixed left-3 right-3 sm:left-4 sm:right-4 z-[150] max-w-6xl mx-auto transition-all duration-300 transform-gpu ${
             hasBanner
               ? (effectiveIsScrolled 
                   ? 'top-16 sm:top-[4.5rem] bg-white/95 backdrop-blur-xl shadow-lg py-2 sm:py-2.5 px-3.5 sm:px-6 border-slate-200/70' 

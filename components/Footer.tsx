@@ -22,119 +22,227 @@ export const Footer: React.FC<FooterProps> = ({
   const { overall: systemStatus } = useSystemStatus();
 
   const statusDotColor = 
-    systemStatus === 'Operational' ? 'bg-emerald-400' :
+    systemStatus === 'Operational' ? 'bg-emerald-500' :
     systemStatus === 'Issues Observed' ? 'bg-amber-400' :
     'bg-rose-500';
+
+  const handleGoHome = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/');
+  };
+
+  const handleGoCurriculum = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (onViewCurriculum) onViewCurriculum();
+    else navigate('/curriculum');
+  };
+
+  const handleGoTools = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (onViewTools) onViewTools();
+    else navigate('/tools');
+  };
+
+  const handleGoResources = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (onViewResources) onViewResources();
+    else navigate('/resources');
+  };
+
+  const handleGoAbout = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (onViewAbout) onViewAbout();
+    else navigate('/about');
+  };
+
+  const handleGoGuide = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (onOpenGuide) onOpenGuide();
+    else navigate('/guide');
+  };
+
   return (
     <footer 
-       
-      className="bg-gradient-to-br from-[#060814] via-[#0b0e26] to-[#12163b] text-white py-14 md:py-20 px-6 border-t border-white/10 no-print"
+      className="bg-[#2D2D36] text-white pt-12 sm:pt-16 pb-10 px-4 sm:px-8 md:px-14 border-t border-white/10 no-print font-sans"
     >
-      <div className="container mx-auto max-w-5xl flex flex-col items-center text-center space-y-10">
-        
-        {/* Logo & Tagline */}
-        <div className="flex flex-col items-center space-y-4">
-          <div className="p-2 bg-white rounded-2xl shadow-xl">
-            <img 
-              src="/logo.png" 
-              alt="BeginFin Logo" 
-              className="w-10 h-10 object-contain rounded-xl" 
-              referrerPolicy="no-referrer" 
-            />
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
+          
+          {/* Left: White Card with Logo & Mission */}
+          <div className="md:col-span-5 lg:col-span-5">
+            <div className="bg-white text-slate-900 rounded-[1.75rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl flex flex-col justify-between space-y-5 sm:space-y-6">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <img 
+                    src="/logo.png" 
+                    alt="BeginFin Logo" 
+                    className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl p-1 bg-slate-50 border border-slate-200/80 shadow-xs shrink-0" 
+                    referrerPolicy="no-referrer" 
+                  />
+                  <div>
+                    <h3 className="font-serif text-xl text-slate-900 font-normal tracking-tight leading-tight">
+                      BeginFin
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-normal">
+                      By Vishnu Kakarla &amp; Kruz Smith
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-normal mt-3.5 sm:mt-4">
+                  An open-access personal finance initiative designed to empower individuals with financial confidence, 100% free, forever.
+                </p>
+              </div>
+
+              <div className="space-y-3.5 sm:space-y-4 pt-1 sm:pt-2">
+                <button
+                  type="button"
+                  onClick={handleGoAbout}
+                  className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 bg-slate-950 hover:bg-slate-900 text-white rounded-full text-xs font-semibold transition-all cursor-pointer shadow-md active:scale-95 inline-flex items-center justify-center"
+                >
+                  About Us
+                </button>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${statusDotColor} animate-pulse shrink-0`} />
+                  <Link
+                    to="/status"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
+                    className="text-xs text-slate-600 hover:text-slate-900 font-medium transition-colors"
+                  >
+                    System Status: {systemStatus === 'Operational' ? 'Working' : systemStatus}
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="space-y-1.5 max-w-2xl">
-            <h3 className="text-xl sm:text-2xl md:text-3xl font-normal tracking-tight text-white whitespace-nowrap">
-              BeginFin by Vishnu Kakarla and Kruz Smith
-            </h3>
-            <p className="text-xs md:text-sm text-slate-400 font-normal leading-relaxed">
-              We want to empower individuals with financial confidence.
-            </p>
+
+          {/* Center & Right: Navigation Columns + Socials */}
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-between h-full pt-1 sm:pt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-10">
+              
+              {/* Column 1 */}
+              <div className="space-y-2 sm:space-y-3.5">
+                <button 
+                  type="button"
+                  onClick={handleGoHome} 
+                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  Home
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleGoTools} 
+                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  Simulators
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleGoCurriculum} 
+                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  Curriculum
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleGoResources} 
+                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  Resources
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleGoGuide} 
+                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  Quick Start Guide
+                </button>
+              </div>
+
+              {/* Column 2 */}
+              <div className="space-y-2 sm:space-y-3.5">
+                <Link 
+                  to="/status" 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
+                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                >
+                  System Status
+                </Link>
+                <Link 
+                  to="/mcp" 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
+                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                >
+                  MCP Tools
+                </Link>
+                <Link 
+                  to="/termsofuse" 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
+                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                >
+                  Terms of Service
+                </Link>
+                <Link 
+                  to="/privacypolicy" 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
+                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                >
+                  Privacy Policy
+                </Link>
+                <a 
+                  href="mailto:support@beginfin.com"
+                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                >
+                  Support Email
+                </a>
+              </div>
+
+              {/* Column 3: Social Icons */}
+              <div className="col-span-2 sm:col-span-1 flex flex-row sm:flex-col sm:items-end gap-3 pt-2 sm:pt-0">
+                <a 
+                  href="https://www.linkedin.com/company/begin-fin/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95 shadow-sm"
+                  title="LinkedIn"
+                  aria-label="BeginFin on LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a 
+                  href="https://www.instagram.com/begin_fin/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95 shadow-sm"
+                  title="Instagram"
+                  aria-label="BeginFin on Instagram"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a 
+                  href="mailto:support@beginfin.com"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95 shadow-sm"
+                  title="Email Support"
+                  aria-label="Send email to BeginFin Support"
+                >
+                  <Mail className="w-4 h-4" />
+                </a>
+              </div>
+
+            </div>
           </div>
+
         </div>
 
-        {/* Navigation Links */}
-        <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-xs font-medium text-slate-300">
-          <span onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-white transition-colors cursor-pointer">Home</span>
-          <span onClick={onViewCurriculum} className="hover:text-white transition-colors cursor-pointer">Curriculum</span>
-          <span 
-            onClick={() => {
-              if (onViewTools) {
-                onViewTools();
-              } else {
-                navigate('/tools');
-              }
-            }} 
-            className="hover:text-white transition-colors cursor-pointer"
-          >
-            Tools & Simulators
-          </span>
-          <span onClick={onViewResources} className="hover:text-white transition-colors cursor-pointer">Resources</span>
-          {onViewAbout && <span onClick={onViewAbout} className="hover:text-white transition-colors cursor-pointer">About</span>}
-          <span onClick={onOpenGuide} className="hover:text-white transition-colors cursor-pointer">Quick Guide</span>
-          <Link 
-            to="/status" 
-            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
-            className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${statusDotColor} transition-colors`}></span>
-            System Status
-          </Link>
-          <Link 
-            to="/mcp" 
-            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
-            className="hover:text-white transition-colors cursor-pointer flex items-center gap-1"
-          >
-            MCP
-          </Link>
-          <Link 
-            to="/termsofuse" 
-            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
-            className="hover:text-white transition-colors cursor-pointer"
-          >
-            Terms of Use
-          </Link>
-          <Link 
-            to="/privacypolicy" 
-            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} 
-            className="hover:text-white transition-colors cursor-pointer"
-          >
-            Privacy Policy
-          </Link>
-        </div>
-
-        {/* Contact & Socials */}
-        <div className="flex flex-wrap justify-center items-center gap-3">
-          <a 
-            href="mailto:support@begin-fin.com"
-            className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-[11px] font-semibold text-[#7F7FFA] tracking-wider flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer"
-          >
-            <Mail className="w-3.5 h-3.5" /> support@begin-fin.com
-          </a>
-          <a 
-            href="https://www.instagram.com/begin_fin/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="p-3 bg-white/5 border border-white/10 rounded-full text-[#7F7FFA] hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center cursor-pointer"
-            title="Instagram"
-          >
-            <Instagram className="w-4 h-4" />
-          </a>
-          <a 
-            href="https://www.linkedin.com/company/begin-fin/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="p-3 bg-white/5 border border-white/10 rounded-full text-[#7F7FFA] hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center cursor-pointer"
-            title="LinkedIn"
-          >
-            <Linkedin className="w-4 h-4" />
-          </a>
-        </div>
-
-        {/* Footer Copyright */}
-        <div className="pt-8 border-t border-white/10 w-full flex flex-col sm:flex-row justify-center items-center gap-3 text-[10px] font-semibold tracking-[0.25em] text-slate-500 uppercase">
-          <div>© 2026 BEGINFIN. ALL RIGHTS RESERVED.</div>
-          <div className="hidden sm:block text-slate-700">•</div>
-          <div>MADE WITH <span className="text-rose-500">❤️</span> IN TEXAS</div>
+        {/* Bottom Bar: Copyright & Location */}
+        <div className="mt-10 sm:mt-14 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-normal text-center sm:text-left">
+          <div>© BeginFin 2026 | All Rights Reserved</div>
+          <div className="flex items-center gap-1.5">
+            <span>Made with</span>
+            <span className="text-rose-500">❤️</span>
+            <span>in Texas</span>
+          </div>
         </div>
 
       </div>
