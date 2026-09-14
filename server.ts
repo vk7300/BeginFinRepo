@@ -60,7 +60,7 @@ async function startServer() {
       "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com",
+      "img-src 'self' data: blob: https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com https://begin-fin.com https://i.postimg.cc https://postimg.cc",
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://generativelanguage.googleapis.com https://accounts.google.com https://www.google.com https://www.recaptcha.net wss: ws:",
       "frame-src 'self' https://accounts.google.com https://www.google.com https://www.recaptcha.net https://docs.google.com https://*.google.com https://ai.studio https://*.run.app",
       "frame-ancestors 'self' https://ai.studio https://*.ai.studio https://*.google.com https://*.googleusercontent.com https://*.run.app",
@@ -147,7 +147,53 @@ async function startServer() {
     },
     credentials: true
   }));
-  app.use(express.json());
+  app.use(express.json({ limit: '15mb' }));
+
+  // Route to serve 0S1A6490.jpg, vishnuandkruz.png, or founders.jpg if available
+  app.get(['/0S1A6490.jpg', '/vishnuandkruz.png', '/founders.jpg'], (req, res) => {
+    const candidates = [
+      path.join(process.cwd(), 'public', '0S1A6490.jpg'),
+      path.join(process.cwd(), 'dist', '0S1A6490.jpg'),
+      path.join(process.cwd(), '0S1A6490.jpg'),
+      path.join(process.cwd(), 'public', 'vishnuandkruz.png'),
+      path.join(process.cwd(), 'dist', 'vishnuandkruz.png')
+    ];
+    for (const file of candidates) {
+      if (fs.existsSync(file)) {
+        res.setHeader('Content-Type', file.endsWith('.png') ? 'image/png' : 'image/jpeg');
+        return res.sendFile(file);
+      }
+    }
+    res.sendStatus(404);
+  });
+
+  // Photo upload route to persist 0S1A6490.jpg directly to public/ and dist/
+  app.post('/api/upload-photo', (req, res) => {
+    try {
+      const { dataUrl } = req.body;
+      if (!dataUrl || typeof dataUrl !== 'string') {
+        return res.status(400).json({ error: 'Missing dataUrl' });
+      }
+      const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (!matches || matches.length !== 3) {
+        return res.status(400).json({ error: 'Invalid data URL format' });
+      }
+      const buffer = Buffer.from(matches[2], 'base64');
+      const targetName = '0S1A6490.jpg';
+      const publicDir = path.join(process.cwd(), 'public');
+      const distDir = path.join(process.cwd(), 'dist');
+      if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+      fs.writeFileSync(path.join(publicDir, targetName), buffer);
+      if (fs.existsSync(distDir)) {
+        fs.writeFileSync(path.join(distDir, targetName), buffer);
+      }
+      console.log(`[Upload] Successfully saved ${targetName} (${buffer.length} bytes) to public/ and dist/`);
+      return res.json({ success: true, url: `/${targetName}`, size: buffer.length });
+    } catch (err: any) {
+      console.error('[Upload] Error saving photo:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
 
   // Rate limiting: 100 requests per 15 minutes per IP (excluding MCP endpoints)
   const limiter = rateLimit({

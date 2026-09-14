@@ -79,27 +79,13 @@ interface FirestoreErrorInfo {
   }
 }
 
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null, shouldThrow = false) {
+  const errMessage = error instanceof Error ? error.message : String(error);
+  // Log operational diagnostics without exposing student/user PII, emails, or credentials
+  console.warn(`[Firestore ${operationType}] ${path || 'unknown'}: ${errMessage}`);
+  if (shouldThrow) {
+    throw new Error(`Firestore operation error: ${errMessage}`);
   }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
 }
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -869,9 +855,8 @@ const App: React.FC = () => {
           }
           setShowLoginModal(false);
           setHasStarted(true);
-          if (currentView === 'welcome') {
-            handleStart(true);
-          }
+          navigate('/app');
+          setCurrentView(userRole ? 'dashboard' : 'onboarding');
         }
       })
       .catch((error) => {
@@ -1017,6 +1002,7 @@ const App: React.FC = () => {
         setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
+          displayName: user.displayName || '',
           completedModules: initialModules,
           role: 'student', // Default to student
           agreedToTerms: consentGranted,
@@ -1034,7 +1020,7 @@ const App: React.FC = () => {
           setCurrentView('dashboard');
         }
       }
-    }, (err) => handleFirestoreError(err, OperationType.GET, `users/${user.uid}`));
+    }, (err) => handleFirestoreError(err, OperationType.GET, `users/${user.uid}`, false));
 
     return () => unsubscribe();
   }, [isAuthReady, user]);
@@ -1145,9 +1131,9 @@ const App: React.FC = () => {
     try {
       await triggerGoogleSignIn();
       setShowLoginModal(false);
-      if (currentView === 'welcome') {
-        handleStart(true);
-      }
+      setHasStarted(true);
+      navigate('/app');
+      setCurrentView(userRole ? 'dashboard' : 'onboarding');
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         return;
@@ -1219,9 +1205,9 @@ const App: React.FC = () => {
         }
       }
       setShowLoginModal(false);
-      if (currentView === 'welcome') {
-        handleStart(true);
-      }
+      setHasStarted(true);
+      navigate('/app');
+      setCurrentView(userRole ? 'dashboard' : 'onboarding');
     } catch (error: any) {
       console.error("Email auth failed", error);
       throw error;
@@ -1446,9 +1432,9 @@ const App: React.FC = () => {
           user={user}
           disabled={showLoginModal || !!user}
           onSuccess={(signedInUser) => {
-            if (currentView === 'welcome') {
-              handleStart(true);
-            }
+            setHasStarted(true);
+            navigate('/app');
+            setCurrentView(userRole ? 'dashboard' : 'onboarding');
           }}
         />
 
@@ -1709,7 +1695,7 @@ const App: React.FC = () => {
             >
               <div className="flex-1 flex flex-col">
                 <main className="flex-1">
-                  <div className="min-h-screen bg-white">
+                  <div className="min-h-screen">
                     <AboutView
                       onBack={() => {
                         navigate('/');

@@ -88,8 +88,10 @@ service cloud.firestore {
              (data.email == null || (data.email is string && data.email.size() > 0)) &&
              data.role in ['student', 'teacher', 'admin'] &&
              data.completedModules is list &&
-             (!('agreedToTerms' in data) || data.agreedToTerms is bool) &&
-             (!('agreedToTermsAt' in data) || data.agreedToTermsAt is string) &&
+             (!('agreedToTerms' in data) || data.agreedToTerms is bool || data.agreedToTerms == null) &&
+             (!('agreedToTermsAt' in data) || data.agreedToTermsAt is string || data.agreedToTermsAt == null) &&
+             (!('displayName' in data) || data.displayName is string || data.displayName == null) &&
+             (!('lastUpdated' in data) || data.lastUpdated is string || data.lastUpdated == null) &&
              (!('classId' in data) || data.classId is string || data.classId == null) &&
              (!('teacherId' in data) || data.teacherId is string || data.teacherId == null) &&
              (!('creditScoreMaster' in data) || data.creditScoreMaster is bool) &&
@@ -145,14 +147,13 @@ service cloud.firestore {
                         (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher'])) || 
                        (isAdmin() && isValidUser(request.resource.data));
       allow update: if (isOwner(userId) && uidNotModified() && isValidUser(request.resource.data) && 
-                       (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher'] || (request.resource.data.role == 'admin' && resource.data.get('role', '') == 'admin')) &&
-                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['completedModules'])
-                      ) || 
-                   isAdmin() ||
-                   (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid && 
-                    isValidUser(request.resource.data) &&
-                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['classId', 'teacherId']) &&
-                    request.resource.data.classId == null && request.resource.data.teacherId == null);
+                        (!('role' in request.resource.data) || request.resource.data.role in ['student', 'teacher'] || (request.resource.data.role == 'admin' && resource.data.get('role', '') == 'admin'))
+                       ) || 
+                    isAdmin() ||
+                    (isAuthenticated() && resource.data.get('teacherId', '') == request.auth.uid && 
+                     isValidUser(request.resource.data) &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['classId', 'teacherId']) &&
+                     request.resource.data.classId == null && request.resource.data.teacherId == null);
       allow delete: if isOwner(userId) || isAdmin();
     }
 

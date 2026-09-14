@@ -100,7 +100,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         <section 
           ref={heroRef}
           onMouseMove={handleMouseMove}
-          className={`relative w-full overflow-hidden select-none cursor-default bg-gradient-to-b from-[#7F7FFA] via-[#6565EC] to-[#3C3C3C] ${
+          className={`relative w-full overflow-hidden select-none cursor-default bg-gradient-to-b from-[#7F7FFA] via-[#7575FA] to-[#3C3C3C] ${
             hasBanner ? 'pt-36 sm:pt-48 md:pt-52' : 'pt-28 sm:pt-36 md:pt-40'
           } pb-16 sm:pb-24 md:pb-28 min-h-[90vh] sm:min-h-[92vh] flex flex-col justify-center items-center text-center px-4 sm:px-6`}
         >
@@ -190,7 +190,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         {/* ========================================================= */}
         <section 
           ref={contrastRef}
-          className="relative w-full bg-gradient-to-b from-[#3C3C3C] via-[#3C3C3C] to-[#5C5CE0] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-white"
+          className="relative w-full bg-gradient-to-b from-[#3C3C3C] via-[#3C3C3C] to-[#7F7FFA] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-white"
         >
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
             
@@ -273,7 +273,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         {/* Gradient: BeginFin Iris Pulse (#7F7FFA) continued         */}
         {/* Flowing seamlessly down towards Slate Grey at footer      */}
         {/* ========================================================= */}
-        <section className="relative w-full bg-gradient-to-b from-[#5C5CE0] via-[#7F7FFA] to-[#5C5CE0] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-white">
+        <section className="relative w-full bg-gradient-to-b from-[#7F7FFA] via-[#8B8BFA] to-[#7F7FFA] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-white">
           <div className="max-w-6xl mx-auto">
             
             {/* Section Title */}
@@ -348,7 +348,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         </section>
 
         {/* Transition zone: Iris Pulse flowing into Slate Grey footer */}
-        <div className="w-full h-16 sm:h-24 bg-gradient-to-b from-[#5C5CE0] to-[#3C3C3C]" />
+        <div className="w-full h-16 sm:h-24 bg-gradient-to-b from-[#7F7FFA] to-[#3C3C3C]" />
 
       </main>
 

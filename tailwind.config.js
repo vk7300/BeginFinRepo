@@ -38,9 +38,11 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['"Source Sans 3"', 'Inter', 'sans-serif'],
         serif: ['"Source Serif 4"', 'Georgia', 'serif'],
         heading: ['"Source Serif 4"', 'Georgia', 'serif'],
+        'source-sans': ['"Source Sans 3"', 'Inter', 'sans-serif'],
+        'source-serif': ['"Source Serif 4"', 'Georgia', 'serif'],
       },
     },
   },

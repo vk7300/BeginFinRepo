@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, sendPasswordResetEmail } from 'firebase/auth';
-import { initializeFirestore, getFirestore, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, setLogLevel } from 'firebase/firestore';
 
 // Import the Firebase configuration
 import firebaseConfigJson from './firebase-applet-config.json';
@@ -20,10 +20,18 @@ if (!firebaseConfig.apiKey && typeof window !== 'undefined') {
   console.warn('[Firebase] Notice: VITE_FIREBASE_API_KEY is not defined. Please configure VITE_FIREBASE_API_KEY in your .env file or environment settings.');
 }
 
+// Silence noisy internal WebChannel streaming reconnect retries
+try {
+  setLogLevel('error');
+} catch {
+  // Ignore in environments where setLogLevel is not supported
+}
+
 // Initialize Firebase SDK
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Ensure Firestore is initialized with long-polling to work reliably in sandboxed iframe previews and proxies
+// Ensure Firestore is initialized with robust long-polling
+// to prevent WebChannelConnection RPC 'Listen' stream transport errors in sandboxes, proxies and iframes
 let dbInstance;
 try {
   dbInstance = initializeFirestore(app, {
@@ -42,7 +50,7 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-export { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail };
+export { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, setLogLevel };
 export type { User, ConfirmationResult };
 
 export enum OperationType {
@@ -73,10 +81,12 @@ export interface FirestoreErrorInfo {
   }
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null, shouldThrow = false) {
   const errMessage = error instanceof Error ? error.message : String(error);
-  // Log operational diagnostics without exposing student/user PII (emails, names)
-  console.error(`[Firestore Operation Failed] Type: ${operationType}, Path: ${path || 'unknown'}, Error: ${errMessage}`);
-  throw new Error(`Firestore operation failed: ${errMessage}`);
+  // Log operational diagnostics without exposing student/user PII or sensitive keys
+  console.warn(`[Firestore Operation Note] Type: ${operationType}, Path: ${path || 'unknown'}, Error: ${errMessage}`);
+  if (shouldThrow) {
+    throw new Error(`Firestore operation failed: ${errMessage}`);
+  }
 }
 
