@@ -732,6 +732,10 @@ const App: React.FC = () => {
       } else {
         setCurrentView('onboarding');
       }
+    } else if (path === '/guest' || path.startsWith('/guest')) {
+      setHasStarted(true);
+      setCurrentView('dashboard');
+      navigate('/app', { replace: true });
     } else if (path === '/') {
       setHasStarted(false);
       setCurrentView('welcome');

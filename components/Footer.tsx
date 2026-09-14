@@ -63,7 +63,7 @@ export const Footer: React.FC<FooterProps> = ({
 
   return (
     <footer 
-      className="bg-[#2D2D36] text-white pt-12 sm:pt-16 pb-10 px-4 sm:px-8 md:px-14 border-t border-white/10 no-print font-sans"
+      className="bg-[#3C3C3C] text-white pt-12 sm:pt-16 pb-10 px-4 sm:px-8 md:px-14 border-t border-white/10 no-print font-sans"
     >
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">

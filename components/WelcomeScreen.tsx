@@ -90,7 +90,7 @@ export const WelcomeScreen: React.FC<Props> = ({
   const hasBanner = Boolean(notice && notice.show && (notice.title || notice.message));
 
   return (
-    <div className="min-h-screen flex flex-col font-sans overflow-x-hidden bg-[#2D2D36]">
+    <div className="min-h-screen flex flex-col font-sans overflow-x-hidden bg-[#3C3C3C]">
       <main id="main-content" className="flex-grow">
         
         {/* ========================================================= */}
@@ -149,13 +149,10 @@ export const WelcomeScreen: React.FC<Props> = ({
 
               <button 
                 type="button"
-                onClick={() => {
-                  if (onViewAbout) onViewAbout();
-                  else navigate('/about');
-                }}
+                onClick={onStart}
                 className="w-full sm:w-auto min-h-[44px] px-8 py-3.5 sm:px-10 sm:py-4 bg-white hover:bg-slate-50 text-slate-950 rounded-full font-semibold text-sm sm:text-base transition-all active:scale-[0.98] shadow-xl hover:shadow-2xl cursor-pointer text-center flex items-center justify-center"
               >
-                About Us
+                Guest Mode
               </button>
             </div>
 
@@ -197,15 +194,15 @@ export const WelcomeScreen: React.FC<Props> = ({
         >
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
             
-            {/* Left Column: Pain points */}
-            <div className="lg:col-span-5 space-y-1.5 sm:space-y-3 text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.2] sm:leading-[1.22] font-serif font-normal text-[#C7D2FE]/85 select-none">
-              <div>Paywalls.</div>
-              <div>Ad breaks.</div>
-              <div>Outdated info.</div>
-              <div>No certificate.</div>
-              <div>Boring lectures.</div>
-              <div>No Interactives.</div>
-              <div className="italic text-white pt-1 sm:pt-2">And other gaps.</div>
+            {/* Left Column: Pain points with gradual gradient from #7F7FFA to white */}
+            <div className="lg:col-span-5 space-y-1.5 sm:space-y-3 text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.2] sm:leading-[1.22] font-serif font-normal select-none">
+              <div style={{ color: '#7F7FFA' }}>Paywalls.</div>
+              <div style={{ color: '#9494FB' }}>Ad breaks.</div>
+              <div style={{ color: '#AAAAFC' }}>Outdated info.</div>
+              <div style={{ color: '#BFBFFD' }}>No certificate.</div>
+              <div style={{ color: '#D4D4FD' }}>Boring lectures.</div>
+              <div style={{ color: '#EAEAFE' }}>No Interactives.</div>
+              <div style={{ color: '#FFFFFF' }} className="italic pt-1 sm:pt-2">And other gaps.</div>
             </div>
 
             {/* Right Column: White Card + Featured Logos */}
@@ -351,7 +348,7 @@ export const WelcomeScreen: React.FC<Props> = ({
         </section>
 
         {/* Transition zone: Iris Pulse flowing into Slate Grey footer */}
-        <div className="w-full h-16 sm:h-24 bg-gradient-to-b from-[#5C5CE0] to-[#2D2D36]" />
+        <div className="w-full h-16 sm:h-24 bg-gradient-to-b from-[#5C5CE0] to-[#3C3C3C]" />
 
       </main>
 
