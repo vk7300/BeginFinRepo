@@ -1,0 +1,4 @@
+## 2024-05-24 - Unauthenticated Image Upload Architecture Gap
+**Vulnerability:** The `/api/upload-photo` endpoint writes base64-encoded image data directly to `0S1A6490.jpg` in the `public` and `dist` directories without any authentication or authorization checks.
+  **Learning:** This is a surprising security gap in the application's architecture. It appears the endpoint was created for a specific administrative task (updating a founders' photo or similar asset) but was left completely exposed. It highlights how ad-hoc file upload functionality, if not integrated into the application's broader auth model, can lead to severe vulnerabilities like unauthenticated defacement.
+**Detection:** Look for `app.post` handlers that accept file contents (or `dataUrl`) and call `fs.writeFileSync` on a hardcoded or user-supplied path without checking `req.headers.authorization` or verifying an ID token against an admin list.
