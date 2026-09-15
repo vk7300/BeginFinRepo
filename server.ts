@@ -2,9 +2,11 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { rateLimit } from "express-rate-limit";
 import cors from "cors";
 import dotenv from "dotenv";
+import sanitizeHtml from "sanitize-html";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
@@ -37,8 +39,82 @@ const firestoreDbId = process.env.FIRESTORE_DATABASE_ID || "ai-studio-815a8484-c
 const adminAuth = getAuth(adminApp);
 const adminDb = getFirestore(adminApp, firestoreDbId);
 
+/**
+ * Robust text sanitization helper powered by sanitize-html.
+ * Strips all HTML tags, script elements, attributes, event handlers, and normalizes whitespaces.
+ */
+function sanitizeText(input: unknown, maxLength: number = 100): string {
+  if (typeof input !== 'string') return '';
+  const noNewlines = input.replace(/[\r\n\t]+/g, ' ').trim();
+  const cleaned = sanitizeHtml(noNewlines, {
+    allowedTags: [],
+    allowedAttributes: {},
+    disallowedTagsMode: 'discard'
+  });
+  return cleaned.substring(0, maxLength).trim();
+}
+
 function sanitizeHeader(str: string): string {
-  return String(str || '').replace(/[\r\n]+/g, ' ').trim();
+  return sanitizeText(str, 120);
+}
+
+/**
+ * Verifies that the incoming request has a valid Firebase Auth ID token belonging to an administrator.
+ */
+async function verifyAdminUser(req: express.Request): Promise<{ authorized: boolean; uid?: string; email?: string; error?: string; status?: number }> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authorized: false, error: "Authentication required.", status: 401 };
+  }
+
+  const idToken = authHeader.split("Bearer ")[1]?.trim();
+  if (!idToken) {
+    return { authorized: false, error: "Authentication token missing.", status: 401 };
+  }
+
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    if (!decodedToken?.uid) {
+      return { authorized: false, error: "Invalid session token.", status: 401 };
+    }
+
+    const envAdminEmails = process.env.ADMIN_EMAILS 
+      ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+      : [];
+    const ADMIN_EMAILS = [
+      'vishnukakarla108@gmail.com',
+      'kv303157@gmail.com',
+      'kruzksmith@gmail.com',
+      'kruz@begin-fin.com',
+      'vishnu@begin-fin.com',
+      'admin@begin-fin.com',
+      'kruzsmith@gmail.com',
+      ...envAdminEmails
+    ];
+
+    let isAdmin = decodedToken.admin === true || decodedToken.role === 'admin';
+    if (!isAdmin && decodedToken.email && ADMIN_EMAILS.includes(decodedToken.email.toLowerCase().trim())) {
+      isAdmin = true;
+    }
+    if (!isAdmin) {
+      try {
+        const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+        if (userDoc.exists && userDoc.data()?.role === 'admin') {
+          isAdmin = true;
+        }
+      } catch (dbErr) {
+        // Fall through
+      }
+    }
+
+    if (!isAdmin) {
+      return { authorized: false, error: "Administrator authorization required.", status: 403 };
+    }
+
+    return { authorized: true, uid: decodedToken.uid, email: decodedToken.email };
+  } catch (err: any) {
+    return { authorized: false, error: "Invalid or expired session token.", status: 401 };
+  }
 }
 
 async function startServer() {
@@ -167,19 +243,51 @@ async function startServer() {
     res.sendStatus(404);
   });
 
-  // Photo upload route to persist 0S1A6490.jpg directly to public/ and dist/
-  app.post('/api/upload-photo', (req, res) => {
+  // Photo upload route - strictly requires Admin authentication, MIME validation, and magic byte checks
+  app.post('/api/upload-photo', async (req, res) => {
     try {
-      const { dataUrl } = req.body;
+      // 1. Verify Authentication & Admin Authorization
+      const authResult = await verifyAdminUser(req);
+      if (!authResult.authorized) {
+        return res.status(authResult.status || 401).json({ error: authResult.error || "Unauthorized" });
+      }
+
+      // 2. Validate input payload
+      const { dataUrl, filename } = req.body;
       if (!dataUrl || typeof dataUrl !== 'string') {
-        return res.status(400).json({ error: 'Missing dataUrl' });
+        return res.status(400).json({ error: 'Missing or invalid dataUrl.' });
       }
-      const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+
+      // Ensure dataUrl has reasonable size (max 10MB decoded ~ 14MB base64)
+      if (dataUrl.length > 15 * 1024 * 1024) {
+        return res.status(413).json({ error: 'Image payload exceeds 10MB limit.' });
+      }
+
+      const matches = dataUrl.match(/^data:image\/(jpeg|jpg|png);base64,(.+)$/i);
       if (!matches || matches.length !== 3) {
-        return res.status(400).json({ error: 'Invalid data URL format' });
+        return res.status(400).json({ error: 'Only JPEG and PNG image data URLs are permitted.' });
       }
+
       const buffer = Buffer.from(matches[2], 'base64');
-      const targetName = '0S1A6490.jpg';
+      if (buffer.length === 0 || buffer.length > 10 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Invalid or oversized image buffer.' });
+      }
+
+      // 3. Binary Magic Byte Verification to prevent disguising non-images
+      const isJpeg = buffer.length >= 3 && buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+      const isPng = buffer.length >= 8 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+
+      if (!isJpeg && !isPng) {
+        return res.status(400).json({ error: 'Invalid image binary signature.' });
+      }
+
+      // 4. Strict filename whitelisting - prevent path traversal & arbitrary file creation
+      const ALLOWED_TARGET_NAMES = new Set(['0S1A6490.jpg', 'vishnuandkruz.png', 'founders.jpg']);
+      const requestedName = typeof filename === 'string' ? path.basename(filename) : '0S1A6490.jpg';
+      const targetName = ALLOWED_TARGET_NAMES.has(requestedName) 
+        ? requestedName 
+        : (isPng ? 'vishnuandkruz.png' : '0S1A6490.jpg');
+
       const publicDir = path.join(process.cwd(), 'public');
       const distDir = path.join(process.cwd(), 'dist');
       if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
@@ -187,11 +295,11 @@ async function startServer() {
       if (fs.existsSync(distDir)) {
         fs.writeFileSync(path.join(distDir, targetName), buffer);
       }
-      console.log(`[Upload] Successfully saved ${targetName} (${buffer.length} bytes) to public/ and dist/`);
+      console.log(`[Upload] Admin ${authResult.email || authResult.uid} safely saved ${targetName} (${buffer.length} bytes)`);
       return res.json({ success: true, url: `/${targetName}`, size: buffer.length });
     } catch (err: any) {
       console.error('[Upload] Error saving photo:', err);
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: "Failed to upload photo." });
     }
   });
 
@@ -413,23 +521,44 @@ async function startServer() {
     }
   });
 
-  // In-memory sliding window rate limiter for quiz grading attempts (keyed by verifiedUid:moduleId)
+  // Dedicated rate limiter for the quiz grading endpoint to protect against rapid enumeration and DoS
+  const quizEndpointLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 60, // Max 60 requests per 15 minutes per IP
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: "Too many quiz grading requests. Please review course materials and try again later." }
+  });
+
+  // In-memory sliding window rate limiter for quiz grading attempts (bounded to prevent memory exhaustion DoS)
   const quizGradingAttempts = new Map<string, { count: number; firstAttemptAt: number }>();
   const QUIZ_WINDOW_MS = 60 * 60 * 1000; // 1 hour sliding window
   const MAX_QUIZ_ATTEMPTS_PER_WINDOW = 12; // 12 attempts per module per hour
+  const MAX_QUIZ_CACHE_SIZE = 2500; // Hard ceiling to prevent heap exhaustion
 
-  // Periodic cleanup of stale quiz attempt entries every 15 minutes
-  setInterval(() => {
+  function pruneQuizGradingAttempts() {
     const now = Date.now();
     for (const [key, record] of quizGradingAttempts.entries()) {
       if (now - record.firstAttemptAt > QUIZ_WINDOW_MS) {
         quizGradingAttempts.delete(key);
       }
     }
-  }, 15 * 60 * 1000);
+    // If still over threshold after expiring stale records, evict oldest entries (FIFO)
+    if (quizGradingAttempts.size > MAX_QUIZ_CACHE_SIZE) {
+      let toDelete = quizGradingAttempts.size - MAX_QUIZ_CACHE_SIZE;
+      for (const key of quizGradingAttempts.keys()) {
+        if (toDelete <= 0) break;
+        quizGradingAttempts.delete(key);
+        toDelete--;
+      }
+    }
+  }
+
+  // Periodic cleanup of stale quiz attempt entries every 15 minutes
+  setInterval(pruneQuizGradingAttempts, 15 * 60 * 1000);
 
   // Quiz grading endpoint (supports authenticated users with Firestore sync & guest mode grading)
-  app.post("/api/grade-quiz", async (req, res) => {
+  app.post("/api/grade-quiz", quizEndpointLimiter, async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
       let verifiedUid: string | null = null;
@@ -454,10 +583,29 @@ async function startServer() {
         return res.status(400).json({ error: "moduleId and answers array are required." });
       }
 
-      // Enforce attempt rate limiting (keyed by user UID or client IP for guests) to prevent answer-key enumeration
-      // Rely solely on req.ip which respects app.set('trust proxy', 1) to prevent rate-limit evasion via spoofed X-Forwarded-For headers
-      const clientIp = req.ip || "guest";
-      const rateLimitKey = verifiedUid ? `${verifiedUid}:${moduleId}` : `guest:${clientIp}:${moduleId}`;
+      // Generate secure client key for rate limiting:
+      // Authenticated users are keyed strictly by verifiedUid to prevent IP-based contention.
+      // Guest users use a composite fingerprint (socket IP + client IP + User-Agent hash)
+      // to prevent bypasses via arbitrary spoofed X-Forwarded-For headers.
+      let rateLimitKey: string;
+      if (verifiedUid) {
+        rateLimitKey = `user:${verifiedUid}:${moduleId}`;
+      } else {
+        const socketIp = req.socket?.remoteAddress || 'unknown-socket';
+        const clientIp = req.ip || 'unknown-ip';
+        const userAgent = (req.headers['user-agent'] || 'unknown-ua').substring(0, 100);
+        const guestFingerprint = crypto.createHash('sha256')
+          .update(`${socketIp}|${clientIp}|${userAgent}`)
+          .digest('hex')
+          .substring(0, 16);
+        rateLimitKey = `guest:${guestFingerprint}:${moduleId}`;
+      }
+
+      // Memory exhaustion safeguard: prune before adding if approaching capacity
+      if (quizGradingAttempts.size >= MAX_QUIZ_CACHE_SIZE) {
+        pruneQuizGradingAttempts();
+      }
+
       const now = Date.now();
       const existingAttempt = quizGradingAttempts.get(rateLimitKey);
 
@@ -583,9 +731,10 @@ async function startServer() {
       }
 
       const { graduateName, isPublic } = req.body;
-      const cleanGraduateName = typeof graduateName === 'string' && graduateName.trim()
-        ? sanitizeHeader(graduateName).replace(/<\/?[^>]+(>|$)/g, "").substring(0, 100)
+      const rawGradName = typeof graduateName === 'string' && graduateName.trim()
+        ? graduateName
         : (userData.displayName || "BeginFin Student");
+      const cleanGraduateName = sanitizeText(rawGradName, 100) || "BeginFin Student";
 
       const now = new Date();
       const issueDate = now.toISOString().substring(0, 10);
@@ -705,7 +854,7 @@ async function startServer() {
         lastUpdated: new Date().toISOString()
       };
       if (displayName && typeof displayName === 'string' && displayName.trim()) {
-        userUpdate.displayName = sanitizeHeader(displayName).replace(/<\/?[^>]+(>|$)/g, "").substring(0, 80);
+        userUpdate.displayName = sanitizeText(displayName, 80);
       }
 
       await adminDb.collection("users").doc(verifiedUid).set(userUpdate, { merge: true });
@@ -975,9 +1124,9 @@ async function startServer() {
       // Safe sanitized logging without writing student PII to stdout
       console.log(`[Certifier] Digital credential request processed at ${new Date().toISOString()}`);
 
-      const cleanName = sanitizeHeader(effectiveName).substring(0, 100);
-      const cleanEmail = sanitizeHeader(effectiveEmail).substring(0, 100);
-      const cleanSerial = sanitizeHeader(serialNumber || 'N/A').substring(0, 50);
+      const cleanName = sanitizeText(effectiveName, 100);
+      const cleanEmail = sanitizeText(effectiveEmail, 100);
+      const cleanSerial = sanitizeText(serialNumber || 'N/A', 50);
       const cleanUserId = verifiedUid;
 
       // Save certifier request to Firestore
@@ -1058,50 +1207,15 @@ async function startServer() {
   // Admin status update endpoint
   app.post("/api/status/update", async (req, res) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Authentication required to update status." });
-      }
-
-      const idToken = authHeader.split("Bearer ")[1]?.trim();
-      const decodedToken = await adminAuth.verifyIdToken(idToken);
-      if (!decodedToken?.uid) {
-        return res.status(401).json({ error: "Invalid session token." });
-      }
-
-      // Check if user is admin via token claims, email whitelist, or Firestore role
-      const envAdminEmails = process.env.ADMIN_EMAILS 
-        ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
-        : [];
-      const ADMIN_EMAILS = [
-        'vishnukakarla108@gmail.com',
-        'kv303157@gmail.com',
-        'kruzksmith@gmail.com',
-        'kruz@begin-fin.com',
-        'vishnu@begin-fin.com',
-        'admin@begin-fin.com',
-        'kruzsmith@gmail.com',
-        ...envAdminEmails
-      ];
-      let isAdmin = decodedToken.admin === true || decodedToken.role === 'admin';
-      if (!isAdmin && decodedToken.email && ADMIN_EMAILS.includes(decodedToken.email.toLowerCase().trim())) {
-        isAdmin = true;
-      }
-      if (!isAdmin) {
-        const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
-        if (userDoc.exists && userDoc.data()?.role === 'admin') {
-          isAdmin = true;
-        }
-      }
-
-      if (!isAdmin) {
-        return res.status(403).json({ error: "Administrator authorization required to update system status." });
+      const authResult = await verifyAdminUser(req);
+      if (!authResult.authorized) {
+        return res.status(authResult.status || 401).json({ error: authResult.error || "Administrator authorization required." });
       }
 
       const { services, customCategory, customMessage, customMessageTitle, customMessageType, showCustomMessage, overall, incidents } = req.body;
       const updatePayload: any = {
         lastUpdated: new Date().toISOString(),
-        updatedBy: decodedToken.email || decodedToken.uid
+        updatedBy: authResult.email || authResult.uid || "admin"
       };
 
       if (services) updatePayload.services = services;
