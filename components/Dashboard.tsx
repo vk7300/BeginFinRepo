@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, ChevronRight, Trophy, Lock, FileBadge, Share2, Users, ArrowRight, Loader2, Info, LogOut, Zap, Calendar, Clock, User as UserIcon, X, BookOpen, Layout, AlertCircle, Sparkles, Briefcase, CreditCard } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Trophy, Lock, FileBadge, Users, ArrowRight, Loader2, Info, LogOut, Zap, Calendar, Clock, User as UserIcon, X, BookOpen, Layout, AlertCircle, Sparkles, Briefcase, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Module } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
@@ -527,16 +527,16 @@ export const Dashboard: React.FC<Props> = ({
             </div>
 
             {/* Encouraging Mentor Micro-Copy */}
-            <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
-              {progress === 0 
-                ? "Welcome! Start with Unit 1 to begin your path to financial confidence."
-                : progress < 50
-                  ? "Great momentum! You're making real progress toward full certification."
-                  : progress < 100
-                    ? "More than halfway there! Keep going — mastery is within reach."
-                    : "Mastery Achieved! You have successfully completed all core financial units."
-              }
-            </p>
+            {progress < 100 && (
+              <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
+                {progress === 0 
+                  ? "Welcome! Start with Unit 1 to begin your path to financial confidence."
+                  : progress < 50
+                    ? "Great momentum! You're making real progress toward full certification."
+                    : "More than halfway there! Keep going — mastery is within reach."
+                }
+              </p>
+            )}
           </div>
 
           {/* Right: Quick Action Controls */}
@@ -553,7 +553,7 @@ export const Dashboard: React.FC<Props> = ({
                 onClick={onViewTools}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-[#3C3C3C] font-bold hover:text-[#7F7FFA] hover:bg-[#F4F8FA] transition-colors text-xs px-3.5 py-2.5 bg-[#F4F8FA] border border-slate-200/60 rounded-xl cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5 text-slate-500" /> Simulators
+                <Sparkles className="w-3.5 h-3.5 text-slate-500" /> Tools
               </button>
             )}
             
@@ -601,7 +601,7 @@ export const Dashboard: React.FC<Props> = ({
               }`}
             >
               {allCompleted ? <Trophy className="w-3.5 h-3.5 text-white" /> : <FileBadge className="w-3.5 h-3.5" />}
-              {allCompleted ? 'Certificate Ready' : t.viewCertProgress}
+              {allCompleted ? 'Claim Certificate' : t.viewCertProgress}
             </button>
 
             {onOpenGuide && (
@@ -623,32 +623,16 @@ export const Dashboard: React.FC<Props> = ({
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-emerald-50 via-[#F4F8FA] to-emerald-50/60 rounded-2xl p-5 border border-emerald-200/90 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4"
+              className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-emerald-50 via-[#F4F8FA] to-emerald-50/60 rounded-2xl p-5 border border-emerald-200/90 shadow-sm flex items-center gap-4"
             >
-              <div className="flex items-center gap-4 text-center sm:text-left">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
-                  <Trophy className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-emerald-950 tracking-tight">Mastery Achieved! All Core Units Mastered</h3>
-                  <p className="text-xs text-emerald-800 font-medium mt-0.5">
-                    You have built a rigorous foundation in personal finance. Claim your verified certificate or share your credential.
-                  </p>
-                </div>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
+                <Trophy className="w-6 h-6" />
               </div>
-              <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
-                <button 
-                  onClick={onClaimCertificate}
-                  className="flex-1 sm:flex-none px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <FileBadge className="w-4 h-4" /> Claim Certificate
-                </button>
-                <button 
-                  onClick={handleShare}
-                  className="flex-1 sm:flex-none px-4 py-2.5 bg-white text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Share2 className="w-4 h-4" /> Share
-                </button>
+              <div>
+                <h3 className="text-lg font-black text-emerald-950 tracking-tight">Mastery Achieved!</h3>
+                <p className="text-xs text-emerald-800 font-medium mt-0.5">
+                  Congratulations! You have completed all personal finance modules.
+                </p>
               </div>
             </motion.div>
           )}

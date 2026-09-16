@@ -1671,6 +1671,11 @@ const App: React.FC = () => {
                         navigate('/');
                         setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
                       }}
+                      onNavigateToAP={() => {
+                        window.scrollTo(0,0);
+                        navigate('/tools/beginfinsguidetoapbusinesswithpf');
+                        setCurrentView('ap-unit');
+                      }}
                     />
                   </div>
                 </main>
@@ -1999,7 +2004,7 @@ const App: React.FC = () => {
                         (currentView as string) === 'tools' ? 'text-indigo-600 bg-indigo-50 font-bold' : 'hover:text-slate-900 hover:bg-slate-50'
                       }`}
                     >
-                      Tools & Simulators
+                      Tools
                     </button>
                     <button
                       onClick={() => {
@@ -2267,7 +2272,7 @@ const App: React.FC = () => {
                           }} 
                           className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-3"
                         >
-                          <Sparkles className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Tools & Simulators
+                          <Sparkles className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Tools
                         </button>
                         <button 
                           onClick={() => {
@@ -2396,6 +2401,11 @@ const App: React.FC = () => {
                           setUserName={setUserName}
                           completedIds={completedModules}
                           onBack={() => setCurrentView('dashboard')}
+                          onViewResources={() => {
+                            window.scrollTo(0, 0);
+                            navigate('/resources');
+                            setCurrentView('resources');
+                          }}
                           language={language}
                           userId={user?.uid || ''}
                           onLogin={() => setShowLoginModal(true)}
@@ -2464,6 +2474,11 @@ const App: React.FC = () => {
                       {((currentView as string) === 'resources') && (
                         <ResourcesView
                           onBack={() => setCurrentView('dashboard')}
+                          onNavigateToAP={() => {
+                            window.scrollTo(0,0);
+                            navigate('/tools/beginfinsguidetoapbusinesswithpf');
+                            setCurrentView('ap-unit');
+                          }}
                         />
                       )}
                       {((currentView as string) === 'about') && (

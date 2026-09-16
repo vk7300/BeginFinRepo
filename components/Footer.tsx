@@ -135,7 +135,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={handleGoTools} 
                   className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  Simulators
+                  Tools
                 </button>
                 <button 
                   type="button"

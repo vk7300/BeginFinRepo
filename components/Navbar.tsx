@@ -16,12 +16,10 @@ import {
   Activity, 
   Settings, 
   LogOut,
-  HelpCircle,
-  ShieldCheck
+  HelpCircle
 } from 'lucide-react';
 import { User } from '../firebase';
 import { useSystemStatus } from '../services/systemStatusService';
-import { isEmailAdmin } from '../config/adminConfig';
 
 export interface NavbarProps {
   user: User | null;
@@ -373,20 +371,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className="px-4 py-1.5 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       {user.email || 'My Account'}
                     </div>
-                    {isEmailAdmin(user.email) && (
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          navigate('/beginfin-admins');
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="w-full text-left px-4 py-2 text-xs font-bold text-[#7F7FFA] hover:bg-[#7F7FFA]/10 transition-colors flex items-center gap-2 cursor-pointer"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#7F7FFA]" />
-                        <span>Admin Portal</span>
-                      </button>
-                    )}
                     {onOpenSettings && (
                       <button 
                         type="button"
@@ -490,7 +474,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       isToolsActive ? 'bg-[#7F7FFA]/10 text-[#7F7FFA]' : 'text-slate-800 hover:bg-slate-50 hover:text-indigo-600'
                     }`}
                   >
-                    <Sparkles className="w-4 h-4 shrink-0" /> Tools & Simulators
+                    <Sparkles className="w-4 h-4 shrink-0" /> Tools
                   </button>
                   <button 
                     type="button"
@@ -541,19 +525,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <Activity className="w-4 h-4 shrink-0" /> System Status
                   </button>
-                  {isEmailAdmin(user?.email) && (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setShowMobileMenu(false);
-                        navigate('/beginfin-admins');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }} 
-                      className="w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-[#7F7FFA] bg-[#7F7FFA]/10 hover:bg-[#7F7FFA]/20 transition-colors flex items-center gap-3 cursor-pointer"
-                    >
-                      <ShieldCheck className="w-4 h-4 shrink-0 text-[#7F7FFA]" /> Admin Portal
-                    </button>
-                  )}
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">

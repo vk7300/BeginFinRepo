@@ -297,10 +297,12 @@ export const AboutView: React.FC<AboutViewProps> = () => {
               <div>
                 <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-md border border-slate-200/80 bg-slate-950 group">
                   <iframe 
-                    src="https://www.youtube-nocookie.com/embed/rtoiGuFXk1s" 
+                    src="https://www.youtube.com/embed/rtoiGuFXk1s?rel=0" 
                     title="At The Core - Pursuing Excellence: Belton ISD BeginFin Feature"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                     allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    loading="lazy"
                     className="w-full h-full border-0"
                   />
                 </div>

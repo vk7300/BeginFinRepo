@@ -9,6 +9,8 @@ import { ClassReportPDF } from './ClassReportPDF';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { googleClassroomService, ClassroomCourse, ClassroomStudent } from '../services/googleClassroomService';
+import { GuillocheBorder } from './GuillocheBorder';
+import { GuillocheBackground } from './GuillocheBackground';
 
 interface ClassData {
   id: string;
@@ -851,22 +853,30 @@ export const TeacherDashboard: React.FC<{
       }
       
       try {
+        if (document.fonts) {
+          await document.fonts.ready;
+        }
         const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          windowWidth: 816,
+          windowHeight: 1056
         });
         
-        const imgData = canvas.toDataURL('image/png');
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
         const pdf = new jsPDF({
-          orientation: 'landscape',
-          unit: 'px',
-          format: [canvas.width, canvas.height]
+          orientation: 'portrait',
+          unit: 'pt',
+          format: 'letter'
         });
         
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`Certificate_${student.displayName.replace(/\s+/g, '_')}.pdf`);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+        const safeName = student.displayName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        pdf.save(`BeginFin_Certificate_${safeName}.pdf`);
       } catch (err) {
         console.error('Error generating certificate:', err);
       } finally {
@@ -1983,55 +1993,174 @@ export const TeacherDashboard: React.FC<{
       {/* Hidden Certificate Component for PDF Generation */}
       {isGeneratingCertificate && (
         <div className="fixed left-[-9999px] top-0">
-          <div id="student-certificate-pdf" className="bg-white border-[20px] border-slate-900 p-12 w-[1123px] h-[794px] flex flex-col items-center justify-center text-slate-900 font-serif relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-              <Award className="w-[500px] h-[500px]" />
-            </div>
-            <div className="border-[1px] border-slate-200 h-full w-full flex flex-col items-center justify-between p-12 text-center relative z-10">
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-3">
-                   <BookOpen className="w-12 h-12 text-slate-900" />
-                   <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase font-sans">BeginFin</span>
+          <div 
+            id="student-certificate-pdf" 
+            className="w-[816px] h-[1056px] relative overflow-hidden flex flex-col justify-between select-none"
+            style={{
+              boxSizing: 'border-box',
+              backgroundColor: '#FFFFFF',
+              color: '#1E293B',
+            }}
+          >
+            {/* Guilloche Security Border with Corner Rosettes (Faint Periwinkle) */}
+            <GuillocheBorder width={816} height={1056} color="#8F9CEE" />
+
+            {/* Faint Guilloche Background Watermark */}
+            <GuillocheBackground width={816} height={1056} color="#8F9CEE" opacity={0.065} />
+
+            {/* Certificate Content */}
+            <div 
+              className="relative z-10 w-full h-full flex flex-col justify-between items-center text-center select-none"
+              style={{
+                padding: '58px 56px 74px 56px',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* Top Section: BeginFin Logo & Certificate Title */}
+              <div className="w-full flex flex-col items-center">
+                {/* Logo: Just "BeginFin" in Source Serif 4 (dollar sign removed) */}
+                <div className="flex items-center justify-center mb-1">
+                  <span 
+                    style={{ 
+                      fontSize: '44px', 
+                      fontWeight: 600, 
+                      fontFamily: "'Source Serif 4', Georgia, serif", 
+                      color: '#0F172A', 
+                      letterSpacing: '-0.01em', 
+                      lineHeight: 1 
+                    }}
+                  >
+                    BeginFin
+                  </span>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-xs font-black text-indigo-600 tracking-[0.4em] uppercase font-sans">Professional Credential</span>
-                  <h1 className="text-6xl font-bold text-slate-900 uppercase tracking-tighter">Certificate</h1>
-                  <h2 className="text-lg font-medium text-slate-400 uppercase tracking-[0.4em]">of Financial Literacy</h2>
-                </div>
+
+                <h1 
+                  style={{ 
+                    fontSize: '26px', 
+                    fontWeight: 600, 
+                    fontFamily: "'Source Serif 4', Georgia, serif", 
+                    letterSpacing: '0.12em', 
+                    color: '#1E293B', 
+                    textTransform: 'uppercase', 
+                    marginTop: '28px', 
+                    marginBottom: '32px' 
+                  }}
+                >
+                  CERTIFICATE OF COMPLETION
+                </h1>
               </div>
-              <div className="w-full px-16">
-                <p className="text-slate-400 italic text-xl mb-2">This certificate is proudly awarded to</p>
-                <div className="text-5xl font-bold text-slate-900 border-b-2 border-slate-200 px-16 pb-3 inline-block">
-                  {isGeneratingCertificate.displayName}
+
+              {/* Middle Section: Recipient Calligraphy & Exact Body Text in Source Serif 4 */}
+              <div className="w-full flex flex-col items-center my-auto">
+                <div 
+                  style={{ 
+                    fontSize: '46px', 
+                    fontFamily: "'Source Serif 4', Georgia, serif", 
+                    fontStyle: 'italic', 
+                    fontWeight: 600, 
+                    color: '#1E293B', 
+                    lineHeight: 1.2, 
+                    marginBottom: '32px',
+                    padding: '0 24px'
+                  }}
+                >
+                  {isGeneratingCertificate.displayName || "BeginFin Scholar"}
                 </div>
-              </div>
-              <div className="w-full max-w-2xl">
-                <p className="text-slate-900 text-2xl italic">
-                  for demonstrating mastery in personal finance essentials.
+
+                <p 
+                  style={{ 
+                    fontSize: '16.5px', 
+                    lineHeight: '1.75', 
+                    fontFamily: "'Source Serif 4', Georgia, serif", 
+                    color: '#1E293B', 
+                    maxWidth: '620px', 
+                    margin: '0 auto', 
+                    textAlign: 'center', 
+                    fontWeight: 400 
+                  }}
+                >
+                  has successfully completed a curriculum that is vetted for alignment with the National Standards for Personal Finance Education on the BeginFin platform at begin-fin.com. Through modules that require 100% mastery to continue, the recipient has received a strong base in several personal finance topics like Investing, Credit, and more.
                 </p>
               </div>
-              <div className="flex justify-between w-full max-w-3xl items-end mt-8 px-4">
-                <div className="text-center flex-1">
-                  <div className="text-2xl md:text-3xl text-slate-800 mb-1 font-signature flex items-center justify-center gap-3">
-                    <span>Vishnu Kakarla</span>
-                    <span className="font-sans text-slate-400 text-sm font-normal">&amp;</span>
-                    <span>Kruz Smith</span>
+
+              {/* Bottom Section: Dual Signatures & About BeginFin */}
+              <div className="w-full flex flex-col items-center mt-auto">
+                <div className="w-full flex items-end justify-around px-4 mb-7">
+                  {/* Left: Vishnu Kakarla */}
+                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
+                    <div 
+                      style={{ 
+                        fontFamily: "'Source Serif 4', Georgia, serif", 
+                        fontSize: '24px', 
+                        fontStyle: 'italic', 
+                        fontWeight: 600, 
+                        color: '#1E293B', 
+                        height: '36px', 
+                        display: 'flex', 
+                        alignItems: 'flex-end', 
+                        justifyContent: 'center' 
+                      }}
+                    >
+                      Vishnu Kakarla
+                    </div>
+                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                      Founder, Vishnu Kakarla
+                    </div>
                   </div>
-                  <div className="h-[2px] bg-slate-900 mb-2" />
-                  <div className="text-xs font-bold text-slate-800 uppercase tracking-widest font-sans">Founders, BeginFin</div>
+
+                  {/* Right: Kruz Smith */}
+                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
+                    <div 
+                      style={{ 
+                        fontFamily: "'Source Serif 4', Georgia, serif", 
+                        fontSize: '24px', 
+                        fontStyle: 'italic', 
+                        fontWeight: 600, 
+                        color: '#1E293B', 
+                        height: '36px', 
+                        display: 'flex', 
+                        alignItems: 'flex-end', 
+                        justifyContent: 'center' 
+                      }}
+                    >
+                      Kruz Smith
+                    </div>
+                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                      Co-Founder, Kruz Smith
+                    </div>
+                  </div>
                 </div>
-                <div className="w-32" />
-                <div className="text-center flex-1">
-                  <div className="text-xl font-bold text-slate-800 mb-1">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-                  <div className="h-[2px] bg-slate-900 mb-2" />
-                  <div className="text-xs font-bold text-slate-800 uppercase tracking-widest font-sans">Validation Date</div>
+
+                {/* About BeginFin - Moved up away from the border */}
+                <div className="w-full text-left px-2">
+                  <div 
+                    style={{ 
+                      fontFamily: "'Source Serif 4', Georgia, serif", 
+                      fontSize: '14.5px', 
+                      fontWeight: 700, 
+                      color: '#1E293B', 
+                      marginBottom: '3px' 
+                    }}
+                  >
+                    About BeginFin
+                  </div>
+                  <p 
+                    style={{ 
+                      fontFamily: "'Source Serif 4', Georgia, serif", 
+                      fontSize: '12.5px', 
+                      lineHeight: '1.55', 
+                      color: '#334155', 
+                      maxWidth: '640px', 
+                      margin: 0 
+                    }}
+                  >
+                    BeginFin is a student-built open access initiative that provides a free foundation in Personal Finance Fundamentals. For more about BeginFin, visit begin-fin.com/about.
+                  </p>
                 </div>
               </div>
-              <div className="mt-4">
-                <div className="text-sm font-mono text-slate-500 font-bold tracking-tight">
-                  CREDENTIAL ID: BF-{isGeneratingCertificate.uid.slice(0, 8).toUpperCase()}
-                </div>
-              </div>
+
             </div>
           </div>
         </div>

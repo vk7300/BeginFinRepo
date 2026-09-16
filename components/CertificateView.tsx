@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle, Printer, RefreshCw, Sparkles } from 'lucide-react';
+import { Download, ArrowLeft, Award, CheckCircle, Send, Check, AlertCircle, ShieldCheck, Loader2, LogIn, Lock, AlertTriangle, RefreshCw, Linkedin, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
 import { db, doc, setDoc, auth, handleFirestoreError, OperationType } from '../firebase';
+import { GuillocheBorder } from './GuillocheBorder';
+import { GuillocheBackground } from './GuillocheBackground';
 
 interface Props {
   userName: string;
@@ -14,6 +16,7 @@ interface Props {
   language: Language;
   userId: string;
   onLogin?: () => void;
+  onViewResources?: () => void;
 }
 
 export const CertificateView: React.FC<Props> = ({ 
@@ -22,7 +25,8 @@ export const CertificateView: React.FC<Props> = ({
   completedIds, 
   onBack, 
   userId, 
-  onLogin 
+  onLogin,
+  onViewResources
 }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -35,7 +39,7 @@ export const CertificateView: React.FC<Props> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const hasSyncedRef = useRef(false);
   
-  // Certificate container & scaling
+  // Certificate container & scaling (Portrait US Letter: 816px x 1056px)
   const certificateRef = useRef<HTMLDivElement>(null);
   const containerWrapperRef = useRef<HTMLDivElement>(null);
   const [containerScale, setContainerScale] = useState<number>(1);
@@ -44,13 +48,13 @@ export const CertificateView: React.FC<Props> = ({
   const completedCount = useMemo(() => requiredModules.filter(m => completedIds.includes(m.id)).length, [requiredModules, completedIds]);
   const allCompleted = useMemo(() => completedCount >= requiredModules.length, [completedCount, requiredModules.length]);
 
-  // Handle responsive scaling so preview matches the 1120x792 mm certificate at all viewport widths
+  // Handle responsive scaling so portrait preview matches the 816x1056 px certificate cleanly
   useEffect(() => {
     const handleResize = () => {
       if (!containerWrapperRef.current) return;
       const availableWidth = containerWrapperRef.current.clientWidth;
-      const targetWidth = 1120;
-      const calculatedScale = Math.min(1, Math.max(0.28, availableWidth / targetWidth));
+      const targetWidth = 816;
+      const calculatedScale = Math.min(1, Math.max(0.3, (availableWidth - 16) / targetWidth));
       setContainerScale(calculatedScale);
     };
 
@@ -105,7 +109,7 @@ export const CertificateView: React.FC<Props> = ({
     window.open("https://docs.google.com/forms/d/e/1FAIpQLScSI5QWSR0q6TtTMC9SWeK00cle6_Jmz6zM3rTpAM8YMPG4Zw/viewform?usp=publish-editor", "_blank");
   };
 
-  // Direct PDF download using html2canvas & jsPDF with high DPI rendering and oklab-safe color sanitizer
+  // Direct PDF download using html2canvas & jsPDF with high DPI rendering and color sanitization
   const handleDownloadPDF = async () => {
     if (!allCompleted) {
       setShowIncompleteNotice(true);
@@ -117,15 +121,21 @@ export const CertificateView: React.FC<Props> = ({
     try {
       const element = certificateRef.current;
       if (!element) return;
+
+      // Ensure fonts are ready
+      if (document.fonts) {
+        await document.fonts.ready;
+      }
       
-      // Render canvas at 2x scale for crisp typography
+      // Render canvas at 2x scale for crisp, official-grade typography
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: '#FFFFFF',
-        windowWidth: 1120,
+        windowWidth: 816,
+        windowHeight: 1056,
         ignoreElements: (el) => {
           return el.classList ? el.classList.contains('no-print') : false;
         },
@@ -134,11 +144,11 @@ export const CertificateView: React.FC<Props> = ({
           clonedDoc.querySelectorAll('style').forEach((styleTag) => {
             if (styleTag.textContent) {
               styleTag.textContent = styleTag.textContent
-                .replace(/oklch\([^)]+\)/gi, '#7F7FFA')
-                .replace(/oklab\([^)]+\)/gi, '#3C3C3C')
-                .replace(/color-mix\([^)]+\)/gi, '#7F7FFA')
-                .replace(/color\(display-p3[^)]+\)/gi, '#7F7FFA')
-                .replace(/color\(srgb[^)]+\)/gi, '#7F7FFA');
+                .replace(/oklch\([^)]+\)/gi, '#4A6FA5')
+                .replace(/oklab\([^)]+\)/gi, '#1E293B')
+                .replace(/color-mix\([^)]+\)/gi, '#4A6FA5')
+                .replace(/color\(display-p3[^)]+\)/gi, '#4A6FA5')
+                .replace(/color\(srgb[^)]+\)/gi, '#4A6FA5');
             }
           });
 
@@ -155,16 +165,16 @@ export const CertificateView: React.FC<Props> = ({
             if (ctx) {
               try {
                 ctx.clearRect(0, 0, 1, 1);
-                ctx.fillStyle = '#3C3C3C';
+                ctx.fillStyle = '#1E293B';
                 ctx.fillStyle = colorStr;
                 ctx.fillRect(0, 0, 1, 1);
                 const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
                 return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(2)})`;
               } catch {
-                return '#3C3C3C';
+                return '#1E293B';
               }
             }
-            return '#3C3C3C';
+            return '#1E293B';
           };
 
           const certEl = clonedDoc.getElementById('beginfin-certificate');
@@ -201,9 +211,9 @@ export const CertificateView: React.FC<Props> = ({
 
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
       const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'letter' // 612 x 792 pt, matching 8.5 x 11 inch portrait
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -211,22 +221,26 @@ export const CertificateView: React.FC<Props> = ({
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       
       const safeGraduate = (userName || 'Student').replace(/[^a-zA-Z0-9_-]/g, '_');
-      pdf.save(`BeginFin_Certificate_Financial_Literacy_${safeGraduate}.pdf`);
+      pdf.save(`BeginFin_Certificate_${safeGraduate}.pdf`);
     } catch (err) {
       console.error('Error generating certificate PDF:', err);
-      // Fallback to standard window.print if canvas generation fails
-      window.print();
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const handlePrint = () => {
-    if (!allCompleted) {
-      setShowIncompleteNotice(true);
-      return;
+  const handleShareLinkedIn = () => {
+    const shareUrl = "https://begin-fin.com";
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleGoToResources = () => {
+    if (onViewResources) {
+      onViewResources();
+    } else {
+      window.location.href = '/resources';
     }
-    window.print();
   };
 
   useEffect(() => {
@@ -234,17 +248,6 @@ export const CertificateView: React.FC<Props> = ({
       setIsNameSet(true);
     }
   }, [userName]);
-
-  // Clean, standard formatted issue date
-  const issueDateString = useMemo(() => {
-    const now = new Date();
-    return now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }, []);
-
-  const credentialId = useMemo(() => {
-    const seed = userId || 'STUDENT';
-    return `BF-${new Date().getFullYear()}-${seed.slice(0, 8).toUpperCase()}`;
-  }, [userId]);
 
   const handleSetName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -399,9 +402,9 @@ export const CertificateView: React.FC<Props> = ({
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-4 pb-20 relative font-sans">
+    <div className="space-y-6 max-w-5xl mx-auto px-4 pb-20 relative font-sans">
       {/* Top Toolbar */}
-      <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+      <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-8 pb-3">
         <button 
           onClick={onBack} 
           className="flex items-center gap-2 text-[#3C3C3C] hover:text-[#7F7FFA] font-bold transition-colors cursor-pointer"
@@ -409,7 +412,7 @@ export const CertificateView: React.FC<Props> = ({
           <ArrowLeft className="w-4 h-4" /> Return to Dashboard
         </button>
         
-        <div className="flex flex-wrap items-center gap-2.5 relative">
+        <div className="flex flex-wrap items-center gap-3 relative">
           {showIncompleteNotice && (
             <div className="absolute -top-12 right-0 bg-[#3C3C3C] text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-xl flex items-center gap-2 z-50">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
@@ -418,40 +421,16 @@ export const CertificateView: React.FC<Props> = ({
             </div>
           )}
 
-          <button 
-            onClick={requestDigitalCredential}
-            disabled={!allCompleted}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs ${
-              allCompleted 
-                ? 'bg-white text-[#3C3C3C] hover:bg-[#F4F8FA] border border-slate-200 cursor-pointer' 
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-600" /> Request Digital Badge
-          </button>
-
-          <button 
-            onClick={handlePrint}
-            disabled={!allCompleted}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs ${
-              allCompleted 
-                ? 'bg-white text-[#3C3C3C] hover:bg-[#F4F8FA] border border-slate-200 cursor-pointer' 
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-            }`}
-            title="Print via browser dialog"
-          >
-            <Printer className="w-4 h-4 text-[#3C3C3C]" /> Print
-          </button>
-
+          {/* Only offer PDF download (Print option removed as requested) */}
           <button 
             onClick={handleDownloadPDF}
             disabled={!allCompleted || isDownloading}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
+            className={`px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
               allCompleted 
                 ? 'bg-[#7F7FFA] hover:bg-[#6868EB] text-white cursor-pointer' 
                 : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
             }`}
-            title={allCompleted ? "Download high-resolution PDF certificate" : "Complete all units to unlock download"}
+            title={allCompleted ? "Download official PDF certificate" : "Complete all units to unlock download"}
           >
             {isDownloading ? (
               <>
@@ -465,6 +444,65 @@ export const CertificateView: React.FC<Props> = ({
               </>
             )}
           </button>
+
+          {/* Request Credential button pointing to certifier request form */}
+          <button
+            onClick={requestDigitalCredential}
+            disabled={!allCompleted}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
+              allCompleted
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+            }`}
+            title={allCompleted ? "Request digital credential via Certifier request form" : "Complete all units to request credential"}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Request Credential</span>
+          </button>
+
+          {/* Share on LinkedIn button */}
+          <button
+            onClick={handleShareLinkedIn}
+            disabled={!allCompleted}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
+              allCompleted
+                ? 'bg-[#0A66C2] hover:bg-[#004182] text-white cursor-pointer'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+            }`}
+            title={allCompleted ? "Share certificate achievement on LinkedIn" : "Complete all units to share"}
+          >
+            <Linkedin className="w-4 h-4" />
+            <span>Share on LinkedIn</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Congratulations Note / Modal */}
+      <div className="no-print bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-[#7F7FFA] shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                Congratulations!
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pl-0 sm:pl-10">
+              Thank you for using BeginFin. You now have a strong base in Personal Finance Fundamentals. To keep going, visit the &quot;Resources&quot; tab to view BeginFin-curated personal finance resources. Don&apos;t forget to share BeginFin with your family and friends!
+            </p>
+          </div>
+          <div className="shrink-0 pt-1 sm:pt-0 sm:self-center pl-0 sm:pl-2">
+            <button
+              onClick={handleGoToResources}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Go to Resources</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -479,87 +517,43 @@ export const CertificateView: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Responsive Scaling Wrapper: Guarantees preview is identical to final 1120x792 export */}
+      {/* Responsive Scaling Wrapper: Guarantees preview is identical to final 816x1056 px export */}
       <div 
         ref={containerWrapperRef} 
         className="w-full flex justify-center items-start overflow-hidden py-2 select-none"
       >
         <div 
           style={{
-            width: '1120px',
-            height: '792px',
+            width: '816px',
+            height: '1056px',
             transform: `scale(${containerScale})`,
             transformOrigin: 'top center',
-            marginBottom: `${(containerScale - 1) * 792}px`,
+            marginBottom: `${(containerScale - 1) * 1056}px`,
           }}
           className="transition-transform duration-100 ease-out"
         >
-          {/* Main 1120x792 Certificate Card: Authentic Certificate Design with Official Logo and BeginFin Brand Aesthetic */}
+          {/* Main 816x1056 Portrait Certificate Card: Exact replica of official BeginFin certificate design */}
           <div 
             ref={certificateRef}
             id="beginfin-certificate"
-            className="w-[1120px] h-[792px] relative overflow-hidden flex flex-col justify-between p-10 certificate-print-card select-none"
+            className="w-[816px] h-[1056px] relative overflow-hidden flex flex-col justify-between select-none certificate-print-card shadow-lg"
             style={{
               boxSizing: 'border-box',
               backgroundColor: '#FFFFFF',
-              color: '#3C3C3C',
-              fontFamily: "'Inter', sans-serif",
-              border: '3px solid #7F7FFA',
-              borderRadius: '14px',
+              color: '#1E293B',
             }}
           >
-            {/* Subtle Glacial White Ambient Gradient Fill */}
-            <div 
-              className="absolute inset-0 pointer-events-none" 
-              style={{
-                background: 'radial-gradient(ellipse at 50% 45%, #FFFFFF 0%, #FAFCFD 70%, #F4F8FA 100%)',
-              }}
-            />
+            {/* Guilloche Security Border with Corner Rosettes (Faint Periwinkle) */}
+            <GuillocheBorder width={816} height={1056} color="#8F9CEE" />
 
-            {/* Inset Hairline Certificate Border */}
-            <div 
-              className="absolute pointer-events-none"
-              style={{
-                inset: '12px',
-                border: '1.5px solid #CBD5E1',
-                borderRadius: '10px',
-              }}
-            />
-
-            {/* Ornate Diploma Corner Accents (4 Corners) */}
-            {/* Top-Left */}
-            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute top-3 left-3 pointer-events-none">
-              <path d="M4 38V12C4 7.58172 7.58172 4 12 4H38" stroke="#7F7FFA" strokeWidth="2.5" />
-              <path d="M10 38V16C10 12.6863 12.6863 10 16 10H38" stroke="#9B9BFF" strokeWidth="1" />
-              <circle cx="7" cy="7" r="3" fill="#7F7FFA" />
-            </svg>
-
-            {/* Top-Right */}
-            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute top-3 right-3 pointer-events-none">
-              <path d="M38 38V12C38 7.58172 34.4183 4 30 4H4" stroke="#7F7FFA" strokeWidth="2.5" />
-              <path d="M32 38V16C32 12.6863 29.3137 10 26 10H4" stroke="#9B9BFF" strokeWidth="1" />
-              <circle cx="35" cy="7" r="3" fill="#7F7FFA" />
-            </svg>
-
-            {/* Bottom-Left */}
-            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute bottom-3 left-3 pointer-events-none">
-              <path d="M4 4V30C4 34.4183 7.58172 38 12 38H38" stroke="#7F7FFA" strokeWidth="2.5" />
-              <path d="M10 4V26C10 29.3137 12.6863 32 16 32H38" stroke="#9B9BFF" strokeWidth="1" />
-              <circle cx="7" cy="35" r="3" fill="#7F7FFA" />
-            </svg>
-
-            {/* Bottom-Right */}
-            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" className="absolute bottom-3 right-3 pointer-events-none">
-              <path d="M38 4V30C38 34.4183 34.4183 38 30 38H4" stroke="#7F7FFA" strokeWidth="2.5" />
-              <path d="M32 4V26C32 29.3137 29.3137 32 26 32H4" stroke="#9B9BFF" strokeWidth="1" />
-              <circle cx="35" cy="35" r="3" fill="#7F7FFA" />
-            </svg>
+            {/* Faint Guilloche Background Watermark */}
+            <GuillocheBackground width={816} height={1056} color="#8F9CEE" opacity={0.065} />
 
             {/* Incomplete Provisional Watermark (if not finished) */}
             {!allCompleted && (
               <div 
-                className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none select-none rounded-[14px]"
-                style={{ backgroundColor: 'rgba(244, 248, 250, 0.7)', backdropFilter: 'blur(2px)' }}
+                className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none select-none"
+                style={{ backgroundColor: 'rgba(244, 248, 250, 0.72)', backdropFilter: 'blur(2px)' }}
                 aria-hidden="true"
               >
                 <div 
@@ -585,228 +579,160 @@ export const CertificateView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Certificate Content - Structured with Authentic Diploma Typography & Balance */}
-            <div className="relative z-10 w-full h-full flex flex-col justify-between items-center text-center px-6 py-2">
-              
-              {/* Top Section: Official Logo, Subtitle & Title */}
-              <div className="flex flex-col items-center">
-                {/* Official BeginFin Logo */}
-                <img 
-                  src="/logo.png" 
-                  alt="BeginFin Official Logo" 
-                  className="w-16 h-16 object-contain mb-1.5"
-                  referrerPolicy="no-referrer"
-                  crossOrigin="anonymous"
-                />
-
-                {/* Subtitle */}
-                <div 
-                  className="text-xs font-bold uppercase tracking-[0.3em]"
-                  style={{ color: '#7F7FFA', fontFamily: "'Inter', sans-serif" }}
-                >
-                  BeginFin
+            {/* Certificate Content - Positioned inside the inner guilloche border with generous bottom breathing room */}
+            <div 
+              className="relative z-10 w-full h-full flex flex-col justify-between items-center text-center select-none"
+              style={{
+                padding: '58px 56px 74px 56px',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* Top Section: BeginFin Logo & Certificate Title */}
+              <div className="w-full flex flex-col items-center">
+                {/* Logo: Just "BeginFin" in Source Serif 4 (dollar sign removed) */}
+                <div className="flex items-center justify-center mb-1">
+                  <span 
+                    style={{ 
+                      fontSize: '44px', 
+                      fontWeight: 600, 
+                      fontFamily: "'Source Serif 4', Georgia, serif", 
+                      color: '#0F172A', 
+                      letterSpacing: '-0.01em', 
+                      lineHeight: 1 
+                    }}
+                  >
+                    BeginFin
+                  </span>
                 </div>
 
                 {/* Title */}
                 <h1 
-                  className="font-diploma-title text-4xl font-black uppercase tracking-wider mt-1 mb-1.5"
-                  style={{ color: '#3C3C3C', fontFamily: "'Cinzel', serif" }}
-                >
-                  Certificate of Completion
-                </h1>
-
-                {/* Delicate Ornamental Divider */}
-                <div className="flex items-center justify-center gap-3 my-1">
-                  <div style={{ width: '70px', height: '1.5px', backgroundColor: '#7F7FFA' }} />
-                  <div style={{ width: '6px', height: '6px', transform: 'rotate(45deg)', backgroundColor: '#7F7FFA' }} />
-                  <div style={{ width: '70px', height: '1.5px', backgroundColor: '#7F7FFA' }} />
-                </div>
-              </div>
-
-              {/* Middle Section: Recipient & Blurb */}
-              <div className="w-full flex flex-col items-center my-auto">
-                <div 
-                  className="text-[11px] font-bold uppercase tracking-[0.28em] mb-1.5"
-                  style={{ color: '#64748B', fontFamily: "'Inter', sans-serif" }}
-                >
-                  This is proudly presented to
-                </div>
-
-                {/* Recipient Full Name */}
-                <div 
-                  className="text-[44px] font-black tracking-tight leading-tight px-6 my-1"
-                  style={{ color: '#3C3C3C', fontFamily: "'Inter', sans-serif" }}
-                >
-                  {userName || "BeginFin Scholar"}
-                </div>
-
-                {/* Elegant Iris Pulse Accent Underline */}
-                <div 
                   style={{ 
-                    width: '140px', 
-                    height: '2.5px', 
-                    backgroundColor: '#7F7FFA', 
-                    borderRadius: '999px', 
-                    margin: '6px auto 16px auto' 
-                  }} 
-                />
-
-                {/* Required Blurb Text - Justified with balanced inter-word spacing and zero awkward gaps */}
-                <p 
-                  style={{
-                    color: '#3C3C3C',
-                    textAlign: 'justify',
-                    textJustify: 'inter-word',
-                    hyphens: 'none',
-                    lineHeight: '1.85',
-                    fontSize: '15.5px',
-                    maxWidth: '820px',
-                    margin: '0 auto',
-                    padding: '0 20px',
-                    fontFamily: "'Inter', sans-serif",
-                    fontWeight: 400,
+                    fontSize: '26px', 
+                    fontWeight: 600, 
+                    fontFamily: "'Source Serif 4', Georgia, serif", 
+                    letterSpacing: '0.12em', 
+                    color: '#1E293B', 
+                    textTransform: 'uppercase', 
+                    marginTop: '28px', 
+                    marginBottom: '32px' 
                   }}
                 >
-                  has successfully completed all modules in BeginFin, an open access financial literacy initiative with a curriculum that is vetted for alignment with the National Standards for Personal Finance Education developed by the Jump$tart Coalition and the Council for Economic Education.
+                  CERTIFICATE OF COMPLETION
+                </h1>
+              </div>
+
+              {/* Middle Section: Recipient Calligraphy & Exact Body Text in Source Serif 4 */}
+              <div className="w-full flex flex-col items-center my-auto">
+                {/* Recipient Full Name in Source Serif 4 */}
+                <div 
+                  style={{ 
+                    fontSize: '46px', 
+                    fontFamily: "'Source Serif 4', Georgia, serif", 
+                    fontStyle: 'italic', 
+                    fontWeight: 600, 
+                    color: '#1E293B', 
+                    lineHeight: 1.2, 
+                    marginBottom: '32px',
+                    padding: '0 24px'
+                  }}
+                >
+                  {userName || "VK"}
+                </div>
+
+                {/* Body Paragraph - Matches exact wording in Source Serif 4 */}
+                <p 
+                  style={{ 
+                    fontSize: '16.5px', 
+                    lineHeight: '1.75', 
+                    fontFamily: "'Source Serif 4', Georgia, serif", 
+                    color: '#1E293B', 
+                    maxWidth: '620px', 
+                    margin: '0 auto', 
+                    textAlign: 'center', 
+                    fontWeight: 400 
+                  }}
+                >
+                  has successfully completed a curriculum that is vetted for alignment with the National Standards for Personal Finance Education on the BeginFin platform at begin-fin.com. Through modules that require 100% mastery to continue, the recipient has received a strong base in several personal finance topics like Investing, Credit, and more.
                 </p>
               </div>
 
-              {/* Bottom Section: Dual Cursive Signatures & Official Verification Seal */}
-              <div className="w-full max-w-[880px] flex items-end justify-between px-4 mt-4">
-                {/* Vishnu Kakarla - Founder */}
-                <div className="flex flex-col items-center text-center" style={{ width: '220px' }}>
-                  <div 
-                    className="font-diploma-script select-none" 
-                    style={{ 
-                      fontSize: '38px', 
-                      color: '#3C3C3C', 
-                      lineHeight: 1, 
-                      height: '42px',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    Vishnu Kakarla
-                  </div>
-                  <div style={{ width: '180px', height: '1.5px', backgroundColor: '#94A3B8', marginTop: '6px', marginBottom: '6px' }} />
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#3C3C3C', fontFamily: "'Inter', sans-serif" }}>
-                    Vishnu Kakarla
-                  </div>
-                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#7F7FFA', marginTop: '2px', fontFamily: "'Inter', sans-serif" }}>
-                    Founder
-                  </div>
-                </div>
-
-                {/* Center: Official Verification Seal */}
-                <div className="flex flex-col items-center justify-center">
-                  <div 
-                    style={{
-                      width: '88px',
-                      height: '88px',
-                      borderRadius: '50%',
-                      border: '2.5px solid #7F7FFA',
-                      padding: '3px',
-                      backgroundColor: '#FFFFFF',
-                      boxShadow: '0 4px 12px rgba(127, 127, 250, 0.12)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                    }}
-                  >
+              {/* Bottom Section: Dual Signatures & About BeginFin */}
+              <div className="w-full flex flex-col items-center mt-auto">
+                {/* Dual Signatures - Moved up, Source Serif 4 */}
+                <div className="w-full flex items-end justify-around px-4 mb-7">
+                  {/* Left: Vishnu Kakarla - Founder */}
+                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
                     <div 
-                      style={{
-                        width: '76px',
-                        height: '76px',
-                        borderRadius: '50%',
-                        border: '1px dashed #7F7FFA',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#F8FAFC',
+                      style={{ 
+                        fontFamily: "'Source Serif 4', Georgia, serif", 
+                        fontSize: '24px', 
+                        fontStyle: 'italic', 
+                        fontWeight: 600, 
+                        color: '#1E293B', 
+                        height: '36px', 
+                        display: 'flex', 
+                        alignItems: 'flex-end', 
+                        justifyContent: 'center' 
                       }}
                     >
-                      <ShieldCheck style={{ width: '24px', height: '24px', color: '#7F7FFA' }} />
-                      <span 
-                        style={{
-                          fontSize: '7px',
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.14em',
-                          color: '#3C3C3C',
-                          marginTop: '2px',
-                          textAlign: 'center',
-                          lineHeight: 1.2,
-                          fontFamily: "'Inter', sans-serif",
-                        }}
-                      >
-                        BEGINFIN<br />VERIFIED
-                      </span>
+                      Vishnu Kakarla
+                    </div>
+                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                      Founder, Vishnu Kakarla
                     </div>
                   </div>
-                  <span 
-                    style={{
-                      fontSize: '8.5px',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.16em',
-                      color: '#7F7FFA',
-                      marginTop: '6px',
-                      fontFamily: "'Inter', sans-serif",
-                    }}
-                  >
-                    Official Seal
-                  </span>
+
+                  {/* Right: Kruz Smith - Co-Founder */}
+                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
+                    <div 
+                      style={{ 
+                        fontFamily: "'Source Serif 4', Georgia, serif", 
+                        fontSize: '24px', 
+                        fontStyle: 'italic', 
+                        fontWeight: 600, 
+                        color: '#1E293B', 
+                        height: '36px', 
+                        display: 'flex', 
+                        alignItems: 'flex-end', 
+                        justifyContent: 'center' 
+                      }}
+                    >
+                      Kruz Smith
+                    </div>
+                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                      Co-Founder, Kruz Smith
+                    </div>
+                  </div>
                 </div>
 
-                {/* Kruz Smith - Co-Founder */}
-                <div className="flex flex-col items-center text-center" style={{ width: '220px' }}>
+                {/* About BeginFin Section - Moved up away from the border */}
+                <div className="w-full text-left px-2">
                   <div 
-                    className="font-diploma-script select-none" 
                     style={{ 
-                      fontSize: '38px', 
-                      color: '#3C3C3C', 
-                      lineHeight: 1, 
-                      height: '42px',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      justifyContent: 'center',
+                      fontFamily: "'Source Serif 4', Georgia, serif", 
+                      fontSize: '14.5px', 
+                      fontWeight: 700, 
+                      color: '#1E293B', 
+                      marginBottom: '3px' 
                     }}
                   >
-                    Kruz Smith
+                    About BeginFin
                   </div>
-                  <div style={{ width: '180px', height: '1.5px', backgroundColor: '#94A3B8', marginTop: '6px', marginBottom: '6px' }} />
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#3C3C3C', fontFamily: "'Inter', sans-serif" }}>
-                    Kruz Smith
-                  </div>
-                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#7F7FFA', marginTop: '2px', fontFamily: "'Inter', sans-serif" }}>
-                    Co-Founder
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Credential Metadata Strip */}
-              <div 
-                className="w-full max-w-[960px] flex items-center justify-between pt-3 mt-3" 
-                style={{ 
-                  borderTop: '1px solid #E2E8F0',
-                  fontSize: '10px',
-                  color: '#64748B',
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                <div>
-                  <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Date Issued: </span>
-                  <span style={{ fontWeight: 700, color: '#3C3C3C' }}>{issueDateString}</span>
-                </div>
-                <div style={{ fontWeight: 600, color: '#7F7FFA', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  National Standards for Personal Finance Education
-                </div>
-                <div>
-                  <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Credential ID: </span>
-                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#3C3C3C' }}>{credentialId}</span>
+                  <p 
+                    style={{ 
+                      fontFamily: "'Source Serif 4', Georgia, serif", 
+                      fontSize: '12.5px', 
+                      lineHeight: '1.55', 
+                      color: '#334155', 
+                      maxWidth: '640px', 
+                      margin: 0 
+                    }}
+                  >
+                    BeginFin is a student-built open access initiative that provides a free foundation in Personal Finance Fundamentals. For more about BeginFin, visit begin-fin.com/about.
+                  </p>
                 </div>
               </div>
 
