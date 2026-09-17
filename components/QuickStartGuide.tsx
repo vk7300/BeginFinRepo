@@ -137,7 +137,7 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
 
     // 9. Support Contacts
     addSectionHeader('9', 'SUPPORT & CONTACTS');
-    addParagraph('General Questions: contact@begin-fin.com\nTeacher Support: teachers@begin-fin.com\nMedia Relations: mediarelations@begin-fin.com\nAccount Assistance: support@begin-fin.com');
+    addParagraph('For any general inquiries, classroom assistance, account support, or media requests, please contact our team:\n\nEmail: support@begin-fin.com\nWebsite: https://begin-fin.com');
 
     const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
@@ -540,21 +540,15 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
               <h2 className="text-2xl font-bold text-white tracking-tight">Support & Inquiry Contacts</h2>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[
-                { label: 'General Questions', email: 'contact@begin-fin.com' },
-                { label: 'Teacher Support', email: 'teachers@begin-fin.com' },
-                { label: 'Media Relations', email: 'mediarelations@begin-fin.com' },
-                { label: 'Account Assistance', email: 'support@begin-fin.com' }
-              ].map((c, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-[#7F7FFA] tracking-wider block">{c.label}</span>
-                  <a href={`mailto:${c.email}`} className="text-xs font-semibold text-slate-200 hover:text-white transition-colors flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-[#7F7FFA]" />
-                    <span>{c.email}</span>
-                  </a>
-                </div>
-              ))}
+            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+              <span className="text-[10px] uppercase font-bold text-[#7F7FFA] tracking-wider block">Direct Support</span>
+              <p className="text-sm text-slate-300 leading-relaxed font-normal">
+                For general questions, teacher support, media relations, or account assistance:
+              </p>
+              <a href="mailto:support@begin-fin.com" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200 hover:text-white transition-colors bg-white/10 px-4 py-2.5 rounded-xl border border-white/10 w-fit">
+                <Mail className="w-4 h-4 text-[#7F7FFA]" />
+                <span>support@begin-fin.com</span>
+              </a>
             </div>
           </section>
 

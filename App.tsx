@@ -364,7 +364,7 @@ const LoginModalContent: React.FC<{
           <span className="text-[12px] text-slate-600 leading-snug">
             I certify that I am at least <strong className="text-slate-900">14 years old</strong> and agree to BeginFin's{' '}
             <a 
-              href="/terms" 
+              href="https://begin-fin.com/termsofuse" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="text-indigo-600 font-semibold underline underline-offset-2 hover:text-indigo-700"
@@ -661,11 +661,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    if (path === '/termsofuse') {
+    if (path === '/termsofuse' || path === '/terms') {
       setCurrentView('terms');
-    } else if (path === '/privacypolicy' || path === '/privacynotice') {
+      if (path === '/terms') {
+        navigate('/termsofuse', { replace: true });
+      }
+    } else if (path === '/privacypolicy' || path === '/privacynotice' || path === '/privacy') {
       setCurrentView('privacy');
-      if (path === '/privacynotice') {
+      if (path === '/privacynotice' || path === '/privacy') {
         navigate('/privacypolicy', { replace: true });
       }
     } else if (path === '/curriculum') {

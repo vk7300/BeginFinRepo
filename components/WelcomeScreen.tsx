@@ -95,12 +95,12 @@ export const WelcomeScreen: React.FC<Props> = ({
         
         {/* ========================================================= */}
         {/* SECTION 1: HERO                                           */}
-        {/* Gradient: BeginFin Iris Pulse (#7F7FFA) --> Slate Grey    */}
+        {/* Gradient: BeginFin Iris Pulse (#7F7FFA) --> White         */}
         {/* ========================================================= */}
         <section 
           ref={heroRef}
           onMouseMove={handleMouseMove}
-          className={`relative w-full overflow-hidden select-none cursor-default bg-gradient-to-b from-[#7F7FFA] via-[#7575FA] to-[#3C3C3C] ${
+          className={`relative w-full overflow-hidden select-none cursor-default bg-gradient-to-b from-[#7F7FFA] via-[#7575FA] to-white ${
             hasBanner ? 'pt-36 sm:pt-48 md:pt-52' : 'pt-28 sm:pt-36 md:pt-40'
           } pb-16 sm:pb-24 md:pb-28 min-h-[90vh] sm:min-h-[92vh] flex flex-col justify-center items-center text-center px-4 sm:px-6`}
         >
@@ -150,20 +150,20 @@ export const WelcomeScreen: React.FC<Props> = ({
               <button 
                 type="button"
                 onClick={onStart}
-                className="w-full sm:w-auto min-h-[44px] px-8 py-3.5 sm:px-10 sm:py-4 bg-white hover:bg-slate-50 text-slate-950 rounded-full font-semibold text-sm sm:text-base transition-all active:scale-[0.98] shadow-xl hover:shadow-2xl cursor-pointer text-center flex items-center justify-center"
+                className="w-full sm:w-auto min-h-[44px] px-8 py-3.5 sm:px-10 sm:py-4 bg-white hover:bg-slate-50 text-slate-950 rounded-full font-semibold text-sm sm:text-base transition-all active:scale-[0.98] shadow-xl hover:shadow-2xl cursor-pointer text-center flex items-center justify-center border border-slate-200"
               >
                 Guest Mode
               </button>
             </div>
 
             {/* Terms Disclaimer Subtext */}
-            <p className="text-white/80 text-xs sm:text-sm font-normal tracking-tight mb-8 sm:mb-12 max-w-md px-2">
+            <p className="text-slate-700 text-xs sm:text-sm font-medium tracking-tight mb-8 sm:mb-12 max-w-md px-2">
               By proceeding, you agree to our{' '}
-              <Link to="/termsofuse" className="underline hover:text-white transition-colors">
+              <Link to="/termsofuse" className="underline text-slate-900 hover:text-[#7F7FFA] transition-colors">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link to="/privacypolicy" className="underline hover:text-white transition-colors">
+              <Link to="/privacypolicy" className="underline text-slate-900 hover:text-[#7F7FFA] transition-colors">
                 Privacy Policy
               </Link>
             </p>
@@ -173,7 +173,7 @@ export const WelcomeScreen: React.FC<Props> = ({
               type="button"
               onClick={() => contrastRef.current?.scrollIntoView({ behavior: 'smooth' })}
               aria-label="Scroll to next section"
-              className="text-white/70 hover:text-white transition-colors p-2.5 rounded-full hover:bg-white/10 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="text-slate-700 hover:text-black transition-colors p-2.5 rounded-full hover:bg-slate-100/70 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ChevronDown className="w-6 h-6 animate-bounce" />
             </button>
@@ -185,32 +185,31 @@ export const WelcomeScreen: React.FC<Props> = ({
 
         {/* ========================================================= */}
         {/* SECTION 2: CONTRAST / PAIN POINTS                         */}
-        {/* Gradient: Slate Grey (#3C3C3C) --> Slate Grey Solid       */}
-        {/* Transitioning at bottom into BeginFin Iris Pulse          */}
+        {/* Gradient: White --> White Solid --> BeginFin Iris Pulse   */}
         {/* ========================================================= */}
         <section 
           ref={contrastRef}
-          className="relative w-full bg-gradient-to-b from-[#3C3C3C] via-[#3C3C3C] to-[#7F7FFA] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-white"
+          className="relative w-full bg-gradient-to-b from-white via-white to-[#7F7FFA] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-slate-900"
         >
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
             
-            {/* Left Column: Pain points with gradual gradient from #7F7FFA to white */}
+            {/* Left Column: Pain points with gradual gradient cascade for maximum contrast and readability */}
             <div className="lg:col-span-5 space-y-1.5 sm:space-y-3 text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.2] sm:leading-[1.22] font-serif font-normal select-none">
-              <div style={{ color: '#7F7FFA' }}>Paywalls.</div>
-              <div style={{ color: '#9494FB' }}>Ad breaks.</div>
-              <div style={{ color: '#AAAAFC' }}>Outdated info.</div>
-              <div style={{ color: '#BFBFFD' }}>No certificate.</div>
-              <div style={{ color: '#D4D4FD' }}>Boring lectures.</div>
-              <div style={{ color: '#EAEAFE' }}>No Interactives.</div>
-              <div style={{ color: '#FFFFFF' }} className="italic pt-1 sm:pt-2">And other gaps.</div>
+              <div style={{ color: '#181A2A' }}>Paywalls.</div>
+              <div style={{ color: '#272B48' }}>Ad breaks.</div>
+              <div style={{ color: '#383E6C' }}>Outdated info.</div>
+              <div style={{ color: '#4B5394' }}>No certificate.</div>
+              <div style={{ color: '#5F68BF' }}>Boring lectures.</div>
+              <div style={{ color: '#737DE8' }}>No Interactives.</div>
+              <div style={{ color: '#4338CA' }} className="italic pt-1 sm:pt-2">And other gaps.</div>
             </div>
 
             {/* Right Column: White Card + Featured Logos */}
             <div className="lg:col-span-7 flex flex-col">
               
               {/* White Card */}
-              <div className="bg-white rounded-[1.75rem] sm:rounded-[2.25rem] p-6 sm:p-10 shadow-2xl text-slate-900 border border-white/20">
-                <h2 className="text-xl min-[400px]:text-2xl sm:text-3xl md:text-4xl font-normal text-[#3C3C3C] font-serif leading-snug tracking-tight mb-6 sm:mb-8">
+              <div className="bg-white rounded-[1.75rem] sm:rounded-[2.25rem] p-6 sm:p-10 shadow-2xl text-slate-900 border border-slate-200/90">
+                <h2 className="text-xl min-[400px]:text-2xl sm:text-3xl md:text-4xl font-normal text-slate-900 font-serif leading-snug tracking-tight mb-6 sm:mb-8">
                   A free foundation<br />
                   in personal finance,<br />
                   <span className="italic">without the gaps.</span>
@@ -218,20 +217,20 @@ export const WelcomeScreen: React.FC<Props> = ({
 
                 {/* 3 Pills */}
                 <div className="space-y-3 sm:space-y-3.5">
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-[#3C3C3C] font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors">
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
                     Free with zero ads
                   </div>
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-[#3C3C3C] font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors">
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
                     10,000+ Unique Visitors
                   </div>
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-[#3C3C3C] font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors">
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
                     25+ countries reached
                   </div>
                 </div>
               </div>
 
               {/* Featured by Press Capsule beneath the card */}
-              <div className="mt-4 sm:mt-5 bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:py-3.5 sm:px-6 shadow-lg border border-white/40 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+              <div className="mt-4 sm:mt-5 bg-white rounded-2xl p-4 sm:py-3.5 sm:px-6 shadow-lg border border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                 <span className="font-serif italic text-sm sm:text-base text-slate-700 font-normal shrink-0">
                   Featured by
                 </span>
@@ -347,14 +346,14 @@ export const WelcomeScreen: React.FC<Props> = ({
           </div>
         </section>
 
-        {/* Transition zone: Iris Pulse flowing into Slate Grey footer */}
-        <div className="w-full h-16 sm:h-24 bg-gradient-to-b from-[#7F7FFA] to-[#3C3C3C]" />
+        {/* Transition zone: Iris Pulse flowing into Black footer */}
+        <div className="w-full h-16 sm:h-24 bg-gradient-to-b from-[#7F7FFA] to-black" />
 
       </main>
 
       {/* ========================================================= */}
       {/* SECTION 4: FOOTER                                         */}
-      {/* Ending with Slate Grey                                    */}
+      {/* Ending with Black                                         */}
       {/* ========================================================= */}
       <Footer 
         onViewCurriculum={onViewCurriculum}

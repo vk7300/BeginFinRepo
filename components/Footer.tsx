@@ -63,14 +63,14 @@ export const Footer: React.FC<FooterProps> = ({
 
   return (
     <footer 
-      className="bg-[#3C3C3C] text-white pt-12 sm:pt-16 pb-10 px-4 sm:px-8 md:px-14 border-t border-white/10 no-print font-sans"
+      className="bg-black text-white pt-12 sm:pt-16 pb-10 px-4 sm:px-8 md:px-14 border-t border-white/10 no-print font-sans"
     >
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* Left: White Card with Logo & Mission */}
           <div className="md:col-span-5 lg:col-span-5">
-            <div className="bg-white text-slate-900 rounded-[1.75rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl flex flex-col justify-between space-y-5 sm:space-y-6">
+            <div className="bg-white text-slate-900 rounded-[1.75rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl flex flex-col justify-between space-y-5 sm:space-y-6 border border-neutral-800/20">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <img 
@@ -98,7 +98,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={handleGoAbout}
-                  className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 bg-slate-950 hover:bg-slate-900 text-white rounded-full text-xs font-semibold transition-all cursor-pointer shadow-md active:scale-95 inline-flex items-center justify-center"
+                  className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-full text-xs font-semibold transition-all cursor-pointer shadow-md active:scale-95 inline-flex items-center justify-center"
                 >
                   About Us
                 </button>
@@ -126,35 +126,35 @@ export const Footer: React.FC<FooterProps> = ({
                 <button 
                   type="button"
                   onClick={handleGoHome} 
-                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                  className="block w-full py-1 text-sm text-neutral-300 hover:text-white transition-colors cursor-pointer text-left font-medium"
                 >
                   Home
                 </button>
                 <button 
                   type="button"
                   onClick={handleGoTools} 
-                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                  className="block w-full py-1 text-sm text-neutral-300 hover:text-white transition-colors cursor-pointer text-left font-medium"
                 >
                   Tools
                 </button>
                 <button 
                   type="button"
                   onClick={handleGoCurriculum} 
-                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                  className="block w-full py-1 text-sm text-neutral-300 hover:text-white transition-colors cursor-pointer text-left font-medium"
                 >
                   Curriculum
                 </button>
                 <button 
                   type="button"
                   onClick={handleGoResources} 
-                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                  className="block w-full py-1 text-sm text-neutral-300 hover:text-white transition-colors cursor-pointer text-left font-medium"
                 >
                   Resources
                 </button>
                 <button 
                   type="button"
                   onClick={handleGoGuide} 
-                  className="block w-full py-1 text-sm text-slate-200 hover:text-white transition-colors cursor-pointer text-left"
+                  className="block w-full py-1 text-sm text-neutral-300 hover:text-white transition-colors cursor-pointer text-left font-medium"
                 >
                   Quick Start Guide
                 </button>
@@ -165,34 +165,34 @@ export const Footer: React.FC<FooterProps> = ({
                 <Link 
                   to="/status" 
                   onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
-                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                  className="block py-1 text-sm text-neutral-300 hover:text-white transition-colors text-left font-medium"
                 >
                   System Status
                 </Link>
                 <Link 
                   to="/mcp" 
                   onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
-                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                  className="block py-1 text-sm text-neutral-300 hover:text-white transition-colors text-left font-medium"
                 >
                   MCP Tools
                 </Link>
                 <Link 
                   to="/termsofuse" 
                   onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
-                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                  className="block py-1 text-sm text-neutral-300 hover:text-white transition-colors text-left font-medium"
                 >
                   Terms of Service
                 </Link>
                 <Link 
                   to="/privacypolicy" 
                   onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
-                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                  className="block py-1 text-sm text-neutral-300 hover:text-white transition-colors text-left font-medium"
                 >
                   Privacy Policy
                 </Link>
                 <a 
-                  href="mailto:support@beginfin.com"
-                  className="block py-1 text-sm text-slate-200 hover:text-white transition-colors text-left"
+                  href="mailto:support@begin-fin.com"
+                  className="block py-1 text-sm text-neutral-300 hover:text-white transition-colors text-left font-medium"
                 >
                   Support Email
                 </a>
@@ -221,7 +221,7 @@ export const Footer: React.FC<FooterProps> = ({
                   <Instagram className="w-4 h-4" />
                 </a>
                 <a 
-                  href="mailto:support@beginfin.com"
+                  href="mailto:support@begin-fin.com"
                   className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95 shadow-sm"
                   title="Email Support"
                   aria-label="Send email to BeginFin Support"

@@ -228,7 +228,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
             <span className="text-xs text-slate-700 leading-snug">
               I certify that I am at least <strong className="text-[#3C3C3C]">14 years of age</strong> and agree to BeginFin's{' '}
               <a 
-                href="/terms" 
+                href="https://begin-fin.com/termsofuse" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-[#7F7FFA] font-semibold underline underline-offset-2 hover:text-[#7F7FFA]/80"
@@ -238,7 +238,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({
               </a>
               {' '}and{' '}
               <a 
-                href="/privacy" 
+                href="/privacypolicy" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-[#7F7FFA] font-semibold underline underline-offset-2 hover:text-[#7F7FFA]/80"

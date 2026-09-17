@@ -623,7 +623,7 @@ export const Dashboard: React.FC<Props> = ({
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-emerald-50 via-[#F4F8FA] to-emerald-50/60 rounded-2xl p-5 border border-emerald-200/90 shadow-sm flex items-center gap-4"
+              className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/60 rounded-2xl p-5 border border-emerald-200/90 shadow-sm flex items-center gap-4"
             >
               <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
                 <Trophy className="w-6 h-6" />
@@ -656,7 +656,7 @@ export const Dashboard: React.FC<Props> = ({
                   key={m.id}
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="col-span-1 md:col-span-2 lg:col-span-2 bg-gradient-to-br from-white via-white to-[#F4F8FA] border-2 border-[#7F7FFA] rounded-3xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col justify-between group"
+                  className="col-span-1 md:col-span-2 lg:col-span-2 bg-gradient-to-br from-white via-white to-white border-2 border-[#7F7FFA] rounded-3xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col justify-between group"
                 >
                   {/* Subtle Background Glow */}
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[#7F7FFA]/10 rounded-full blur-3xl -translate-y-20 translate-x-20 pointer-events-none" />

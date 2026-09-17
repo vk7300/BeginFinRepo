@@ -585,15 +585,15 @@ export const McpServerView: React.FC<McpServerViewProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-8 px-6 text-center text-xs text-slate-400 space-y-2">
-        <div className="flex items-center justify-center gap-4 text-xs font-semibold text-slate-600">
-          <Link to="/termsofuse" className="hover:text-[#7F7FFA] transition-colors">Terms of Use</Link>
+      <footer className="bg-black border-t border-white/10 py-8 px-6 text-center text-xs text-neutral-400 space-y-2">
+        <div className="flex items-center justify-center gap-4 text-xs font-semibold text-neutral-300">
+          <Link to="/termsofuse" className="hover:text-white transition-colors">Terms of Use</Link>
           <span>•</span>
-          <Link to="/privacypolicy" className="hover:text-[#7F7FFA] transition-colors">Privacy Policy</Link>
+          <Link to="/privacypolicy" className="hover:text-white transition-colors">Privacy Policy</Link>
           <span>•</span>
-          <Link to="/status" className="hover:text-[#7F7FFA] transition-colors">System Status</Link>
+          <Link to="/status" className="hover:text-white transition-colors">System Status</Link>
           <span>•</span>
-          <a href="mailto:support@begin-fin.com" className="hover:text-[#7F7FFA] transition-colors">support@begin-fin.com</a>
+          <a href="mailto:support@begin-fin.com" className="hover:text-white transition-colors">support@begin-fin.com</a>
         </div>
         <p>© 2026 BeginFin. Open Educational Resource.</p>
       </footer>

@@ -28,7 +28,7 @@ interface AboutViewProps {
 export const AboutView: React.FC<AboutViewProps> = () => {
   const navigate = useNavigate();
   const navPadding = useNavPadding();
-  const [photoSrc, setPhotoSrc] = useState<string>('https://i.postimg.cc/13DzymGX/0S1A6490.jpg');
+  const [photoSrc, setPhotoSrc] = useState<string>('https://begin-fin.com/vishnuandkruz.png');
   const [photoError, setPhotoError] = useState(false);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export const AboutView: React.FC<AboutViewProps> = () => {
       {/* HERO SECTION with Periwinkle (#7F7FFA) Gradient           */}
       {/* ========================================================= */}
       <section 
-        className={`relative w-full overflow-hidden bg-gradient-to-b from-[#7F7FFA] via-[#A8A8FC] via-35% via-[#D8DBFD] via-70% to-[#FAF9FD] pb-16 sm:pb-24 ${navPadding}`}
+        className={`relative w-full overflow-hidden bg-gradient-to-b from-[#7F7FFA] via-[#A8A8FC] via-35% via-[#D8DBFD] via-70% to-white pb-16 sm:pb-24 ${navPadding}`}
       >
         {/* Fluid Ambient Glow Blobs for Tandem Motion */}
         <div 
@@ -151,8 +151,12 @@ export const AboutView: React.FC<AboutViewProps> = () => {
                         className="w-full h-auto object-cover object-top block transition-transform duration-500 hover:scale-105"
                         referrerPolicy="no-referrer"
                         onError={() => {
-                          if (photoSrc !== '/0S1A6490.jpg') {
+                          if (photoSrc === 'https://begin-fin.com/vishnuandkruz.png') {
+                            setPhotoSrc('/vishnuandkruz.png');
+                          } else if (photoSrc === '/vishnuandkruz.png') {
                             setPhotoSrc('/0S1A6490.jpg');
+                          } else if (photoSrc === '/0S1A6490.jpg') {
+                            setPhotoSrc('https://i.postimg.cc/13DzymGX/0S1A6490.jpg');
                           } else {
                             setPhotoError(true);
                           }
@@ -161,7 +165,7 @@ export const AboutView: React.FC<AboutViewProps> = () => {
                     </div>
                   ) : (
                     /* Fallback portrait card */
-                    <div className="w-full aspect-[2/3] bg-gradient-to-b from-[#7F7FFA]/15 via-white to-[#FAF9FD] p-3 sm:p-3.5 flex flex-col items-center justify-between text-center select-none">
+                    <div className="w-full aspect-[2/3] bg-gradient-to-b from-[#7F7FFA]/15 via-white to-white p-3 sm:p-3.5 flex flex-col items-center justify-between text-center select-none">
                       <div className="w-full flex justify-end">
                         <span className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA]">
                           LBHS
@@ -567,8 +571,8 @@ export const AboutView: React.FC<AboutViewProps> = () => {
 
       </div>
 
-      {/* Fluid transition into the Slate Grey Footer */}
-      <div className="w-full h-12 sm:h-16 bg-gradient-to-b from-[#FAF9FD] to-[#3C3C3C]" />
+      {/* Fluid transition into the Black Footer */}
+      <div className="w-full h-12 sm:h-16 bg-gradient-to-b from-white to-black" />
 
     </div>
   );
