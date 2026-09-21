@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, BookOpen, SlidersHorizontal, Sparkles, GraduationCap } from 'lucide-react';
+import { ChevronDown, BookOpen, SlidersHorizontal, Sparkles, GraduationCap, ShieldCheck, Users, Globe } from 'lucide-react';
 import { CookieBanner } from './CookieBanner';
 import { Language } from '../data/uiTranslations';
 import { User } from '../firebase';
@@ -123,7 +123,7 @@ export const WelcomeScreen: React.FC<Props> = ({
                 className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-md p-1 bg-white" 
                 referrerPolicy="no-referrer" 
               />
-              <span className="text-white text-xl sm:text-2xl md:text-3xl font-serif font-normal tracking-tight">
+              <span className="text-white text-xl sm:text-2xl md:text-3xl font-['Source_Sans_3',sans-serif] font-bold tracking-tight">
                 BeginFin
               </span>
             </div>
@@ -217,14 +217,17 @@ export const WelcomeScreen: React.FC<Props> = ({
 
                 {/* 3 Pills */}
                 <div className="space-y-3 sm:space-y-3.5">
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
-                    Free with zero ads
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold flex items-center justify-center gap-2.5 text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white shadow-xs">
+                    <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#7F7FFA] shrink-0" />
+                    <span>Free with zero ads</span>
                   </div>
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
-                    10,000+ Unique Visitors
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold flex items-center justify-center gap-2.5 text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white shadow-xs">
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#7F7FFA] shrink-0" />
+                    <span>15,000+ unique visitors</span>
                   </div>
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
-                    25+ countries reached
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold flex items-center justify-center gap-2.5 text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white shadow-xs">
+                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-[#7F7FFA] shrink-0" />
+                    <span>25+ countries reached</span>
                   </div>
                 </div>
               </div>
@@ -277,7 +280,7 @@ export const WelcomeScreen: React.FC<Props> = ({
             
             {/* Section Title */}
             <h2 className="text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl font-normal text-white tracking-tight text-center font-serif mb-8 sm:mb-14 md:mb-16 px-2">
-              Built by students, <span className="italic">for students.</span>
+              Built for students, <span className="italic">by students.</span>
             </h2>
 
             {/* 2x2 Cards Grid */}
@@ -337,7 +340,7 @@ export const WelcomeScreen: React.FC<Props> = ({
               >
                 <GraduationCap className="w-7 h-7 sm:w-8 sm:h-8 text-[#7F7FFA] group-hover:scale-110 transition-transform mb-5 sm:mb-6" />
                 <h3 className="text-lg sm:text-xl md:text-2xl font-normal text-[#3C3C3C] leading-snug font-serif">
-                  For teachers: <span className="italic">a full suite of classroom-ready tools.</span>
+                  For teachers: <span className="italic">a full suite of classroom-ready tools at no cost.</span>
                 </h3>
               </div>
 

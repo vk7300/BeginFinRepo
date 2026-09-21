@@ -11,12 +11,21 @@ import html2canvas from 'html2canvas';
 import { googleClassroomService, ClassroomCourse, ClassroomStudent } from '../services/googleClassroomService';
 import { GuillocheBorder } from './GuillocheBorder';
 import { GuillocheBackground } from './GuillocheBackground';
+import { 
+  isDummyUser, 
+  loadDummyClasses, 
+  saveDummyClasses, 
+  loadDummyStudents, 
+  saveDummyStudents, 
+  loadDummyAlerts 
+} from '../data/dummyTestData';
 
 interface ClassData {
   id: string;
   className: string;
   joinCode: string;
   teacherId: string;
+  createdAt?: string;
   linkedCourseId?: string;
   linkedCourseName?: string;
   isFullScreenLockEnabled?: boolean;
@@ -177,6 +186,13 @@ export const TeacherDashboard: React.FC<{
   useEffect(() => {
     if (!user) return;
 
+    if (isDummyUser(user)) {
+      const dummyClasses = loadDummyClasses();
+      setClasses(dummyClasses as ClassData[]);
+      setIsLoading(false);
+      return;
+    }
+
     const classesRef = collection(db, 'classes');
     const q = query(classesRef, where('teacherId', '==', user.uid));
     
@@ -201,6 +217,12 @@ export const TeacherDashboard: React.FC<{
       return;
     }
 
+    if (isDummyUser(user)) {
+      const dummyStudents = loadDummyStudents();
+      setStudents(dummyStudents as StudentProgress[]);
+      return;
+    }
+
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('teacherId', '==', user.uid));
 
@@ -220,6 +242,17 @@ export const TeacherDashboard: React.FC<{
 
   useEffect(() => {
     if (!user || classes.length === 0) return;
+
+    if (isDummyUser(user)) {
+      const dummyAlerts = loadDummyAlerts();
+      const map: Record<string, AlertData[]> = {};
+      dummyAlerts.forEach(a => {
+        if (!map[a.classId]) map[a.classId] = [];
+        map[a.classId].push(a as any);
+      });
+      setAlerts(map);
+      return;
+    }
 
     const unsubscribes = classes.map(cls => {
       const alertsRef = collection(db, 'classes', cls.id, 'alerts');
@@ -519,6 +552,24 @@ export const TeacherDashboard: React.FC<{
         return;
       }
 
+      if (isDummyUser(user)) {
+        setClasses(prev => {
+          const updated = prev.map(c => c.id === manualRosterClass.id ? { ...c, rosterEmails: emails } : c);
+          saveDummyClasses(updated as any);
+          return updated;
+        });
+        setManualRosterFeedback(`✓ Saved ${emails.length} students to roster!`);
+        if (triggerLoading) {
+          triggerLoading(`✓ Roster updated with ${emails.length} students.`, 2000);
+        }
+        setTimeout(() => {
+          setManualRosterClass(null);
+          setManualRosterFeedback(null);
+        }, 1500);
+        setManualRosterSaving(false);
+        return;
+      }
+
       const idToken = await user.getIdToken();
       const response = await fetch('/api/sync-class-roster', {
         method: 'POST',
@@ -579,6 +630,23 @@ export const TeacherDashboard: React.FC<{
       }
       
       let joinCode = generateJoinCode();
+
+      if (isDummyUser(user)) {
+        const newClass: ClassData = {
+          id: 'dummy-class-' + Date.now(),
+          className: finalClassName,
+          joinCode,
+          teacherId: user.uid,
+          createdAt: new Date().toISOString()
+        };
+        const updated = [...classes, newClass];
+        setClasses(updated);
+        saveDummyClasses(updated as any);
+        setNewClassName('');
+        setIsCreatingClass(false);
+        if (triggerLoading) triggerLoading(`Class "${finalClassName}" created!`, 2000);
+        return;
+      }
       
       // Check for uniqueness
       let isUnique = false;
@@ -633,6 +701,24 @@ export const TeacherDashboard: React.FC<{
     try {
       if (triggerLoading) triggerLoading("Deleting class and updating student records...", 3000);
       
+      if (isDummyUser(user)) {
+        setClasses(prev => {
+          const updated = prev.filter(c => c.id !== classId);
+          saveDummyClasses(updated as any);
+          return updated;
+        });
+        setStudents(prev => {
+          const updated = prev.filter(s => s.classId !== classId);
+          saveDummyStudents(updated as any);
+          return updated;
+        });
+        setDeletingClassId(null);
+        setDeleteConfirmationText('');
+        setIsDeleting(false);
+        if (triggerLoading) triggerLoading("Class deleted successfully!", 2000);
+        return;
+      }
+
       // 1. Safely unenroll all students belonging to this class
       // Using students in memory avoids the Firestore permission failure from querying without teacherId
       const targetStudents = students.filter(s => s.classId === classId);
@@ -715,6 +801,15 @@ export const TeacherDashboard: React.FC<{
   };
 
   const toggleScreenLock = async (classId: string, enabled: boolean) => {
+    if (isDummyUser(user)) {
+      setClasses(prev => {
+        const updated = prev.map(c => c.id === classId ? { ...c, isFullScreenLockEnabled: enabled } : c);
+        saveDummyClasses(updated as any);
+        return updated;
+      });
+      if (triggerLoading) triggerLoading(enabled ? "Locking student screens..." : "Unlocking student screens...", 1500);
+      return;
+    }
     try {
       const classRef = doc(db, 'classes', classId);
       await updateDoc(classRef, {
@@ -736,6 +831,28 @@ export const TeacherDashboard: React.FC<{
       const finalTitle = cleaned.substring(0, 100);
       if (finalTitle.length === 0) {
         setIsSavingChallenge(false);
+        return;
+      }
+
+      if (isDummyUser(user)) {
+        const updated = classes.map(c => c.id === isCreatingChallenge ? {
+          ...c,
+          challenge: {
+            title: finalTitle,
+            deadline: new Date(challengeDeadline).toISOString(),
+            isActive: true,
+            moduleIds: selectedModuleIds.length > 0 ? selectedModuleIds : undefined,
+            createdAt: new Date().toISOString()
+          }
+        } : c);
+        setClasses(updated);
+        saveDummyClasses(updated as any);
+        setIsCreatingChallenge(null);
+        setChallengeTitle('');
+        setChallengeDeadline('');
+        setSelectedModuleIds([]);
+        setIsSavingChallenge(false);
+        if (triggerLoading) triggerLoading("Challenge launched successfully!", 2000);
         return;
       }
 
@@ -784,6 +901,28 @@ export const TeacherDashboard: React.FC<{
         return;
       }
 
+      if (isDummyUser(user)) {
+        const updated = classes.map(c => c.id === isEditingChallenge ? {
+          ...c,
+          challenge: {
+            title: finalTitle,
+            deadline: new Date(challengeDeadline).toISOString(),
+            isActive: true,
+            moduleIds: selectedModuleIds.length > 0 ? selectedModuleIds : undefined,
+            createdAt: c.challenge?.createdAt || new Date().toISOString()
+          }
+        } : c);
+        setClasses(updated);
+        saveDummyClasses(updated as any);
+        setIsEditingChallenge(null);
+        setChallengeTitle('');
+        setChallengeDeadline('');
+        setSelectedModuleIds([]);
+        setIsSavingChallenge(false);
+        if (triggerLoading) triggerLoading("Challenge updated successfully!", 2000);
+        return;
+      }
+
       const classRef = doc(db, 'classes', isEditingChallenge);
       await updateDoc(classRef, {
         'challenge.title': finalTitle,
@@ -804,6 +943,14 @@ export const TeacherDashboard: React.FC<{
   };
 
   const handleEndChallenge = async (classId: string) => {
+    if (isDummyUser(user)) {
+      setClasses(prev => {
+        const updated = prev.map(c => c.id === classId && c.challenge ? { ...c, challenge: { ...c.challenge, isActive: false } } : c);
+        saveDummyClasses(updated as any);
+        return updated;
+      });
+      return;
+    }
     try {
       const classRef = doc(db, 'classes', classId);
       const cls = classes.find(c => c.id === classId);
@@ -824,6 +971,14 @@ export const TeacherDashboard: React.FC<{
   };
 
   const handleDeleteChallenge = async (classId: string) => {
+    if (isDummyUser(user)) {
+      setClasses(prev => {
+        const updated = prev.map(c => c.id === classId ? { ...c, challenge: undefined } : c);
+        saveDummyClasses(updated as any);
+        return updated;
+      });
+      return;
+    }
     try {
       const classRef = doc(db, 'classes', classId);
       await updateDoc(classRef, {
@@ -835,6 +990,16 @@ export const TeacherDashboard: React.FC<{
   };
 
   const dismissAlert = async (classId: string, alertId: string) => {
+    if (isDummyUser(user)) {
+      setAlerts(prev => {
+        const classAlerts = prev[classId] || [];
+        return {
+          ...prev,
+          [classId]: classAlerts.filter(a => a.id !== alertId)
+        };
+      });
+      return;
+    }
     try {
       await deleteDoc(doc(db, 'classes', classId, 'alerts', alertId));
     } catch (err) {

@@ -375,7 +375,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
             </div>
 
             <div className="relative z-10 shrink-0">
-              <div className="text-3xl font-extrabold text-white mb-1">10,000+</div>
+              <div className="text-3xl font-extrabold text-white mb-1">15,000+</div>
               <div className="text-xs text-[#7F7FFA] font-medium uppercase tracking-wider">Active Learners</div>
             </div>
           </motion.div>

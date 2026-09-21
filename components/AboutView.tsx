@@ -482,7 +482,7 @@ export const AboutView: React.FC<AboutViewProps> = () => {
                     Global Reach
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 font-sans mt-0.5">
-                    10,000+ Unique Visitors across 25+ countries
+                    15,000+ Unique Visitors across 25+ countries
                   </p>
                 </div>
               </div>

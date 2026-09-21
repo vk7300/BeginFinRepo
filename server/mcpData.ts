@@ -510,7 +510,7 @@ export const BRAND_BOOK_DATA = {
     logo: 'Bold, italicized dollar sign in Inter typeface against layered gradients of BeginFin Iris Pulse (#7F7FFA).'
   },
   recognitionsAndMilestones: [
-    '10,000+ unique visitors across 25+ countries.',
+    '15,000+ unique visitors across 25+ countries.',
     'Gubernatorial Commendation from Governor Greg Abbott (State of Texas).',
     'Mayoral Proclamations from the City of Temple, TX and City of Belton, TX.',
     'Vetted and listed in the Jump$tart Coalition Clearinghouse directory for the National Standards for Personal Finance Education (NSPFE).',
