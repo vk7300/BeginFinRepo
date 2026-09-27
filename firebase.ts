@@ -9,7 +9,7 @@ import firebaseConfigJson from './firebase-applet-config.json';
 const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
   appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyD3y-RoyekI6NJx7ztI0v5tFNN5sRl196o',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey || 'AIzaSyD3y-RoyekI6NJx7ztI0v5tFNN5sRl196o',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,

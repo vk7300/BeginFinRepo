@@ -120,11 +120,6 @@ export async function triggerGoogleSignIn(): Promise<User> {
     });
     return user;
   } catch (error: any) {
-    if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
-      const err: any = new Error('Sign-in cancelled.');
-      err.code = 'auth/popup-closed-by-user';
-      throw err;
-    }
     console.error("Firebase Google signInWithPopup error:", error);
     throw error;
   }
