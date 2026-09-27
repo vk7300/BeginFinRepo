@@ -59,6 +59,18 @@ export const Dashboard: React.FC<Props> = ({
     classId: string;
   } | null>(null);
 
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    if (showJoinInput || isAskingName) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showJoinInput, isAskingName]);
+
   // Check if student was automatically added to class by a teacher's roster
   useEffect(() => {
     if (!user) return;
@@ -280,12 +292,13 @@ export const Dashboard: React.FC<Props> = ({
       {/* Prominent Join Class Modal */}
       <AnimatePresence>
         {showJoinInput && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-7 shadow-2xl border border-slate-200 relative overflow-hidden"
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-7 shadow-2xl border border-slate-200 relative overflow-hidden my-auto max-h-[min(90vh,600px)] flex flex-col"
             >
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
                 <div className="flex items-center gap-3">
@@ -442,8 +455,8 @@ export const Dashboard: React.FC<Props> = ({
 
       {/* Name Request Modal */}
       {isAskingName && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl animate-in zoom-in duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-7 shadow-2xl animate-in zoom-in duration-200 my-auto max-h-[min(90vh,600px)] overflow-y-auto">
             <div className="w-14 h-14 bg-[#F4F8FA] border border-[#7F7FFA]/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#7F7FFA]">
               <UserIcon className="w-7 h-7" />
             </div>
@@ -545,7 +558,7 @@ export const Dashboard: React.FC<Props> = ({
               onClick={onViewCurriculum}
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-[#3C3C3C] font-bold hover:text-[#7F7FFA] hover:bg-[#F4F8FA] transition-colors text-xs px-3.5 py-2.5 bg-[#F4F8FA] border border-slate-200/60 rounded-xl cursor-pointer"
             >
-              <Layout className="w-3.5 h-3.5 text-slate-500" /> Syllabus & PDF
+              <Layout className="w-3.5 h-3.5 text-slate-500" /> Syllabus
             </button>
 
             {onViewTools && (

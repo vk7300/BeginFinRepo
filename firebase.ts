@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, sendPasswordResetEmail } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, sendPasswordResetEmail, browserPopupRedirectResolver } from 'firebase/auth';
 import { initializeFirestore, getFirestore, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, setLogLevel } from 'firebase/firestore';
 
 // Import the Firebase configuration
@@ -9,7 +9,7 @@ import firebaseConfigJson from './firebase-applet-config.json';
 const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
   appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey || '',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyD3y-RoyekI6NJx7ztI0v5tFNN5sRl196o',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
@@ -50,7 +50,7 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-export { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, setLogLevel };
+export { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signOut, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot, getDocFromServer, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, writeBatch, serverTimestamp, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, setLogLevel, browserPopupRedirectResolver };
 export type { User, ConfirmationResult };
 
 export enum OperationType {

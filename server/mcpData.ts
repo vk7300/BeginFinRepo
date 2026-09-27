@@ -442,7 +442,7 @@ export const BRAND_BOOK_DATA = {
   name: 'BeginFin',
   portmanteau: 'Derived from "Beginning Finance"',
   founded: 'December 2025 in Temple, TX (Launched January 2026)',
-  entityStatus: 'Student-led open educational resource (OER). Generates zero revenue ($0). Not a registered 501(c)(3) non-profit.',
+  entityStatus: 'Student-led open educational resource (OER). Operates as a fiscally sponsored project of The Hack Foundation (dba Hack Club), a California 501(c)(3) (EIN 81-2908499). BeginFin is not an independently registered 501(c)(3) non-profit entity; funds and administrative oversight are held by The Hack Foundation while BeginFin remains student-run and independently responsible for its curriculum and operations. Currently not soliciting or accepting donations.',
   founders: [
     {
       name: 'Vishnu Kakarla',
@@ -513,8 +513,7 @@ export const BRAND_BOOK_DATA = {
     '15,000+ unique visitors across 25+ countries.',
     'Gubernatorial Commendation from Governor Greg Abbott (State of Texas).',
     'Mayoral Proclamations from the City of Temple, TX and City of Belton, TX.',
-    'Vetted and listed in the Jump$tart Coalition Clearinghouse directory for the National Standards for Personal Finance Education (NSPFE).',
-    'Licensed by the College Board to use their AP® trademark for upcoming AP Business with Personal Finance resources (not endorsed by the College Board).'
+    'Vetted and listed in the Jump$tart Coalition Clearinghouse directory for the National Standards for Personal Finance Education (NSPFE).'
   ],
   privacyNotice: 'As a bootstrapped student-led resource with limited resources, BeginFin cannot guarantee compliance with FERPA, COPPA, or SOC2. BeginFin guarantees that no user data is sold, sessions are not tracked, and learners retain full data control via Guest Mode.'
 };

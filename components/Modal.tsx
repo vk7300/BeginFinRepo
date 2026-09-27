@@ -32,30 +32,30 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
   };
 
   const modalVariants = {
-    initial: { opacity: 0, scale: 0.95, filter: 'blur(10px)' },
-    animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
-    exit: { opacity: 0, scale: 0.95, filter: 'blur(10px)' }
+    initial: { opacity: 0, scale: 0.96, y: 8 },
+    animate: { opacity: 1, scale: 1, y: 0 },
+    exit: { opacity: 0, scale: 0.96, y: 8 }
   };
 
   const content = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-10">
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-6 overflow-y-auto">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" 
+            className="fixed inset-0 bg-slate-950/70" 
           />
           <motion.div 
             variants={modalVariants}
             initial="initial"
             animate="animate"
             exit="exit"
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className={`relative bg-white rounded-[2rem] w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col shadow-2xl overflow-hidden`}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative z-10 bg-white rounded-[2rem] w-full ${sizeClasses[size]} max-h-[min(90vh,720px)] flex flex-col shadow-2xl overflow-hidden my-auto`}
           >
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 tracking-tight">{title}</h3>

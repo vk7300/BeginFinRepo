@@ -20,7 +20,6 @@ export const BlogView: React.FC<BlogViewProps> = () => {
   return (
     <div className="min-h-[75vh] flex items-center justify-center bg-slate-50/50 py-16 px-6 font-sans">
       <Helmet>
-        <title>BeginFin Blog | Financial Literacy Fundamentals</title>
         <meta name="description" content="Stay updated with educational personal finance resources, announcements, and micro-lessons from BeginFin's Financial Literacy Fundamentals." />
       </Helmet>
 

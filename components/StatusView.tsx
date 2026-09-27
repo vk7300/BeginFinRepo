@@ -20,13 +20,16 @@ import {
   ShieldCheck,
   Lock,
   Edit3,
-  User as UserIcon
+  User as UserIcon,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db, doc, onSnapshot, setDoc, auth, onAuthStateChanged, User } from '../firebase';
 import { DEFAULT_ADMIN_EMAILS, isEmailAdmin, checkIsAdmin } from '../config/adminConfig';
 import { useNavPadding } from './Navbar';
 import { useNavigate } from 'react-router-dom';
+import { useSystemStatus } from '../services/systemStatusService';
 
 export type ServiceStatus = 'Operational' | 'Issues Observed' | 'Not Operational';
 
@@ -135,6 +138,7 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const { isDismissed, dismissNotice } = useSystemStatus();
 
   // Sync active user state with auth listeners
   useEffect(() => {
@@ -232,9 +236,9 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
             teacherFeatures: { ...DEFAULT_STATUS_DATA.services.teacherFeatures, ...(remoteData.services?.teacherFeatures || {}) },
             certificateDownload: { 
               ...DEFAULT_STATUS_DATA.services.certificateDownload, 
-              ...(remoteData.services?.certificateDownload || {}),
-              description: 'Verifiable PDF certificate rendering and Certifier.io credential delivery.'
-            }
+              ...(remoteData.services?.certificateDownload || {})
+            },
+            ...(remoteData.services || {})
           },
           customCategory: {
             ...DEFAULT_STATUS_DATA.customCategory!,
@@ -459,25 +463,40 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
   return (
     <div className={`min-h-screen bg-[#F4F8FA] text-[#3C3C3C] selection:bg-[#7F7FFA]/20 pb-20 ${navPadding}`}>
       {/* Top Status Sub-Bar */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-2 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs px-2.5 py-1 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] font-extrabold uppercase tracking-wider">
-            Live System Health
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Refresh Button */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-2 flex items-center justify-end gap-2 sm:gap-3">
+        {/* Admin Controls Trigger */}
+        {isAdmin && (
           <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
-            title="Refresh status"
+            type="button"
+            onClick={() => {
+              setEditServices(statusData.services);
+              if (statusData.customCategory) {
+                setEditCustomCategory(statusData.customCategory);
+              }
+              setEditCustomTitle(statusData.customMessageTitle || '');
+              setEditCustomMessage(statusData.customMessage || '');
+              setEditCustomType(statusData.customMessageType || 'info');
+              setEditShowCustom(statusData.showCustomMessage ?? false);
+              setShowAdminModal(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#7F7FFA] hover:bg-[#6868EB] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+            title="Manage live status and notices"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#7F7FFA]' : 'text-slate-500'}`} />
-            <span>Refresh</span>
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Admin Controls</span>
           </button>
-        </div>
+        )}
+
+        {/* Refresh Button */}
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
+          title="Refresh status"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#7F7FFA]' : 'text-slate-500'}`} />
+          <span>Refresh</span>
+        </button>
       </div>
 
       {/* Main Content Area */}
@@ -489,15 +508,9 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
           
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2">
-                <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-white/80 border border-slate-200/80 shadow-2xs">
-                  <span className={`w-2.5 h-2.5 rounded-full ${overallMeta.dotColor} animate-pulse`} />
-                  {overallMeta.badgeText}
-                </span>
-              </div>
-              
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#3C3C3C]">
-                {overallMeta.title}
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#3C3C3C] flex items-center gap-3">
+                <span className={`w-3.5 h-3.5 rounded-full ${overallMeta.dotColor} animate-pulse shrink-0`} />
+                <span>{overallMeta.title}</span>
               </h1>
             </div>
 
@@ -510,23 +523,34 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
         </section>
 
         {/* Bento Card 2: Custom Broadcast Announcement / Notice (if enabled) */}
-        {statusData.showCustomMessage && statusData.customMessage && (
+        {!isDismissed && statusData.showCustomMessage && statusData.customMessage && (
           <section className="rounded-3xl bg-white border border-[#7F7FFA]/30 p-6 sm:p-7 shadow-2xs relative overflow-hidden">
             <div className="absolute top-0 left-0 w-2 h-full bg-[#7F7FFA]" />
-            <div className="flex items-start gap-4">
-              <div className="p-2.5 rounded-2xl bg-[#7F7FFA]/10 text-[#7F7FFA] shrink-0 mt-0.5">
-                <MessageSquare className="w-5 h-5" />
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-2.5 rounded-2xl bg-[#7F7FFA]/10 text-[#7F7FFA] shrink-0 mt-0.5">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  {statusData.customMessageTitle && (
+                    <h3 className="text-base font-bold text-[#3C3C3C] tracking-tight">
+                      {statusData.customMessageTitle}
+                    </h3>
+                  )}
+                  <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                    {statusData.customMessage}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1 flex-1">
-                {statusData.customMessageTitle && (
-                  <h3 className="text-base font-bold text-[#3C3C3C] tracking-tight">
-                    {statusData.customMessageTitle}
-                  </h3>
-                )}
-                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-                  {statusData.customMessage}
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={dismissNotice}
+                aria-label="Dismiss status notice"
+                title="Dismiss notice"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </section>
         )}
@@ -683,54 +707,152 @@ export const StatusView: React.FC<StatusViewProps> = ({ user, onBackToApp, onOpe
 
               {/* Service Categories Configuration */}
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  1. Section Statuses
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    1. Section Statuses & Details
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newId = `section_${Date.now()}`;
+                      setEditServices(prev => ({
+                        ...prev,
+                        [newId]: {
+                          id: newId,
+                          name: 'New Section / Module',
+                          category: 'Platform Feature',
+                          status: 'Operational',
+                          description: 'Description of this system component or curriculum engine.'
+                        }
+                      }));
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#7F7FFA]/10 hover:bg-[#7F7FFA]/20 text-[#7F7FFA] text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Section</span>
+                  </button>
+                </div>
                 <div className="space-y-3">
-                  {Object.entries(editServices).map(([key, service]) => (
+                  {Object.entries(editServices).map(([key, service]) => {
+                    const isCustomSection = !['googleSso', 'emailPhoneAuth', 'modules', 'teacherFeatures', 'certificateDownload'].includes(key);
+                    return (
                     <div 
                       key={key}
-                      className="p-4 rounded-2xl bg-[#F4F8FA] border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 rounded-2xl bg-[#F4F8FA] border border-slate-200/80 space-y-3"
                     >
-                      <div className="space-y-0.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 pb-3">
                         <div className="text-sm font-bold text-[#3C3C3C] flex items-center gap-2">
                           {getCategoryIcon(key)}
-                          <span>{service.name}</span>
+                          <span>{service.name || key}</span>
+                          {isCustomSection && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditServices(prev => {
+                                  const copy = { ...prev };
+                                  delete copy[key];
+                                  return copy;
+                                });
+                              }}
+                              className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors ml-1 cursor-pointer"
+                              title="Remove section"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-500 max-w-sm">
-                          {service.description}
-                        </p>
+
+                        {/* Status Toggle Radio Group */}
+                        <div className="flex items-center gap-1 shrink-0 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+                          {(['Operational', 'Issues Observed', 'Not Operational'] as ServiceStatus[]).map((st) => (
+                            <button
+                              key={st}
+                              type="button"
+                              onClick={() => {
+                                setEditServices(prev => ({
+                                  ...prev,
+                                  [key]: {
+                                    ...prev[key as keyof typeof prev],
+                                    status: st
+                                  }
+                                }));
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                service.status === st 
+                                  ? st === 'Operational' ? 'bg-emerald-600 text-white shadow-2xs' :
+                                    st === 'Issues Observed' ? 'bg-amber-500 text-white shadow-2xs' :
+                                    'bg-rose-600 text-white shadow-2xs'
+                                  : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {st}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
-                      {/* Status Toggle Radio Group */}
-                      <div className="flex items-center gap-1 shrink-0 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-                        {(['Operational', 'Issues Observed', 'Not Operational'] as ServiceStatus[]).map((st) => (
-                          <button
-                            key={st}
-                            type="button"
-                            onClick={() => {
+                      {/* Editable Section Title & Category */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                            Section Title
+                          </label>
+                          <input 
+                            type="text"
+                            value={service.name}
+                            onChange={(e) => {
+                              const val = e.target.value;
                               setEditServices(prev => ({
                                 ...prev,
-                                [key]: {
-                                  ...prev[key as keyof typeof prev],
-                                  status: st
-                                }
+                                [key]: { ...prev[key as keyof typeof prev], name: val }
                               }));
                             }}
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                              service.status === st 
-                                ? st === 'Operational' ? 'bg-emerald-600 text-white shadow-2xs' :
-                                  st === 'Issues Observed' ? 'bg-amber-500 text-white shadow-2xs' :
-                                  'bg-rose-600 text-white shadow-2xs'
-                                : 'text-slate-600 hover:bg-slate-100'
-                            }`}
-                          >
-                            {st}
-                          </button>
-                        ))}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:border-[#7F7FFA] outline-none"
+                            placeholder="Section Title"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                            Category / Tag
+                          </label>
+                          <input 
+                            type="text"
+                            value={service.category}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditServices(prev => ({
+                                ...prev,
+                                [key]: { ...prev[key as keyof typeof prev], category: val }
+                              }));
+                            }}
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:border-[#7F7FFA] outline-none"
+                            placeholder="Category"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Editable Description */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={service.description}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setEditServices(prev => ({
+                              ...prev,
+                              [key]: { ...prev[key as keyof typeof prev], description: val }
+                            }));
+                          }}
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-700 leading-relaxed focus:border-[#7F7FFA] outline-none resize-none"
+                          placeholder="Description of this service component"
+                        />
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               </div>
 

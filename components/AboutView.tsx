@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavPadding } from './Navbar';
 import { 
   ChevronDown, 
+  ChevronLeft,
+  ChevronRight,
   CircleDollarSign, 
   GraduationCap, 
   Lock, 
@@ -14,9 +16,54 @@ import {
   Linkedin, 
   Instagram, 
   ExternalLink,
-  ShieldCheck,
-  Info
+  ShieldCheck
 } from 'lucide-react';
+
+interface FounderPhoto {
+  id: string;
+  src: string;
+  fallbackSrcs: string[];
+  alt: string;
+  credit: string;
+  objectPosition: string;
+}
+
+const FOUNDER_PHOTOS: FounderPhoto[] = [
+  {
+    id: 'library-portrait',
+    src: 'https://begin-fin.com/vishnuandkruz.png',
+    fallbackSrcs: [
+      '/vishnuandkruz.png',
+      '/0S1A6490.jpg',
+      'https://i.postimg.cc/13DzymGX/0S1A6490.jpg'
+    ],
+    alt: 'Kruz Smith and Vishnu Kakarla standing in the Lake Belton High School Library',
+    credit: '© BISD Comms Dept.',
+    objectPosition: 'object-top'
+  },
+  {
+    id: 'classroom-collaboration',
+    src: 'https://begin-fin.com/vishnuandkruz2.jpg',
+    fallbackSrcs: [
+      '/vishnuandkruz2.jpg',
+      'https://live.staticflickr.com/65535/55544320403_6b5a72134e_b.jpg'
+    ],
+    alt: 'Vishnu Kakarla and Kruz Smith working together on BeginFin digital modules in Belton',
+    credit: '© BISD Comms Dept.',
+    objectPosition: 'object-center'
+  },
+  {
+    id: 'founders-showcase',
+    src: 'https://begin-fin.com/vishnuandkruz3.jpg',
+    fallbackSrcs: [
+      '/vishnuandkruz3.jpg',
+      'https://live.staticflickr.com/65535/55544320323_1e1b7908ac_b.jpg'
+    ],
+    alt: 'Vishnu Kakarla and Kruz Smith smiling at Lake Belton High School',
+    credit: '© BISD Comms Dept.',
+    objectPosition: 'object-top'
+  }
+];
 
 interface AboutViewProps {
   onBack?: () => void;
@@ -28,8 +75,68 @@ interface AboutViewProps {
 export const AboutView: React.FC<AboutViewProps> = () => {
   const navigate = useNavigate();
   const navPadding = useNavPadding();
-  const [photoSrc, setPhotoSrc] = useState<string>('https://begin-fin.com/vishnuandkruz.png');
-  const [photoError, setPhotoError] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [slideSrcs, setSlideSrcs] = useState<string[]>(() => FOUNDER_PHOTOS.map(p => p.src));
+  const [failedSlides, setFailedSlides] = useState<Record<number, boolean>>({});
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartXRef = useRef<number | null>(null);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % FOUNDER_PHOTOS.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + FOUNDER_PHOTOS.length) % FOUNDER_PHOTOS.length);
+  }, []);
+
+  const handleImageError = (index: number) => {
+    const currentSrc = slideSrcs[index];
+    const photo = FOUNDER_PHOTOS[index];
+    const nextFallback = photo.fallbackSrcs.find(f => f !== currentSrc);
+    if (nextFallback && !slideSrcs[index].includes(nextFallback)) {
+      setSlideSrcs(prev => {
+        const next = [...prev];
+        next[index] = nextFallback;
+        return next;
+      });
+    } else {
+      setFailedSlides(prev => ({ ...prev, [index]: true }));
+    }
+  };
+
+  // Auto-advance carousel every 6 seconds, pausing on hover/interaction
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      nextSlide();
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [isPaused, nextSlide]);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const diff = touchStartXRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+    touchStartXRef.current = null;
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      prevSlide();
+    } else if (e.key === 'ArrowRight') {
+      nextSlide();
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -137,67 +244,122 @@ export const AboutView: React.FC<AboutViewProps> = () => {
                 <p>
                   Our vision is to live in a world where financial education is a universal right, not a luxury, enabling every individual to navigate their economic future with dignity, resilience, and confidence. Through zero paywalls, zero ads, zero user data monetization, we want to empower high school and college students, young professionals, and everyone in between.
                 </p>
+                <p>
+                  BeginFin operates as a fiscally sponsored project of The Hack Foundation (dba Hack Club), EIN 81-2908499.
+                </p>
               </div>
 
-              {/* Right Column: Founder Portrait Photo Card */}
+              {/* Right Column: Founder Carousel Card */}
               <div className="md:col-span-5 lg:col-span-5 landscape:col-span-5 flex flex-col items-center justify-center">
                 
-                <div className="w-full max-w-[180px] sm:max-w-[195px] md:max-w-[190px] lg:max-w-[200px] mx-auto rounded-2xl overflow-hidden shadow-md border border-slate-200/90 bg-white">
-                  {!photoError ? (
-                    <div className="relative overflow-hidden bg-slate-100 flex items-center justify-center">
-                      <img 
-                        src={photoSrc} 
-                        alt="Kruz Smith and Vishnu Kakarla standing in the Lake Belton High School Library"
-                        className="w-full h-auto object-cover object-top block transition-transform duration-500 hover:scale-105"
-                        referrerPolicy="no-referrer"
-                        onError={() => {
-                          if (photoSrc === 'https://begin-fin.com/vishnuandkruz.png') {
-                            setPhotoSrc('/vishnuandkruz.png');
-                          } else if (photoSrc === '/vishnuandkruz.png') {
-                            setPhotoSrc('/0S1A6490.jpg');
-                          } else if (photoSrc === '/0S1A6490.jpg') {
-                            setPhotoSrc('https://i.postimg.cc/13DzymGX/0S1A6490.jpg');
-                          } else {
-                            setPhotoError(true);
-                          }
-                        }}
-                      />
+                <div 
+                  className="w-full max-w-[280px] sm:max-w-[310px] md:max-w-[320px] lg:max-w-[340px] mx-auto focus:outline-hidden"
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setIsPaused(false)}
+                  onTouchStart={onTouchStart}
+                  onTouchEnd={onTouchEnd}
+                  onKeyDown={onKeyDown}
+                  tabIndex={0}
+                  role="region"
+                  aria-label="BeginFin Co-Founders photo carousel"
+                >
+                  {/* Photo Frame Container */}
+                  <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-md border border-slate-200/90 bg-slate-900 group">
+                    {/* Slides Track */}
+                    <div 
+                      className="w-full h-full flex transition-transform duration-500 ease-out"
+                      style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                    >
+                      {FOUNDER_PHOTOS.map((photo, index) => {
+                        const isFailed = failedSlides[index];
+                        const src = slideSrcs[index];
+                        return (
+                          <div 
+                            key={photo.id}
+                            className="w-full h-full shrink-0 relative bg-slate-950 flex items-center justify-center overflow-hidden"
+                            aria-hidden={currentSlide !== index}
+                          >
+                            {!isFailed ? (
+                              <img 
+                                src={src} 
+                                alt={photo.alt}
+                                className={`w-full h-full object-cover ${photo.objectPosition} block transition-transform duration-700 group-hover:scale-105`}
+                                referrerPolicy="no-referrer"
+                                loading={index === 0 ? "eager" : "lazy"}
+                                onError={() => handleImageError(index)}
+                              />
+                            ) : (
+                              /* Fallback portrait card */
+                              <div className="w-full h-full bg-gradient-to-b from-[#7F7FFA]/15 via-white to-white p-4 flex flex-col items-center justify-between text-center select-none">
+                                <div className="my-auto space-y-2">
+                                  <div className="w-12 h-12 rounded-full bg-[#7F7FFA]/15 text-[#7F7FFA] mx-auto flex items-center justify-center shadow-inner">
+                                    <Users className="w-6 h-6" />
+                                  </div>
+                                  <h3 
+                                    className="text-sm font-serif text-slate-900 leading-snug font-medium"
+                                    style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
+                                  >
+                                    Kruz Smith & Vishnu Kakarla
+                                  </h3>
+                                </div>
+                                <div className="w-full pt-2 border-t border-slate-200/80">
+                                  <span className="text-[10px] font-sans text-slate-400">
+                                    {photo.credit}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  ) : (
-                    /* Fallback portrait card */
-                    <div className="w-full aspect-[2/3] bg-gradient-to-b from-[#7F7FFA]/15 via-white to-white p-3 sm:p-3.5 flex flex-col items-center justify-between text-center select-none">
-                      <div className="w-full flex justify-end">
-                        <span className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA]">
-                          LBHS
-                        </span>
-                      </div>
-                      <div className="my-auto space-y-1.5">
-                        <div className="w-10 h-10 rounded-full bg-[#7F7FFA]/15 text-[#7F7FFA] mx-auto flex items-center justify-center shadow-inner">
-                          <Users className="w-5 h-5" />
-                        </div>
-                        <h3 
-                          className="text-xs sm:text-sm font-serif text-slate-900 leading-snug font-medium"
-                          style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
-                        >
-                          Kruz & Vishnu
-                        </h3>
-                        <p className="text-[10px] text-slate-500 font-sans leading-tight">
-                          Co-Founders of BeginFin
-                        </p>
-                      </div>
-                      <div className="w-full pt-1.5 border-t border-slate-200/80">
-                        <span className="text-[9px] font-sans text-slate-400">
-                          © Belton ISD
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
 
-                {/* Caption underneath photo */}
-                <div className="text-[11px] sm:text-xs text-slate-400 mt-2 text-center font-sans w-full max-w-[180px] sm:max-w-[195px] md:max-w-[190px] lg:max-w-[200px] mx-auto flex flex-col gap-0.5">
-                  <span className="font-medium text-slate-600">Kruz Smith & Vishnu Kakarla</span>
-                  <span className="text-[10px] text-slate-400">© Belton ISD Dept. of Comm.</span>
+                    {/* Slide Counter Badge */}
+                    <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                      <span className="text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white border border-white/15">
+                        {currentSlide + 1} / {FOUNDER_PHOTOS.length}
+                      </span>
+                    </div>
+
+                    {/* Navigation Buttons (Left & Right) */}
+                    <button
+                      type="button"
+                      onClick={prevSlide}
+                      aria-label="Previous team photo"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all opacity-80 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-105 active:scale-95 z-20 cursor-pointer"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextSlide}
+                      aria-label="Next team photo"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all opacity-80 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-105 active:scale-95 z-20 cursor-pointer"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Dot Indicators */}
+                  <div className="flex items-center justify-center gap-1.5 mt-2.5">
+                    {FOUNDER_PHOTOS.map((photo, i) => (
+                      <button
+                        key={photo.id}
+                        type="button"
+                        onClick={() => setCurrentSlide(i)}
+                        aria-label={`Go to slide ${i + 1}`}
+                        className={`h-1.5 transition-all rounded-full cursor-pointer ${
+                          currentSlide === i ? 'w-5 bg-[#7F7FFA]' : 'w-1.5 bg-slate-300 hover:bg-slate-400'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Caption underneath photo */}
+                  <div className="text-[11px] sm:text-xs text-slate-400 mt-2 text-center font-sans w-full max-w-[280px] sm:max-w-[310px] md:max-w-[320px] lg:max-w-[340px] mx-auto">
+                    <span>© BISD Comms Dept.</span>
+                  </div>
+
                 </div>
 
               </div>
@@ -510,27 +672,9 @@ export const AboutView: React.FC<AboutViewProps> = () => {
           </section>
 
           {/* ----------------------------------------------------- */}
-          {/* SECTION 4: Advisory & Educational Disclosure Notes    */}
+          {/* SECTION 4: Contact & Social Capsule (Matches Design)  */}
           {/* ----------------------------------------------------- */}
-          <section className="p-6 sm:p-7 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-            <div className="flex items-center gap-2 text-[#7F7FFA]">
-              <Info className="w-4 h-4" />
-              <h3 
-                className="text-sm sm:text-base font-semibold text-slate-900 font-serif"
-                style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
-              >
-                Educational Advisory & Standard Alignment
-              </h3>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
-              BeginFin is an independent open-access educational initiative founded by students to advance universal financial literacy. All interactive simulators, lesson modules, and certification materials are engineered strictly for instructional and educational purposes and do not constitute personalized financial, tax, legal, or investment advice. Curriculum alignment is evaluated against the National Standards for Personal Finance Education (Jump$tart Coalition & CEE).
-            </p>
-          </section>
-
-          {/* ----------------------------------------------------- */}
-          {/* SECTION 5: Contact & Social Capsule (Matches Design)  */}
-          {/* ----------------------------------------------------- */}
-          <section className="flex justify-center pt-2">
+          <section className="flex justify-center pt-2 sm:pt-4">
             <div className="inline-flex items-center gap-3 sm:gap-4 px-5 sm:px-6 py-2.5 rounded-full bg-white border border-slate-200/90 shadow-md">
               <div className="flex items-center gap-2 text-slate-700">
                 <Mail className="w-4 h-4 text-[#7F7FFA]" />

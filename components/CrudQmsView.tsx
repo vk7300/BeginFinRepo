@@ -6,7 +6,8 @@ import {
   Upload, FileText, Check, Loader2, ShieldCheck, Award, Clock, Mail, Copy, Search, Filter, Download
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
-import { db, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, auth, googleProvider, signInWithRedirect, signOut } from '../firebase';
+import { db, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, auth, googleProvider, signOut } from '../firebase';
+import { triggerGoogleSignIn } from '../services/googleAuthService';
 import { DEFAULT_ADMIN_EMAILS, isEmailAdmin } from '../config/adminConfig';
 import { modules } from '../data/courseData';
 import { Language } from '../data/uiTranslations';
@@ -651,11 +652,13 @@ export const CrudQmsView: React.FC<Props> = ({ user, onBack }) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithRedirect(auth, googleProvider);
+      await triggerGoogleSignIn();
       showToast('success', 'Logged in successfully!');
     } catch (err: any) {
-      console.error("Login error:", err);
-      showToast('error', err.message || 'Authentication failed.');
+      if (err?.code !== 'auth/popup-closed-by-user') {
+        console.error("Login error:", err);
+        showToast('error', err.message || 'Authentication failed.');
+      }
     }
   };
 

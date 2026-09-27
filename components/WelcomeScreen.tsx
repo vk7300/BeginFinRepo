@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, BookOpen, SlidersHorizontal, Sparkles, GraduationCap, ShieldCheck, Users, Globe } from 'lucide-react';
+import { ChevronDown, BookOpen, SlidersHorizontal, Sparkles, GraduationCap } from 'lucide-react';
 import { CookieBanner } from './CookieBanner';
 import { Language } from '../data/uiTranslations';
 import { User } from '../firebase';
@@ -96,11 +96,12 @@ export const WelcomeScreen: React.FC<Props> = ({
         {/* ========================================================= */}
         {/* SECTION 1: HERO                                           */}
         {/* Gradient: BeginFin Iris Pulse (#7F7FFA) --> White         */}
+        {/* Matching About view gradient: periwinkle -> lavender -> white */}
         {/* ========================================================= */}
         <section 
           ref={heroRef}
           onMouseMove={handleMouseMove}
-          className={`relative w-full overflow-hidden select-none cursor-default bg-gradient-to-b from-[#7F7FFA] via-[#7575FA] to-white ${
+          className={`relative w-full overflow-hidden select-none cursor-default bg-gradient-to-b from-[#7F7FFA] via-[#A8A8FC] via-35% via-[#D8DBFD] via-70% to-white ${
             hasBanner ? 'pt-36 sm:pt-48 md:pt-52' : 'pt-28 sm:pt-36 md:pt-40'
           } pb-16 sm:pb-24 md:pb-28 min-h-[90vh] sm:min-h-[92vh] flex flex-col justify-center items-center text-center px-4 sm:px-6`}
         >
@@ -185,23 +186,23 @@ export const WelcomeScreen: React.FC<Props> = ({
 
         {/* ========================================================= */}
         {/* SECTION 2: CONTRAST / PAIN POINTS                         */}
-        {/* Gradient: White --> White Solid --> BeginFin Iris Pulse   */}
+        {/* Gradient: White --> BeginFin Iris Pulse (matching Hero inverse) */}
         {/* ========================================================= */}
         <section 
           ref={contrastRef}
-          className="relative w-full bg-gradient-to-b from-white via-white to-[#7F7FFA] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-slate-900"
+          className="relative w-full bg-gradient-to-b from-white via-[#D8DBFD] via-30% via-[#A8A8FC] via-65% to-[#7F7FFA] py-14 sm:py-24 md:py-28 px-4 sm:px-8 md:px-14 text-slate-900"
         >
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
             
-            {/* Left Column: Pain points with gradual gradient cascade for maximum contrast and readability */}
+            {/* Left Column: Pain points with deep, crisp midnight contrast matching the new gradient */}
             <div className="lg:col-span-5 space-y-1.5 sm:space-y-3 text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.2] sm:leading-[1.22] font-serif font-normal select-none">
-              <div style={{ color: '#181A2A' }}>Paywalls.</div>
-              <div style={{ color: '#272B48' }}>Ad breaks.</div>
-              <div style={{ color: '#383E6C' }}>Outdated info.</div>
-              <div style={{ color: '#4B5394' }}>No certificate.</div>
-              <div style={{ color: '#5F68BF' }}>Boring lectures.</div>
-              <div style={{ color: '#737DE8' }}>No Interactives.</div>
-              <div style={{ color: '#4338CA' }} className="italic pt-1 sm:pt-2">And other gaps.</div>
+              <div style={{ color: '#0A0D1A' }}>Paywalls.</div>
+              <div style={{ color: '#0F1426' }}>Ad breaks.</div>
+              <div style={{ color: '#141832' }}>Outdated info.</div>
+              <div style={{ color: '#171B3D' }}>No certificate.</div>
+              <div style={{ color: '#15183A' }}>Boring lectures.</div>
+              <div style={{ color: '#111330' }}>No Interactives.</div>
+              <div style={{ color: '#0D0E26' }} className="italic pt-1 sm:pt-2 font-medium">And other gaps.</div>
             </div>
 
             {/* Right Column: White Card + Featured Logos */}
@@ -217,17 +218,14 @@ export const WelcomeScreen: React.FC<Props> = ({
 
                 {/* 3 Pills */}
                 <div className="space-y-3 sm:space-y-3.5">
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold flex items-center justify-center gap-2.5 text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white shadow-xs">
-                    <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#7F7FFA] shrink-0" />
-                    <span>Free with zero ads</span>
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
+                    Free with zero ads
                   </div>
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold flex items-center justify-center gap-2.5 text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white shadow-xs">
-                    <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#7F7FFA] shrink-0" />
-                    <span>15,000+ unique visitors</span>
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
+                    15,000+ Unique Visitors
                   </div>
-                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold flex items-center justify-center gap-2.5 text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white shadow-xs">
-                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-[#7F7FFA] shrink-0" />
-                    <span>25+ countries reached</span>
+                  <div className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-full border-2 border-[#7F7FFA] text-slate-900 font-semibold text-center text-xs min-[380px]:text-sm sm:text-base hover:bg-[#7F7FFA]/5 transition-colors bg-white">
+                    25+ countries reached
                   </div>
                 </div>
               </div>
@@ -280,7 +278,7 @@ export const WelcomeScreen: React.FC<Props> = ({
             
             {/* Section Title */}
             <h2 className="text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl font-normal text-white tracking-tight text-center font-serif mb-8 sm:mb-14 md:mb-16 px-2">
-              Built for students, <span className="italic">by students.</span>
+              Built by students, <span className="italic">for students.</span>
             </h2>
 
             {/* 2x2 Cards Grid */}
@@ -340,7 +338,7 @@ export const WelcomeScreen: React.FC<Props> = ({
               >
                 <GraduationCap className="w-7 h-7 sm:w-8 sm:h-8 text-[#7F7FFA] group-hover:scale-110 transition-transform mb-5 sm:mb-6" />
                 <h3 className="text-lg sm:text-xl md:text-2xl font-normal text-[#3C3C3C] leading-snug font-serif">
-                  For teachers: <span className="italic">a full suite of classroom-ready tools at no cost.</span>
+                  For teachers: <span className="italic">a full suite of classroom-ready tools.</span>
                 </h3>
               </div>
 

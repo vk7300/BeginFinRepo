@@ -579,11 +579,11 @@ export const CertificateView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Certificate Content - Positioned inside the inner guilloche border with generous bottom breathing room */}
+            {/* Certificate Content - Positioned inside the inner guilloche border with generous breathing room */}
             <div 
               className="relative z-10 w-full h-full flex flex-col justify-between items-center text-center select-none"
               style={{
-                padding: '58px 56px 74px 56px',
+                padding: '62px 76px 74px 76px',
                 boxSizing: 'border-box'
               }}
             >
@@ -608,14 +608,14 @@ export const CertificateView: React.FC<Props> = ({
                 {/* Title */}
                 <h1 
                   style={{ 
-                    fontSize: '26px', 
+                    fontSize: '25px', 
                     fontWeight: 600, 
                     fontFamily: "'Source Serif 4', Georgia, serif", 
                     letterSpacing: '0.12em', 
                     color: '#1E293B', 
                     textTransform: 'uppercase', 
-                    marginTop: '28px', 
-                    marginBottom: '32px' 
+                    marginTop: '26px', 
+                    marginBottom: '30px' 
                   }}
                 >
                   CERTIFICATE OF COMPLETION
@@ -633,21 +633,21 @@ export const CertificateView: React.FC<Props> = ({
                     fontWeight: 600, 
                     color: '#1E293B', 
                     lineHeight: 1.2, 
-                    marginBottom: '32px',
+                    marginBottom: '30px',
                     padding: '0 24px'
                   }}
                 >
                   {userName || "VK"}
                 </div>
 
-                {/* Body Paragraph - Matches exact wording in Source Serif 4 */}
+                {/* Body Paragraph - Matches exact wording in Source Serif 4, brought inward and centered */}
                 <p 
                   style={{ 
-                    fontSize: '16.5px', 
+                    fontSize: '16px', 
                     lineHeight: '1.75', 
                     fontFamily: "'Source Serif 4', Georgia, serif", 
                     color: '#1E293B', 
-                    maxWidth: '620px', 
+                    maxWidth: '560px', 
                     margin: '0 auto', 
                     textAlign: 'center', 
                     fontWeight: 400 
@@ -659,10 +659,10 @@ export const CertificateView: React.FC<Props> = ({
 
               {/* Bottom Section: Dual Signatures & About BeginFin */}
               <div className="w-full flex flex-col items-center mt-auto">
-                {/* Dual Signatures - Moved up, Source Serif 4 */}
-                <div className="w-full flex items-end justify-around px-4 mb-7">
+                {/* Dual Signatures - Centered, Source Serif 4 */}
+                <div className="w-full flex items-end justify-center gap-12 sm:gap-16 px-4 mb-7">
                   {/* Left: Vishnu Kakarla - Founder */}
-                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
+                  <div className="flex flex-col items-center text-center" style={{ width: '240px' }}>
                     <div 
                       style={{ 
                         fontFamily: "'Source Serif 4', Georgia, serif", 
@@ -678,14 +678,14 @@ export const CertificateView: React.FC<Props> = ({
                     >
                       Vishnu Kakarla
                     </div>
-                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
-                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                    <div style={{ width: '220px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14px', color: '#334155' }}>
                       Founder, Vishnu Kakarla
                     </div>
                   </div>
 
                   {/* Right: Kruz Smith - Co-Founder */}
-                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
+                  <div className="flex flex-col items-center text-center" style={{ width: '240px' }}>
                     <div 
                       style={{ 
                         fontFamily: "'Source Serif 4', Georgia, serif", 
@@ -701,22 +701,23 @@ export const CertificateView: React.FC<Props> = ({
                     >
                       Kruz Smith
                     </div>
-                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
-                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                    <div style={{ width: '220px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14px', color: '#334155' }}>
                       Co-Founder, Kruz Smith
                     </div>
                   </div>
                 </div>
 
-                {/* About BeginFin Section - Moved up away from the border */}
-                <div className="w-full text-left px-2">
+                {/* About BeginFin Section - Brought inward, centered */}
+                <div className="w-full text-center flex flex-col items-center px-4">
                   <div 
                     style={{ 
                       fontFamily: "'Source Serif 4', Georgia, serif", 
-                      fontSize: '14.5px', 
+                      fontSize: '14px', 
                       fontWeight: 700, 
                       color: '#1E293B', 
-                      marginBottom: '3px' 
+                      marginBottom: '3px',
+                      textAlign: 'center'
                     }}
                   >
                     About BeginFin
@@ -727,8 +728,9 @@ export const CertificateView: React.FC<Props> = ({
                       fontSize: '12.5px', 
                       lineHeight: '1.55', 
                       color: '#334155', 
-                      maxWidth: '640px', 
-                      margin: 0 
+                      maxWidth: '520px', 
+                      margin: '0 auto',
+                      textAlign: 'center'
                     }}
                   >
                     BeginFin is a student-built open access initiative that provides a free foundation in Personal Finance Fundamentals. For more about BeginFin, visit begin-fin.com/about.

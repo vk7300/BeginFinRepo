@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { X, Mail, Shield, AlertTriangle, Loader2, CheckCircle2, Lock, Phone } from 'lucide-react';
-import { auth, db, doc, updateDoc, collection, query, where, getDocs, writeBatch, googleProvider, signInWithRedirect } from '../firebase';
+import { auth, db, doc, updateDoc, collection, query, where, getDocs, writeBatch, googleProvider, browserPopupRedirectResolver } from '../firebase';
 import { deleteUser, updateEmail, reauthenticateWithCredential, EmailAuthProvider, reauthenticateWithPopup, verifyBeforeUpdateEmail } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,7 +30,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
     setError(null);
     try {
       if (isGoogleUser) {
-        await reauthenticateWithPopup(auth.currentUser!, googleProvider);
+        await reauthenticateWithPopup(auth.currentUser!, googleProvider, browserPopupRedirectResolver);
       } else {
         const credential = EmailAuthProvider.credential(user.email, password);
         await reauthenticateWithCredential(auth.currentUser!, credential);
@@ -173,11 +173,11 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.98, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl overflow-hidden relative"
+        className="bg-white rounded-[2.5rem] w-full max-w-lg p-6 sm:p-8 shadow-2xl max-h-[90vh] my-auto overflow-y-auto relative"
       >
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
@@ -278,7 +278,7 @@ export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-white/95 backdrop-blur-sm z-[210] flex flex-col items-center justify-center p-8 text-center"
+              className="absolute inset-0 bg-white z-[210] flex flex-col items-center justify-center p-6 sm:p-8 text-center"
             >
               <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 mb-6">
                 <Lock className="w-8 h-8" />

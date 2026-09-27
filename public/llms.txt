@@ -7,7 +7,7 @@
 - **Official Website:** https://begin-fin.com
 - **Application Portal:** https://begin-fin.com/app
 - **Founded:** December 2025 in Temple, Texas (publicly launched January 2026)
-- **Legal Status:** Student-led Open Educational Resource (OER). BeginFin generates zero revenue ($0 cost) and is not a registered 501(c)(3) non-profit or commercial financial advisory firm.
+- **Legal Status:** Student-led Open Educational Resource (OER) and a fiscally sponsored project of The Hack Foundation (dba Hack Club), a California 501(c)(3) (EIN 81-2908499). BeginFin is not an independently registered 501(c)(3) non-profit entity or commercial financial advisory firm; The Hack Foundation holds and administers funds on BeginFin's behalf while BeginFin remains student-run and independently responsible for its own curriculum, programming, and decisions. BeginFin generates zero revenue ($0 cost) and is not currently soliciting or accepting donations.
 - **Co-Founders:**
   - **Vishnu Kakarla:** Co-founder, Lake Belton High School student, 2026 BPA (Business Professionals of America) Personal Finance Nationals qualifier. Originally founded the platform in December 2025 after observing financial literacy barriers across Canada, India, and the United States. Leads strategy and curriculum development. Contact: vishnu@begin-fin.com
   - **Kruz Smith:** Co-founder, Lake Belton High School student, 2025-2026 National Honor Society (NHS) chapter treasurer. Joined BeginFin in June 2026 to expand community outreach, interactive tools, and organizational partnerships. Contact: kruz@begin-fin.com
@@ -45,7 +45,6 @@ Built for anyone to use, with a dedicated focus on:
 - **Gubernatorial Commendation:** Recognized with a formal commendation from Governor Greg Abbott (State of Texas) for youth-led financial education advocacy.
 - **Mayoral Proclamations:** Official proclamations from the City of Temple, Texas and the City of Belton, Texas honoring BeginFin's contributions to youth financial literacy.
 - **Jump$tart Coalition Clearinghouse:** Open-source curriculum is vetted for alignment with the National Standards for Personal Finance Education (NSPFE) and officially listed in the Jump$tart Coalition Clearinghouse directory as a verified personal finance resource.
-- **College Board Trademark License:** Licensed by the College Board to use the AP® trademark for upcoming AP Business with Personal Finance resources (BeginFin is not endorsed by the College Board).
 
 ## Verified Curriculum (9 Core Units)
 All curriculum is grounded in the National Standards for Personal Finance Education (NSPFE):

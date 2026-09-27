@@ -12,17 +12,9 @@ import { CertificateView } from './components/CertificateView';
 import { CurriculumView } from './components/CurriculumView';
 import { modules, Module } from './data/courseData';
 import { Language, uiTranslations } from './data/uiTranslations';
-import { LogOut, User as UserIcon, BookOpen, AlertTriangle, Users, Zap, X, Loader2, Bell, Trophy, CheckCircle2, Settings, Phone, Repeat, Menu, Home, Sparkles, ExternalLink, RefreshCw } from 'lucide-react';
+import { LogOut, User as UserIcon, BookOpen, AlertTriangle, Users, Zap, X, Loader2, Bell, Trophy, CheckCircle2, Settings, Phone, Repeat, Menu, Home, Sparkles, ExternalLink } from 'lucide-react';
 import { auth, db, googleProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, collection, query, where, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, doc, setDoc, onSnapshot } from './firebase';
 import { sendEmailVerification, GoogleAuthProvider } from 'firebase/auth';
-import { 
-  DUMMY_CREDENTIALS, 
-  createDummyUser, 
-  isDummyUser, 
-  loadDummyProgress, 
-  saveDummyProgress, 
-  loadDummyAlerts 
-} from './data/dummyTestData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SettingsModal } from './components/SettingsModal';
 import { VerificationNotice } from './components/VerificationNotice';
@@ -36,8 +28,6 @@ import { ResourcesView } from './components/ResourcesView';
 import { AboutView } from './components/AboutView';
 import { McpServerView } from './components/McpServerView';
 import { ToolsView } from './components/ToolsView';
-import { APUnitView } from './components/APUnitView';
-import { APTopicView } from './components/APTopicView';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
 import { GoogleOneTap } from './components/GoogleOneTap';
@@ -58,7 +48,7 @@ const orderedModules = [
   modules.find(m => m.id === 'm9')
 ].filter((m): m is Module => !!m);
 
-export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'admin' | 'resources' | 'about' | 'mcp' | 'teacher-mcp' | 'bradley-mcp' | 'tools' | 'status' | 'ap-unit' | 'ap-topic' | 'postpresentation';
+export type View = 'welcome' | 'dashboard' | 'module' | 'certificate' | 'tax-roadmap' | 'onboarding' | 'guide' | 'terms' | 'privacy' | 'not-found' | 'curriculum' | 'crud-qms' | 'admin' | 'resources' | 'about' | 'mcp' | 'teacher-mcp' | 'bradley-mcp' | 'tools' | 'status' | 'postpresentation';
 
 enum OperationType {
   CREATE = 'create',
@@ -256,10 +246,6 @@ const LoginModalContent: React.FC<{
       setError("Please enter your email address first");
       return;
     }
-    if (emailOrPhone.trim().toLowerCase() === DUMMY_CREDENTIALS.email) {
-      setResetSent(true);
-      return;
-    }
     setError('');
     setIsLoading(true);
     try {
@@ -293,15 +279,14 @@ const LoginModalContent: React.FC<{
 
   const handleAuthSubmit = async (isSignUpChoice: boolean, e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const isEmail = emailOrPhone.includes('@');
-    const isDummy = emailOrPhone.trim().toLowerCase() === DUMMY_CREDENTIALS.email;
-    if (isSignUpChoice && !agreedToTerms && !isDummy) {
+    if (isSignUpChoice && !agreedToTerms) {
       setError("Please confirm you are at least 14 years old and agree to the Terms of Use and Privacy Policy to create an account.");
       return;
     }
     setError('');
     setIsLoading(true);
 
+    const isEmail = emailOrPhone.includes('@');
     const cleanedPhone = formatPhoneNumber(emailOrPhone);
     const isPhone = /^\+[1-9]\d{1,14}$/.test(cleanedPhone);
 
@@ -479,24 +464,6 @@ const LoginModalContent: React.FC<{
                 />
               </motion.div>
             )}
-
-            {/* Quick-fill / helper for test credentials */}
-            <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-center justify-between text-xs text-indigo-950">
-              <div className="text-[11px] leading-tight">
-                <span className="font-bold text-indigo-900">Test Login:</span> <code className="bg-indigo-100/80 px-1 py-0.5 rounded font-mono text-[10px] text-indigo-800">test@test.com</code> / <code className="bg-indigo-100/80 px-1 py-0.5 rounded font-mono text-[10px] text-indigo-800">testtest8</code>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmailOrPhone('test@test.com');
-                  setPassword('testtest8');
-                  setAgreedToTerms(true);
-                }}
-                className="px-2.5 py-1 bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 font-bold rounded-lg border border-indigo-200 transition-all text-[11px] shadow-xs cursor-pointer shrink-0 ml-2"
-              >
-                Fill In
-              </button>
-            </div>
           </div>
 
           <div className="flex flex-col gap-3 pt-2">
@@ -572,8 +539,8 @@ const LoginModalContent: React.FC<{
 const SwitchRoleModalContent: React.FC<{ 
   onClose: () => void; 
   onConfirm: (role: 'student' | 'teacher') => void;
-  currentRole: 'student' | 'teacher' | null;
-}> = ({ onClose, onConfirm, currentRole }) => {
+  currentRole?: 'student' | 'teacher' | null;
+}> = ({ onClose, onConfirm }) => {
   return (
     <div className="py-2">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
@@ -581,11 +548,7 @@ const SwitchRoleModalContent: React.FC<{
         <button
           type="button"
           onClick={() => onConfirm('student')}
-          className={`group bg-white border rounded-2xl p-5 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#7F7FFA]/40 active:scale-[0.99] ${
-            currentRole === 'student'
-              ? 'border-[#7F7FFA] ring-1 ring-[#7F7FFA] shadow-md bg-indigo-50/20'
-              : 'border-slate-200/90 hover:border-[#7F7FFA] hover:shadow-md'
-          }`}
+          className="group bg-white border border-slate-200/90 hover:border-[#7F7FFA] hover:shadow-md rounded-2xl p-5 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#7F7FFA]/40 active:scale-[0.99]"
         >
           <div>
             <div className="w-11 h-11 rounded-xl bg-[#EEF0FD] border border-[#E0E4FB] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
@@ -594,23 +557,13 @@ const SwitchRoleModalContent: React.FC<{
             <h4 className="text-base font-bold text-[#1E2022] mb-0.5">Student Mode</h4>
             <p className="text-slate-500 text-xs leading-relaxed">Learn at your own pace.</p>
           </div>
-          {currentRole === 'student' && (
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-[#7F7FFA] uppercase tracking-wider">
-              <span>Current</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7F7FFA]" />
-            </div>
-          )}
         </button>
 
         {/* Teacher Mode Card */}
         <button
           type="button"
           onClick={() => onConfirm('teacher')}
-          className={`group bg-white border rounded-2xl p-5 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 active:scale-[0.99] ${
-            currentRole === 'teacher'
-              ? 'border-emerald-500 ring-1 ring-emerald-500 shadow-md bg-emerald-50/20'
-              : 'border-slate-200/90 hover:border-emerald-500 hover:shadow-md'
-          }`}
+          className="group bg-white border border-slate-200/90 hover:border-emerald-500 hover:shadow-md rounded-2xl p-5 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 active:scale-[0.99]"
         >
           <div>
             <div className="w-11 h-11 rounded-xl bg-[#E8F8F0] border border-[#D1F2E3] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
@@ -619,12 +572,6 @@ const SwitchRoleModalContent: React.FC<{
             <h4 className="text-base font-bold text-[#1E2022] mb-0.5">Teacher Mode</h4>
             <p className="text-slate-500 text-xs leading-relaxed">Teach your way</p>
           </div>
-          {currentRole === 'teacher' && (
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-              <span>Current</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            </div>
-          )}
         </button>
       </div>
 
@@ -685,7 +632,6 @@ const App: React.FC = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showMobileDashboardNav, setShowMobileDashboardNav] = useState(false);
   const userAgreedConsentRef = useRef(false);
-  const [selectedApTopic, setSelectedApTopic] = useState<string>('1.1');
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -709,15 +655,6 @@ const App: React.FC = () => {
       setCurrentView('resources');
     } else if (path === '/about') {
       setCurrentView('about');
-    } else if (path === '/tools/beginfinsguidetoapbusinesswithpf' || path.startsWith('/tools/beginfinsguidetoapbusinesswithpf/')) {
-      const topicSub = path.replace('/tools/beginfinsguidetoapbusinesswithpf', '').replace(/^\//, '');
-      if (topicSub) {
-        const formattedTopic = topicSub.replace('-', '.');
-        setSelectedApTopic(formattedTopic || '1.1');
-        setCurrentView('ap-topic');
-      } else {
-        setCurrentView('ap-unit');
-      }
     } else if (path === '/tools' || path.startsWith('/tools/') || path === '/simulator' || path === '/simulators') {
       setCurrentView('tools');
     } else if (
@@ -797,9 +734,6 @@ const App: React.FC = () => {
   
   const [completedModules, setCompletedModules] = useState<string[]>(() => {
     try {
-      if (localStorage.getItem('beginfin-dummy-auth') === 'true') {
-        return loadDummyProgress();
-      }
       const saved = localStorage.getItem('beginfin-progress');
       return saved ? JSON.parse(saved) : [];
     } catch(e) {
@@ -867,12 +801,6 @@ const App: React.FC = () => {
       case 'bradley-mcp':
         sectionTitle = 'MCP Server';
         break;
-      case 'ap-unit':
-        sectionTitle = 'Unit 1 Review · AP® Business with Personal Finance';
-        break;
-      case 'ap-topic':
-        sectionTitle = `Topic ${selectedApTopic} · AP® Business with Personal Finance`;
-        break;
       case 'guide':
         sectionTitle = 'Quick Start Guide';
         break;
@@ -921,21 +849,7 @@ const App: React.FC = () => {
         console.warn("Google redirect sign-in result check:", error?.message || error);
       });
 
-    if (localStorage.getItem('beginfin-dummy-auth') === 'true') {
-      const dummyUser = createDummyUser();
-      setUser(dummyUser);
-      setIsAuthReady(true);
-      setUserName(dummyUser.displayName);
-      const prog = loadDummyProgress();
-      setCompletedModules(prog);
-      const savedRole = (localStorage.getItem('beginfin-user-role') as 'student' | 'teacher') || 'student';
-      setUserRole(savedRole);
-    }
-
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (localStorage.getItem('beginfin-dummy-auth') === 'true') {
-        return;
-      }
       setUser(currentUser);
       setIsAuthReady(true);
       if (currentUser) {
@@ -1003,7 +917,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthReady || !user) return;
-    if (isDummyUser(user)) return;
 
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(userDocRef, (snapshot) => {
@@ -1100,7 +1013,7 @@ const App: React.FC = () => {
 
   // Listen for class document changes to get fullScreenLock setting
   useEffect(() => {
-    if (!classId || isDummyUser(user)) {
+    if (!classId) {
         setIsFullScreenLockEnabled(false);
         return;
     }
@@ -1111,17 +1024,12 @@ const App: React.FC = () => {
         }
     });
     return () => unsubscribe();
-  }, [classId, user]);
+  }, [classId]);
 
   // Listen for all alerts for teacher's classes
   useEffect(() => {
     if (!user || userRole !== 'teacher') {
       setAllAlerts([]);
-      return;
-    }
-
-    if (isDummyUser(user)) {
-      setAllAlerts(loadDummyAlerts() as any);
       return;
     }
 
@@ -1180,9 +1088,7 @@ const App: React.FC = () => {
 
   // Local Storage Fallback
   useEffect(() => {
-    if (user && isDummyUser(user)) {
-      saveDummyProgress(completedModules);
-    } else if (!user) {
+    if (!user) {
       localStorage.setItem('beginfin-progress', JSON.stringify(completedModules));
       localStorage.setItem('beginfin-username', userName);
     }
@@ -1246,27 +1152,6 @@ const App: React.FC = () => {
     if (typeof agreed === 'boolean') {
       userAgreedConsentRef.current = agreed;
     }
-    const trimmedEmail = email.trim().toLowerCase();
-    if (trimmedEmail === DUMMY_CREDENTIALS.email) {
-      if (pass !== DUMMY_CREDENTIALS.password) {
-        throw new Error("Invalid password for test credential. Please use testtest8.");
-      }
-      const dummyUser = createDummyUser();
-      localStorage.setItem('beginfin-dummy-auth', 'true');
-      setUser(dummyUser);
-      setIsAuthReady(true);
-      setUserName(dummyUser.displayName);
-      const prog = loadDummyProgress();
-      setCompletedModules(prog);
-      const savedRole = (localStorage.getItem('beginfin-user-role') as 'student' | 'teacher') || 'student';
-      setUserRole(savedRole);
-      setShowLoginModal(false);
-      setHasStarted(true);
-      navigate('/app');
-      setCurrentView('dashboard');
-      triggerPseudoLoading("Welcome to BeginFin Test Environment!");
-      return;
-    }
     try {
       if (isSignUp) {
         // User clicked "Create an Account"
@@ -1317,9 +1202,6 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      if (localStorage.getItem('beginfin-dummy-auth') === 'true') {
-        localStorage.removeItem('beginfin-dummy-auth');
-      }
       await signOut(auth);
       setCompletedModules([]);
       setUserName('');
@@ -1346,13 +1228,13 @@ const App: React.FC = () => {
     triggerPseudoLoading(`Switching to ${nextRole === 'teacher' ? 'Teacher' : 'Student'} Mode...`, 2000);
     
     try {
-      if (user && !isDummyUser(user)) {
+      if (user) {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, {
           role: nextRole,
           lastUpdated: new Date().toISOString()
         }, { merge: true });
-      } else if (!user) {
+      } else {
         localStorage.setItem('beginfin-guest-role', nextRole);
       }
       
@@ -1367,7 +1249,7 @@ const App: React.FC = () => {
       setShowUserMenu(false);
       setCurrentView('dashboard');
     } catch (err) {
-      if (user && !isDummyUser(user)) {
+      if (user) {
         handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
       }
       setUserRole(nextRole);
@@ -1411,10 +1293,6 @@ const App: React.FC = () => {
   };
 
   const saveProgress = useCallback(async (updatedModules: string[]) => {
-    if (user && isDummyUser(user)) {
-      saveDummyProgress(updatedModules);
-      return;
-    }
     if (!user) {
       try {
         localStorage.setItem('beginfin-progress', JSON.stringify(updatedModules));
@@ -1434,7 +1312,7 @@ const App: React.FC = () => {
       saveProgress(updatedModules);
 
       // Send notification if in a class
-      if (classId && user && !isDummyUser(user)) {
+      if (classId) {
         try {
           const module = modules.find(m => m.id === moduleId);
           const moduleTitle = module?.translations[language]?.title || module?.translations.en.title || moduleId;
@@ -1791,11 +1669,6 @@ const App: React.FC = () => {
                         navigate('/');
                         setCurrentView(user ? (userRole ? 'dashboard' : 'onboarding') : 'welcome');
                       }}
-                      onNavigateToAP={() => {
-                        window.scrollTo(0,0);
-                        navigate('/tools/beginfinsguidetoapbusinesswithpf');
-                        setCurrentView('ap-unit');
-                      }}
                     />
                   </div>
                 </main>
@@ -1890,11 +1763,6 @@ const App: React.FC = () => {
                       }}
                       user={user}
                       initialTool={location.pathname.includes('credit') ? 'credit' : 'wage'}
-                      onNavigateToAP={() => {
-                        window.scrollTo(0,0);
-                        navigate('/tools/beginfinsguidetoapbusinesswithpf');
-                        setCurrentView('ap-unit');
-                      }}
                     />
                   </div>
                 </main>
@@ -1906,68 +1774,6 @@ const App: React.FC = () => {
                   onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
                 />
               </div>
-            </motion.div>
-          ) : currentView === 'ap-unit' ? (
-            <motion.div
-              key="ap-unit"
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              variants={pageVariants}
-              transition={pageTransition}
-              className="flex-1 flex flex-col"
-            >
-              <APUnitView
-                onBackToTools={() => {
-                  window.scrollTo(0,0);
-                  navigate('/tools');
-                  setCurrentView('tools');
-                }}
-                onSelectTopic={(id) => {
-                  window.scrollTo(0,0);
-                  setSelectedApTopic(id);
-                  navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
-                  setCurrentView('ap-topic');
-                }}
-              />
-              <Footer 
-                onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
-                onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
-                onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
-                onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
-                onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
-              />
-            </motion.div>
-          ) : currentView === 'ap-topic' ? (
-            <motion.div
-              key="ap-topic"
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              variants={pageVariants}
-              transition={pageTransition}
-              className="flex-1 flex flex-col"
-            >
-              <APTopicView
-                topicId={selectedApTopic}
-                onBackToUnit={() => {
-                  window.scrollTo(0,0);
-                  navigate('/tools/beginfinsguidetoapbusinesswithpf');
-                  setCurrentView('ap-unit');
-                }}
-                onSelectTopic={(id) => {
-                  window.scrollTo(0,0);
-                  setSelectedApTopic(id);
-                  navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
-                }}
-              />
-              <Footer 
-                onViewCurriculum={() => { window.scrollTo(0,0); navigate('/curriculum'); setCurrentView('curriculum'); }}
-                onViewTools={() => { window.scrollTo(0,0); navigate('/tools'); setCurrentView('tools'); }}
-                onViewResources={() => { window.scrollTo(0,0); navigate('/resources'); setCurrentView('resources'); }}
-                onViewAbout={() => { window.scrollTo(0,0); navigate('/about'); setCurrentView('about'); }}
-                onOpenGuide={() => { window.scrollTo(0,0); setCurrentView('guide'); }}
-              />
             </motion.div>
           ) : currentView === 'status' ? (
             <motion.div
@@ -2274,26 +2080,6 @@ const App: React.FC = () => {
                     </div>
                   )}
 
-                  {user && (
-                    <button
-                      onClick={() => handleSwitchRole(userRole === 'teacher' ? 'student' : 'teacher')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs transition-all shadow-xs cursor-pointer ${
-                        userRole === 'teacher'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                          : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
-                      }`}
-                      title={userRole === 'teacher' ? "Switch to Student View (Modules 1-3 Completed)" : "Switch to Teacher View (2nd & 3rd Period Classes)"}
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">
-                        {userRole === 'teacher' ? 'Teacher View' : 'Student View'}
-                      </span>
-                      <span className="sm:hidden">
-                        {userRole === 'teacher' ? 'Teacher' : 'Student'}
-                      </span>
-                    </button>
-                  )}
-
                   {user ? (
                     <div className="relative">
                       <button 
@@ -2310,9 +2096,6 @@ const App: React.FC = () => {
                           <div className="px-6 py-4 border-b border-slate-50 mb-2">
                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Account</p>
                             <p className="text-sm font-bold text-slate-900 truncate">{user.email}</p>
-                            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                              {userRole === 'teacher' ? 'Teacher Account' : 'Student Account'}
-                            </div>
                           </div>
                           
                           <button 
@@ -2561,41 +2344,6 @@ const App: React.FC = () => {
                           }}
                           user={user}
                           initialTool={location.pathname.includes('credit') ? 'credit' : 'wage'}
-                          onNavigateToAP={() => {
-                            window.scrollTo(0,0);
-                            navigate('/tools/beginfinsguidetoapbusinesswithpf');
-                            setCurrentView('ap-unit');
-                          }}
-                        />
-                      )}
-                      {((currentView as string) === 'ap-unit') && (
-                        <APUnitView
-                          onBackToTools={() => {
-                            window.scrollTo(0,0);
-                            navigate('/tools');
-                            setCurrentView('tools');
-                          }}
-                          onSelectTopic={(id) => {
-                            window.scrollTo(0,0);
-                            setSelectedApTopic(id);
-                            navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
-                            setCurrentView('ap-topic');
-                          }}
-                        />
-                      )}
-                      {((currentView as string) === 'ap-topic') && (
-                        <APTopicView
-                          topicId={selectedApTopic}
-                          onBackToUnit={() => {
-                            window.scrollTo(0,0);
-                            navigate('/tools/beginfinsguidetoapbusinesswithpf');
-                            setCurrentView('ap-unit');
-                          }}
-                          onSelectTopic={(id) => {
-                            window.scrollTo(0,0);
-                            setSelectedApTopic(id);
-                            navigate(`/tools/beginfinsguidetoapbusinesswithpf/${id}`);
-                          }}
                         />
                       )}
                       {((currentView as string) === 'curriculum') && (
@@ -2614,11 +2362,6 @@ const App: React.FC = () => {
                       {((currentView as string) === 'resources') && (
                         <ResourcesView
                           onBack={() => setCurrentView('dashboard')}
-                          onNavigateToAP={() => {
-                            window.scrollTo(0,0);
-                            navigate('/tools/beginfinsguidetoapbusinesswithpf');
-                            setCurrentView('ap-unit');
-                          }}
                         />
                       )}
                       {((currentView as string) === 'about') && (

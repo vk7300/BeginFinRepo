@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { jsPDF } from 'jspdf';
-import { Helmet } from 'react-helmet-async';
 import { modules } from '../data/courseData';
 import { Language, uiTranslations } from '../data/uiTranslations';
 import { useNavPadding } from './Navbar';
@@ -236,10 +235,6 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
 
   return (
     <div className="min-h-screen bg-[#F4F8FA] text-[#3C3C3C] font-sans pb-24">
-      <Helmet>
-        <title>BeginFin Curriculum | Personal Finance Learning Outcomes</title>
-      </Helmet>
-
       {/* Hero Section */}
       <section className={`max-w-7xl mx-auto px-6 ${navPadding} pb-10`}>
         <motion.div 
@@ -247,10 +242,6 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({ onBack, language
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-3xl mx-auto mb-12"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#7F7FFA]/10 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider mb-4 border border-[#7F7FFA]/20">
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>Structured Financial Learning</span>
-          </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-5 leading-[1.1]">
             Curriculum
           </h1>

@@ -138,7 +138,7 @@ export const CurriculumModal: React.FC<{ isOpen: boolean; onClose: () => void }>
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 overflow-y-auto">
       <div className="bg-white rounded-[2.5rem] w-full max-w-4xl my-8 shadow-2xl animate-in zoom-in duration-300 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-8 border-b border-white/10 flex justify-between items-center bg-[#0b0f19] rounded-t-[2.5rem] text-white relative overflow-hidden">

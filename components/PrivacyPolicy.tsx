@@ -12,7 +12,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
   }, []);
 
   const navPadding = useNavPadding();
-  const currentDate = "August 30, 2026";
+  const currentDate = "September 26, 2026";
 
   return (
     <div className={`min-h-screen bg-[#F4F8FA] ${navPadding} pb-16 px-4 sm:px-6 font-sans`}>
@@ -50,8 +50,8 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">1. INTRODUCTION, SCOPE & FOUNDATIONAL STATUS</h4>
-              <p>BeginFin ("we," "us," or "our") is a 100% free educational platform founded in December 2025 in Temple, Texas by high school co-founders Vishnu Kakarla and Kruz Smith. BeginFin operates as a student-led Open Educational Resource (OER) with zero revenue, zero external monetization, and is not a registered 501(c)(3) non-profit entity or financial advisory firm. The curriculum is open-source and free to use for non-commercial educational purposes. This Privacy Policy explains our data collection, handling, and security practices across begin-fin.com, its application portal, and its Model Context Protocol (MCP) server.</p>
+              <h4 className="font-bold text-[#3C3C3C]">1. INTRODUCTION, SCOPE & FISCAL SPONSORSHIP STATUS</h4>
+              <p>BeginFin ("we," "us," or "our") is a 100% free educational platform founded in December 2025 in Temple, Texas by high school co-founders Vishnu Kakarla and Kruz Smith. BeginFin operates as a student-led Open Educational Resource (OER) and a fiscally sponsored project of The Hack Foundation (dba Hack Club), a California 501(c)(3) tax-exempt public charity (EIN 81-2908499). While The Hack Foundation provides fiscal sponsorship and holds funds on BeginFin's behalf, BeginFin remains student-run and independently responsible for its own curriculum, programming, tools, and operational decisions. BeginFin is not an independently registered 501(c)(3) non-profit entity or financial advisory firm, generates zero revenue, and is not currently soliciting or accepting donations. The curriculum is open-source and free to use for non-commercial educational purposes. This Privacy Policy explains our data collection, handling, and security practices across begin-fin.com, its application portal, and its Model Context Protocol (MCP) server.</p>
             </section>
 
             <section className="space-y-4">
@@ -121,17 +121,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">6. AP® COURSE REVIEW RESOURCES & PRIVACY (ZERO DATA COLLECTION)</h4>
-              <p>BeginFin provides open review materials in <em>BeginFin's Guide to AP® Business with Personal Finance</em> (available at <code>/tools/beginfinsguidetoapbusinesswithpf</code>):</p>
-              <ul className="list-disc ml-6 space-y-2 text-xs font-medium text-slate-700">
-                <li><strong>Strictly Read-Only Access:</strong> All AP® review content is delivered statically for educational review. Navigating and reading these pages does not alter BeginFin's strict no-collection privacy posture.</li>
-                <li><strong>No Progress Tracking or Telemetry:</strong> We do not collect, monitor, track, or record learner identities, page views, progress flags, quiz scores, or completion metrics on AP® review pages.</li>
-                <li><strong>Trademark Notice:</strong> AP® is a trademark registered by the College Board. BeginFin is licensed to use the AP® trademark. BeginFin is not endorsed by the College Board. Review resources are independently aligned to the publicly available AP® Business with Personal Finance Course Framework. Note: Only Unit 1 is available now, with more units and BeginFin tools to be supported soon.</li>
-              </ul>
-            </section>
-
-            <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">7. THIRD-PARTY SERVICES & MODEL CONTEXT PROTOCOL (MCP)</h4>
+              <h4 className="font-bold text-[#3C3C3C]">6. THIRD-PARTY SERVICES & MODEL CONTEXT PROTOCOL (MCP)</h4>
               <p>Data sharing is strictly limited to services required to deliver core application functionality. We do not sell or monetize personal data:</p>
               <ul className="list-disc ml-6 space-y-2 mb-4">
                 <li><strong>Cloud Infrastructure & Authentication:</strong> Google Cloud Platform, Firebase (Firestore database and Firebase Authentication), and Google Identity Services provide secure hosting, real-time database synchronization, and encrypted user authentication.</li>
@@ -143,12 +133,12 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">8. DATA SECURITY & RETENTION</h4>
+              <h4 className="font-bold text-[#3C3C3C]">7. DATA SECURITY & RETENTION</h4>
               <p>We maintain technical and administrative safeguards to protect your personal data, including TLS 1.3 encryption for data in transit, AES-256 encryption at rest within Firestore, and strict access controls. Data is retained during the active life of the user account.</p>
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">9. USER PRIVACY RIGHTS & DATA CONTROL</h4>
+              <h4 className="font-bold text-[#3C3C3C]">8. USER PRIVACY RIGHTS & DATA CONTROL</h4>
               <p>All users have control over their personal data:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Access and Export:</strong> Request a summary of your account and learning data by contacting support@begin-fin.com.</li>
@@ -159,7 +149,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-[#3C3C3C]">10. CONTACT INFORMATION</h4>
+              <h4 className="font-bold text-[#3C3C3C]">9. CONTACT INFORMATION</h4>
               <p>If you have questions, feedback, or requests regarding this Privacy Policy or our data practices, please contact us at:</p>
               <div className="bg-[#F4F8FA] p-6 rounded-2xl border border-slate-200/80 font-sans text-sm">
                 <strong>BeginFin Privacy & Support Team</strong><br />

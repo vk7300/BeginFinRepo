@@ -237,7 +237,12 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar: Copyright & Location */}
         <div className="mt-10 sm:mt-14 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-normal text-center sm:text-left">
-          <div>© BeginFin 2026 | All Rights Reserved</div>
+          <div className="space-y-1">
+            <div>© BeginFin 2026 | All Rights Reserved</div>
+            <div className="text-slate-400 text-xs">
+              BeginFin is a fiscally sponsored project of The Hack Foundation.
+            </div>
+          </div>
           <div className="flex items-center gap-1.5">
             <span>Made with</span>
             <span className="text-rose-500">❤️</span>

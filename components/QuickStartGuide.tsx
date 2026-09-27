@@ -1,7 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Download, Printer, ChevronRight, BookOpen, Users, Shield, CheckCircle2, Info, Mail, Terminal, Server, Code2, Cpu } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Helmet } from 'react-helmet-async';
 import { jsPDF } from 'jspdf';
 import { useNavPadding } from './Navbar';
 
@@ -161,10 +160,6 @@ export const QuickStartGuide: React.FC<Props> = ({ onBack }) => {
 
   return (
     <div className={`min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-24 ${navPadding}`}>
-      <Helmet>
-        <title>Quick Start Guide | BeginFin Educator Resources</title>
-      </Helmet>
-
       {/* Guide Sub-Bar Actions */}
       <div className="max-w-7xl mx-auto px-6 pt-4 pb-2 flex items-center justify-between gap-4 no-print">
         <div className="flex items-center gap-2">

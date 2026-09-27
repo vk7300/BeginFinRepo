@@ -18,7 +18,6 @@ import {
   AlertTriangle,
   Info,
   ChevronRight,
-  Sliders,
   Sparkles
 } from 'lucide-react';
 
@@ -248,10 +247,6 @@ export const SalarySimulator: React.FC = () => {
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7F7FFA]/10 border border-[#7F7FFA]/20 text-[#7F7FFA] text-xs font-bold uppercase tracking-wider mb-2">
-              <Sliders className="w-3.5 h-3.5" />
-              <span>Interactive Career & Budgeting Tool</span>
-            </div>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Entry Salary & Living Cost Simulator
             </h2>

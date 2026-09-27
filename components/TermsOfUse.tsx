@@ -12,7 +12,7 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
   }, []);
 
   const navPadding = useNavPadding();
-  const currentDate = "August 30, 2026";
+  const currentDate = "September 26, 2026";
 
   return (
     <div className={`min-h-screen bg-[#F4F8FA] ${navPadding} pb-16 px-4 sm:px-6 font-sans`}>
@@ -50,8 +50,9 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">1. ACCEPTANCE OF TERMS, MINIMUM AGE REQUIREMENT (14+) & OPEN SOURCE CURRICULUM</h4>
+              <h4 className="font-bold text-slate-900">1. ACCEPTANCE OF TERMS, FISCAL SPONSORSHIP STATUS & MINIMUM AGE REQUIREMENT (14+)</h4>
               <p>BeginFin (the "Platform") is a free educational platform founded in December 2025 in Temple, Texas as a student-led initiative by Vishnu Kakarla and Kruz Smith. By accessing begin-fin.com, its application portal at begin-fin.com/app, or its Model Context Protocol (MCP) endpoints, you agree to be bound by these Terms of Use and our Privacy Policy. The curriculum is open-source and free to use for non-commercial educational purposes.</p>
+              <p><strong>Fiscal Sponsorship Disclosure:</strong> BeginFin operates as a fiscally sponsored project of The Hack Foundation (dba Hack Club), a California 501(c)(3) tax-exempt public charity (EIN 81-2908499). The Hack Foundation holds and administers funds on BeginFin's behalf. BeginFin remains student-run and independently responsible for its own curriculum, programming, tools, and operational decisions. BeginFin is not an investment advisory firm and is not currently soliciting or accepting donations.</p>
               <p><strong>Minimum Age Requirement (14+):</strong> You must be at least 14 years of age to register for an account, access personalized features, or use the Platform. By creating an account or signing in, you certify and warrant that you are at least 14 years old.</p>
             </section>
 
@@ -113,11 +114,10 @@ export const TermsOfUse: React.FC<Props> = ({ onBack }) => {
             </section>
 
             <section className="space-y-4">
-              <h4 className="font-bold text-slate-900">8. INTELLECTUAL PROPERTY, ATTRIBUTIONS & AP® TRADEMARKS</h4>
+              <h4 className="font-bold text-slate-900">8. INTELLECTUAL PROPERTY & ATTRIBUTIONS</h4>
               <p>The hosted BeginFin platform, website software, custom visual assets, and design system are maintained by BeginFin. The core curriculum text is open-source for non-commercial educational use.</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>Educational Framework Alignment:</strong> Curriculum topics are developed with national financial education frameworks in mind, referencing principles from the <em>National Standards for Personal Finance Education</em> (2021), developed jointly by the <strong>Council for Economic Education (CEE)</strong> and the <strong>Jump$tart Coalition for Personal Financial Literacy</strong>. Copyright &copy; 2021 CEE and Jump$tart. All rights reserved.</li>
-                <li><strong>College Board AP® Trademark Use & Non-Endorsement:</strong> AP® is a trademark registered by the College Board. BeginFin is licensed to use the AP® trademark. BeginFin is not endorsed by the College Board. All review materials in <em>BeginFin's Guide to AP® Business with Personal Finance</em> are independently aligned to the publicly available AP® Business with Personal Finance Course Framework. College Board trademarks are used strictly as adjectives modifying generic nouns in compliance with College Board trademark guidelines. Note: Only Unit 1 is available now, with more units and BeginFin tools to be supported soon.</li>
               </ul>
             </section>
 

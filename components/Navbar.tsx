@@ -66,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const pathname = location.pathname.toLowerCase();
   const isHero = (pathname === '/' || pathname === '') && (currentView === 'welcome' || !currentView);
 
-  const { notice } = useSystemStatus();
+  const { notice, dismissNotice } = useSystemStatus();
   // Status alert is strictly shown ONLY on the hero view; removed in all other tabs
   const hasBanner = isHero && Boolean(notice && notice.show && (notice.title || notice.message));
 
@@ -201,17 +201,32 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           </div>
-          <Link 
-            to="/status" 
-            className={`inline-flex items-center gap-1 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold shrink-0 transition-all shadow-sm active:scale-95 whitespace-nowrap ${
-              notice.type === 'warning'
-                ? 'bg-slate-950 text-white hover:bg-slate-800'
-                : 'bg-white text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <span>View Details</span>
-            <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-          </Link>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <Link 
+              to="/status" 
+              className={`inline-flex items-center gap-1 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold shrink-0 transition-all shadow-sm active:scale-95 whitespace-nowrap ${
+                notice.type === 'warning'
+                  ? 'bg-slate-950 text-white hover:bg-slate-800'
+                  : 'bg-white text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <span>View Details</span>
+              <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            </Link>
+            <button
+              type="button"
+              onClick={dismissNotice}
+              aria-label="Dismiss status notice"
+              title="Dismiss notice"
+              className={`p-1 sm:p-1.5 rounded-full transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-90 ${
+                notice.type === 'warning'
+                  ? 'text-slate-950 hover:bg-black/10'
+                  : 'text-white hover:bg-white/20'
+              }`}
+            >
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
         </aside>
       )}
 

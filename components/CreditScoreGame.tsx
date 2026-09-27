@@ -15,7 +15,6 @@ import {
   Wallet, 
   DollarSign, 
   Sliders, 
-  CreditCard, 
   Scale, 
   Sparkles, 
   AlertCircle, 
@@ -309,9 +308,6 @@ export const CreditScoreGame: React.FC<Props> = ({
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#7F7FFA]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-indigo-300 text-xs font-bold uppercase tracking-wider">
-              <CreditCard className="w-3.5 h-3.5" /> Credit & FICO Score Modeler
-            </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Credit Score Dynamics & Scenario Lab
             </h2>

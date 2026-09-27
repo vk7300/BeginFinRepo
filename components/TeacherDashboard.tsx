@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Plus, Copy, CheckCircle2, BookOpen, Trophy, Loader2, Search, User as UserIcon, Trash2, ChevronDown, ChevronUp, AlertCircle, FileText, Download, Zap, Calendar, X, Lock, Unlock, Bell, Award, Share2, GraduationCap, Send, RefreshCw, Link as LinkIcon, ExternalLink, Check, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -131,6 +132,31 @@ export const TeacherDashboard: React.FC<{
     badgeText?: string;
     onConfirm: () => Promise<void>;
   } | null>(null);
+
+  // Lock body scroll whenever any modal/panel is open to eliminate background scrolling
+  const isAnyModalOpen = Boolean(
+    deletingClassId ||
+    pendingConfirmation ||
+    showCourseImportModal ||
+    courseworkClass ||
+    announcementClass ||
+    rosterSyncClass ||
+    manualRosterClass ||
+    isCreatingClass ||
+    isCreatingChallenge ||
+    isEditingChallenge ||
+    reportData ||
+    isGeneratingCertificate
+  );
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isAnyModalOpen]);
 
 
   // Automatic background grade sync
@@ -1051,41 +1077,50 @@ export const TeacherDashboard: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0E] p-6 md:p-12 font-sans text-white relative">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
+    <div className="min-h-screen bg-[#FAF9FD] p-4 sm:p-6 md:p-10 font-sans text-slate-900 relative">
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#ECECFC]/80 via-[#F4F8FA]/90 to-transparent pointer-events-none z-0" />
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[52rem] h-64 bg-radial from-white/80 via-[#7F7FFA]/10 to-transparent blur-3xl pointer-events-none z-0" />
       <div className="max-w-7xl mx-auto space-y-6 relative z-10">
         
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        {/* Header - Styled in Hero & About Section Design Language */}
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 relative z-10">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">Teacher Dashboard</h1>
-            <p className="text-lg text-white/80 font-light">Bring the power of BeginFin to your classroom.</p>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/90 border border-slate-200/80 shadow-xs text-xs font-semibold text-slate-700 font-sans mb-3">
+              <GraduationCap className="w-3.5 h-3.5 text-[#7F7FFA]" />
+              <span>Educator Command Center</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal font-serif text-slate-900 tracking-tight leading-tight">
+              Teacher Dashboard
+            </h1>
+            <p className="text-base sm:text-lg text-slate-600 font-sans mt-1">
+              Bring the power of BeginFin to your classroom.
+            </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
             <button 
               onClick={() => navigate('/teacher/mcp')} 
-              className="px-5 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm"
+              className="px-4 py-2.5 bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm cursor-pointer hover:shadow-md"
               title="Integrate BeginFin Lesson Planner with your AI tool via MCP"
             >
-              <Sparkles className="w-4 h-4 text-indigo-400" /> AI Lesson Planner (MCP)
+              <Sparkles className="w-4 h-4 text-[#7F7FFA]" /> AI Lesson Planner (MCP)
             </button>
             {onOpenGuide && (
               <button 
                 onClick={onOpenGuide} 
-                className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-white/10 transition-colors flex items-center gap-2"
+                className="px-5 py-2.5 bg-white text-slate-700 border border-slate-200 font-semibold rounded-full hover:bg-slate-50 hover:text-slate-950 transition-all flex items-center gap-2 text-sm shadow-xs cursor-pointer"
               >
                 Quickstart Guide
               </button>
             )}
             <button 
               onClick={onSwitchToStudentView} 
-              className="px-6 py-2.5 bg-emerald-500 text-white font-bold rounded-full hover:bg-emerald-600 transition-colors flex items-center gap-2 shadow-sm"
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full transition-all flex items-center gap-2 shadow-xs text-sm cursor-pointer"
             >
               <GraduationCap className="w-4 h-4" /> Take Course
             </button>
             <button 
               onClick={() => setIsCreatingClass(true)} 
-              className="px-6 py-2.5 bg-[#7F7FFA] text-white font-bold rounded-full hover:bg-[#5656D4] transition-colors flex items-center gap-2 shadow-sm"
+              className="px-6 py-2.5 bg-[#7F7FFA] hover:bg-[#6868EB] text-white font-bold rounded-full transition-all flex items-center gap-2 shadow-md hover:shadow-lg text-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Create Class
             </button>
@@ -1097,7 +1132,7 @@ export const TeacherDashboard: React.FC<{
           {/* Left Column: Classes */}
           <div className="lg:col-span-2 space-y-6">
             {classes.length === 0 && !isCreatingClass ? (
-              <div className="bg-white rounded-[32px] p-12 text-center text-slate-900 h-full flex flex-col items-center justify-center">
+              <div className="bg-white rounded-[32px] p-12 text-center text-slate-900 h-full flex flex-col items-center justify-center border border-slate-200/80 shadow-md">
                 <div className="w-20 h-20 bg-[#7F7FFA]/10 rounded-3xl flex items-center justify-center mb-6">
                   <Users className="w-10 h-10 text-[#7F7FFA]" />
                 </div>
@@ -1127,9 +1162,9 @@ export const TeacherDashboard: React.FC<{
                 const hasAlerts = alerts[cls.id] && alerts[cls.id].length > 0;
                 
                 return (
-                  <div key={cls.id} className="bg-white rounded-[32px] p-2 relative shadow-2xl shadow-black/20">
+                  <div key={cls.id} className="bg-white rounded-[32px] p-2 relative shadow-lg border border-slate-200/80">
                     {/* Collapsed/Header View */}
-                    <div className="bg-gradient-to-r from-[#44387C] to-black rounded-[24px] p-6 relative overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#3B346E] via-[#484285] to-[#7F7FFA] rounded-[24px] p-6 relative overflow-hidden shadow-sm">
                       <div className="relative z-10">
                         <div className="flex justify-between items-start mb-4">
                           <h3 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -2048,102 +2083,108 @@ export const TeacherDashboard: React.FC<{
       </AnimatePresence>
 
       {/* Mandatory User Confirmation Dialog for Workspace Mutations */}
-      <AnimatePresence>
-        {pendingConfirmation && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 right-0 h-2 bg-indigo-600" />
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-indigo-600">
-                <Send className="w-8 h-8" />
-              </div>
-              <div className="text-center mb-2">
-                {pendingConfirmation.badgeText && (
-                  <span className="px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full inline-block mb-2">
-                    {pendingConfirmation.badgeText}
-                  </span>
-                )}
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">{pendingConfirmation.title}</h3>
-              </div>
-              <p className="text-slate-600 text-center font-medium text-sm mb-8 leading-relaxed">
-                {pendingConfirmation.message}
-              </p>
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {pendingConfirmation && (
+            <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl relative overflow-hidden"
+              >
+                <div className="absolute top-0 left-0 right-0 h-2 bg-indigo-600" />
+                <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-indigo-600">
+                  <Send className="w-8 h-8" />
+                </div>
+                <div className="text-center mb-2">
+                  {pendingConfirmation.badgeText && (
+                    <span className="px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full inline-block mb-2">
+                      {pendingConfirmation.badgeText}
+                    </span>
+                  )}
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">{pendingConfirmation.title}</h3>
+                </div>
+                <p className="text-slate-600 text-center font-medium text-sm mb-8 leading-relaxed">
+                  {pendingConfirmation.message}
+                </p>
 
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setPendingConfirmation(null)}
-                  disabled={isSubmittingClassroom}
-                  className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => pendingConfirmation.onConfirm()}
-                  disabled={isSubmittingClassroom}
-                  className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isSubmittingClassroom ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm & Publish'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setPendingConfirmation(null)}
+                    disabled={isSubmittingClassroom}
+                    className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => pendingConfirmation.onConfirm()}
+                    disabled={isSubmittingClassroom}
+                    className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmittingClassroom ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm & Publish'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {deletingClassId && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 right-0 h-2 bg-rose-500" />
-              <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-rose-600">
-                <AlertCircle className="w-8 h-8" />
-              </div>
-              <h3 className="text-2xl font-black text-slate-900 text-center mb-2 tracking-tight">Delete Class?</h3>
-              <p className="text-slate-500 text-center font-medium mb-6">
-                This will permanently delete the class and remove all students. This action cannot be undone.
-              </p>
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {deletingClassId && (
+            <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative overflow-hidden"
+              >
+                <div className="absolute top-0 left-0 right-0 h-2 bg-rose-500" />
+                <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-rose-600">
+                  <AlertCircle className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 text-center mb-2 tracking-tight">Delete Class?</h3>
+                <p className="text-slate-500 text-center font-medium mb-6">
+                  This will permanently delete the class and remove all students. This action cannot be undone.
+                </p>
 
-              <div className="space-y-3 mb-8">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 text-center block">
-                  Type <span className="text-rose-600 font-black">DELETE</span> to confirm
-                </label>
-                <input 
-                  type="text" 
-                  value={deleteConfirmationText}
-                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
-                  placeholder="Type DELETE"
-                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold text-center focus:border-rose-500 focus:bg-white outline-none transition-all text-slate-900"
-                />
-              </div>
-              
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => { setDeletingClassId(null); setDeleteConfirmationText(''); }}
-                  className="flex-1 py-4 bg-slate-50 text-slate-600 font-bold rounded-2xl hover:bg-slate-100 transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={() => handleDeleteClass(deletingClassId!)}
-                  disabled={isDeleting || deleteConfirmationText.trim().toUpperCase() !== 'DELETE'}
-                  className="flex-1 py-4 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-200 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete Class'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <div className="space-y-3 mb-8">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 text-center block">
+                    Type <span className="text-rose-600 font-black">DELETE</span> to confirm
+                  </label>
+                  <input 
+                    type="text" 
+                    value={deleteConfirmationText}
+                    onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                    placeholder="Type DELETE"
+                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold text-center focus:border-rose-500 focus:bg-white outline-none transition-all text-slate-900"
+                  />
+                </div>
+                
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => { setDeletingClassId(null); setDeleteConfirmationText(''); }}
+                    className="flex-1 py-4 bg-slate-50 text-slate-600 font-bold rounded-2xl hover:bg-slate-100 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteClass(deletingClassId!)}
+                    disabled={isDeleting || deleteConfirmationText.trim().toUpperCase() !== 'DELETE'}
+                    className="flex-1 py-4 bg-rose-600 text-white font-bold rounded-2xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete Class'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Off-screen report container for PDF generation */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
@@ -2177,7 +2218,7 @@ export const TeacherDashboard: React.FC<{
             <div 
               className="relative z-10 w-full h-full flex flex-col justify-between items-center text-center select-none"
               style={{
-                padding: '58px 56px 74px 56px',
+                padding: '62px 76px 74px 76px',
                 boxSizing: 'border-box'
               }}
             >
@@ -2201,14 +2242,14 @@ export const TeacherDashboard: React.FC<{
 
                 <h1 
                   style={{ 
-                    fontSize: '26px', 
+                    fontSize: '25px', 
                     fontWeight: 600, 
                     fontFamily: "'Source Serif 4', Georgia, serif", 
                     letterSpacing: '0.12em', 
                     color: '#1E293B', 
                     textTransform: 'uppercase', 
-                    marginTop: '28px', 
-                    marginBottom: '32px' 
+                    marginTop: '26px', 
+                    marginBottom: '30px' 
                   }}
                 >
                   CERTIFICATE OF COMPLETION
@@ -2225,7 +2266,7 @@ export const TeacherDashboard: React.FC<{
                     fontWeight: 600, 
                     color: '#1E293B', 
                     lineHeight: 1.2, 
-                    marginBottom: '32px',
+                    marginBottom: '30px',
                     padding: '0 24px'
                   }}
                 >
@@ -2234,11 +2275,11 @@ export const TeacherDashboard: React.FC<{
 
                 <p 
                   style={{ 
-                    fontSize: '16.5px', 
+                    fontSize: '16px', 
                     lineHeight: '1.75', 
                     fontFamily: "'Source Serif 4', Georgia, serif", 
                     color: '#1E293B', 
-                    maxWidth: '620px', 
+                    maxWidth: '560px', 
                     margin: '0 auto', 
                     textAlign: 'center', 
                     fontWeight: 400 
@@ -2250,9 +2291,9 @@ export const TeacherDashboard: React.FC<{
 
               {/* Bottom Section: Dual Signatures & About BeginFin */}
               <div className="w-full flex flex-col items-center mt-auto">
-                <div className="w-full flex items-end justify-around px-4 mb-7">
+                <div className="w-full flex items-end justify-center gap-12 sm:gap-16 px-4 mb-7">
                   {/* Left: Vishnu Kakarla */}
-                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
+                  <div className="flex flex-col items-center text-center" style={{ width: '240px' }}>
                     <div 
                       style={{ 
                         fontFamily: "'Source Serif 4', Georgia, serif", 
@@ -2268,14 +2309,14 @@ export const TeacherDashboard: React.FC<{
                     >
                       Vishnu Kakarla
                     </div>
-                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
-                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                    <div style={{ width: '220px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14px', color: '#334155' }}>
                       Founder, Vishnu Kakarla
                     </div>
                   </div>
 
                   {/* Right: Kruz Smith */}
-                  <div className="flex flex-col items-center text-center" style={{ width: '250px' }}>
+                  <div className="flex flex-col items-center text-center" style={{ width: '240px' }}>
                     <div 
                       style={{ 
                         fontFamily: "'Source Serif 4', Georgia, serif", 
@@ -2291,22 +2332,23 @@ export const TeacherDashboard: React.FC<{
                     >
                       Kruz Smith
                     </div>
-                    <div style={{ width: '230px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
-                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14.5px', color: '#334155' }}>
+                    <div style={{ width: '220px', height: '1px', backgroundColor: '#94A3B8', marginTop: '4px', marginBottom: '6px' }} />
+                    <div style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: '14px', color: '#334155' }}>
                       Co-Founder, Kruz Smith
                     </div>
                   </div>
                 </div>
 
-                {/* About BeginFin - Moved up away from the border */}
-                <div className="w-full text-left px-2">
+                {/* About BeginFin - Centered and brought inward */}
+                <div className="w-full text-center flex flex-col items-center px-4">
                   <div 
                     style={{ 
                       fontFamily: "'Source Serif 4', Georgia, serif", 
-                      fontSize: '14.5px', 
+                      fontSize: '14px', 
                       fontWeight: 700, 
                       color: '#1E293B', 
-                      marginBottom: '3px' 
+                      marginBottom: '3px',
+                      textAlign: 'center'
                     }}
                   >
                     About BeginFin
@@ -2317,8 +2359,9 @@ export const TeacherDashboard: React.FC<{
                       fontSize: '12.5px', 
                       lineHeight: '1.55', 
                       color: '#334155', 
-                      maxWidth: '640px', 
-                      margin: 0 
+                      maxWidth: '520px', 
+                      margin: '0 auto',
+                      textAlign: 'center'
                     }}
                   >
                     BeginFin is a student-built open access initiative that provides a free foundation in Personal Finance Fundamentals. For more about BeginFin, visit begin-fin.com/about.

@@ -10,7 +10,6 @@ interface ToolsViewProps {
   onBackToDashboard: () => void;
   user: User | null;
   initialTool?: 'wage' | 'credit';
-  onNavigateToAP?: () => void;
 }
 
 export const ToolsView: React.FC<ToolsViewProps> = () => {

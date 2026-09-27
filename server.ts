@@ -136,7 +136,7 @@ async function startServer() {
       "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://www.youtube.com https://s.ytimg.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com https://begin-fin.com https://i.postimg.cc https://postimg.cc https://i.ytimg.com https://*.ytimg.com https://www.youtube.com",
+      "img-src 'self' data: blob: https://www.gstatic.com https://lh3.googleusercontent.com https://accounts.google.com https://images.unsplash.com https://begin-fin.com https://i.postimg.cc https://postimg.cc https://i.ytimg.com https://*.ytimg.com https://www.youtube.com https://live.staticflickr.com https://*.staticflickr.com",
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://generativelanguage.googleapis.com https://accounts.google.com https://www.google.com https://www.recaptcha.net https://*.youtube.com https://www.youtube.com wss: ws:",
       "frame-src 'self' https://accounts.google.com https://www.google.com https://www.recaptcha.net https://docs.google.com https://*.google.com https://ai.studio https://*.run.app https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com",
       "frame-ancestors 'self' https://ai.studio https://*.ai.studio https://*.google.com https://*.googleusercontent.com https://*.run.app",
@@ -225,12 +225,13 @@ async function startServer() {
   }));
   app.use(express.json({ limit: '15mb' }));
 
-  // Route to serve 0S1A6490.jpg, vishnuandkruz.png, or founders.jpg if available
-  app.get(['/0S1A6490.jpg', '/vishnuandkruz.png', '/founders.jpg'], (req, res) => {
+  // Route to serve founder team photos (0S1A6490.jpg, vishnuandkruz.png, vishnuandkruz2.jpg, vishnuandkruz3.jpg, or founders.jpg)
+  app.get(['/0S1A6490.jpg', '/vishnuandkruz.png', '/vishnuandkruz2.jpg', '/vishnuandkruz3.jpg', '/founders.jpg'], (req, res) => {
+    const filename = path.basename(req.path);
     const candidates = [
-      path.join(process.cwd(), 'public', '0S1A6490.jpg'),
-      path.join(process.cwd(), 'dist', '0S1A6490.jpg'),
-      path.join(process.cwd(), '0S1A6490.jpg'),
+      path.join(process.cwd(), 'public', filename),
+      path.join(process.cwd(), 'dist', filename),
+      path.join(process.cwd(), filename),
       path.join(process.cwd(), 'public', 'vishnuandkruz.png'),
       path.join(process.cwd(), 'dist', 'vishnuandkruz.png')
     ];
@@ -282,7 +283,7 @@ async function startServer() {
       }
 
       // 4. Strict filename whitelisting - prevent path traversal & arbitrary file creation
-      const ALLOWED_TARGET_NAMES = new Set(['0S1A6490.jpg', 'vishnuandkruz.png', 'founders.jpg']);
+      const ALLOWED_TARGET_NAMES = new Set(['0S1A6490.jpg', 'vishnuandkruz.png', 'vishnuandkruz2.jpg', 'vishnuandkruz3.jpg', 'founders.jpg']);
       const requestedName = typeof filename === 'string' ? path.basename(filename) : '0S1A6490.jpg';
       const targetName = ALLOWED_TARGET_NAMES.has(requestedName) 
         ? requestedName 

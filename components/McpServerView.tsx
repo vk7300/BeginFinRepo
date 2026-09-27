@@ -20,7 +20,8 @@ import {
   Code2,
   Terminal,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';

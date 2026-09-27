@@ -14,32 +14,32 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
   // Precompute circle coordinates for horizontal and vertical guilloche bands
   const { topBottomCircles, leftRightCircles, topScallop, bottomScallop, leftScallop, rightScallop } = useMemo(() => {
     const tb: number[] = [];
-    for (let x = 42; x <= width - 42; x += 8) {
+    for (let x = 38; x <= width - 38; x += 8) {
       tb.push(x);
     }
 
     const lr: number[] = [];
-    for (let y = 42; y <= height - 42; y += 8) {
+    for (let y = 38; y <= height - 38; y += 8) {
       lr.push(y);
     }
 
     // Generate undulating scalloped rim paths
-    let ts = `M 42 13`;
-    let bs = `M 42 ${height - 13}`;
-    for (let x = 42; x <= width - 42; x += 12) {
+    let ts = `M 38 11`;
+    let bs = `M 38 ${height - 11}`;
+    for (let x = 38; x <= width - 38; x += 12) {
       const mid = x + 6;
-      const next = Math.min(x + 12, width - 42);
-      ts += ` Q ${mid} 11 ${next} 13`;
-      bs += ` Q ${mid} ${height - 11} ${next} ${height - 13}`;
+      const next = Math.min(x + 12, width - 38);
+      ts += ` Q ${mid} 9 ${next} 11`;
+      bs += ` Q ${mid} ${height - 9} ${next} ${height - 11}`;
     }
 
-    let ls = `M 13 42`;
-    let rs = `M ${width - 13} 42`;
-    for (let y = 42; y <= height - 42; y += 12) {
+    let ls = `M 11 38`;
+    let rs = `M ${width - 11} 38`;
+    for (let y = 38; y <= height - 38; y += 12) {
       const mid = y + 6;
-      const next = Math.min(y + 12, height - 42);
-      ls += ` Q 11 ${mid} 13 ${next}`;
-      rs += ` Q ${width - 11} ${mid} ${width - 13} ${next}`;
+      const next = Math.min(y + 12, height - 38);
+      ls += ` Q 9 ${mid} 11 ${next}`;
+      rs += ` Q ${width - 9} ${mid} ${width - 11} ${next}`;
     }
 
     return { 
@@ -56,10 +56,10 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
   const rosetteAngles = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165];
 
   const corners = [
-    { cx: 26, cy: 26 },
-    { cx: width - 26, cy: 26 },
-    { cx: 26, cy: height - 26 },
-    { cx: width - 26, cy: height - 26 },
+    { cx: 22, cy: 22 },
+    { cx: width - 22, cy: 22 },
+    { cx: 22, cy: height - 22 },
+    { cx: width - 22, cy: height - 22 },
   ];
 
   return (
@@ -74,10 +74,10 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
     >
       {/* Outer Fine Hairline Border */}
       <rect
-        x="7"
-        y="7"
-        width={width - 14}
-        height={height - 14}
+        x="4"
+        y="4"
+        width={width - 8}
+        height={height - 8}
         stroke={color}
         strokeWidth="0.5"
         strokeOpacity="0.25"
@@ -85,10 +85,10 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
 
       {/* Main Outer Border Line */}
       <rect
-        x="10"
-        y="10"
-        width={width - 20}
-        height={height - 20}
+        x="7"
+        y="7"
+        width={width - 14}
+        height={height - 14}
         stroke={color}
         strokeWidth="1.2"
         strokeOpacity="0.6"
@@ -96,10 +96,10 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
 
       {/* Main Inner Border Line */}
       <rect
-        x="42"
-        y="42"
-        width={width - 84}
-        height={height - 84}
+        x="37"
+        y="37"
+        width={width - 74}
+        height={height - 74}
         stroke={color}
         strokeWidth="1.2"
         strokeOpacity="0.6"
@@ -107,10 +107,10 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
 
       {/* Inset Hairline Accent */}
       <rect
-        x="46"
-        y="46"
-        width={width - 92}
-        height={height - 92}
+        x="41"
+        y="41"
+        width={width - 82}
+        height={height - 82}
         stroke={color}
         strokeWidth="0.5"
         strokeOpacity="0.38"
@@ -120,8 +120,8 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
       <g stroke={color} fill="none">
         {topBottomCircles.map((x) => (
           <React.Fragment key={`tb-top-${x}`}>
-            <circle cx={x} cy={26} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
-            <circle cx={x} cy={26} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
+            <circle cx={x} cy={22} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
+            <circle cx={x} cy={22} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
           </React.Fragment>
         ))}
       </g>
@@ -130,8 +130,8 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
       <g stroke={color} fill="none">
         {topBottomCircles.map((x) => (
           <React.Fragment key={`tb-bot-${x}`}>
-            <circle cx={x} cy={height - 26} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
-            <circle cx={x} cy={height - 26} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
+            <circle cx={x} cy={height - 22} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
+            <circle cx={x} cy={height - 22} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
           </React.Fragment>
         ))}
       </g>
@@ -140,8 +140,8 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
       <g stroke={color} fill="none">
         {leftRightCircles.map((y) => (
           <React.Fragment key={`lr-left-${y}`}>
-            <circle cx={26} cy={y} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
-            <circle cx={26} cy={y} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
+            <circle cx={22} cy={y} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
+            <circle cx={22} cy={y} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
           </React.Fragment>
         ))}
       </g>
@@ -150,8 +150,8 @@ export const GuillocheBorder: React.FC<GuillocheBorderProps> = ({
       <g stroke={color} fill="none">
         {leftRightCircles.map((y) => (
           <React.Fragment key={`lr-right-${y}`}>
-            <circle cx={width - 26} cy={y} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
-            <circle cx={width - 26} cy={y} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
+            <circle cx={width - 22} cy={y} r={13} strokeWidth="0.5" strokeOpacity="0.45" />
+            <circle cx={width - 22} cy={y} r={8.5} strokeWidth="0.4" strokeOpacity="0.28" />
           </React.Fragment>
         ))}
       </g>

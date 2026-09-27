@@ -105,79 +105,27 @@ export function renderGoogleButton(
 }
 
 /**
- * Programmatically trigger Google Sign-In using GIS Token Client or GSI Prompt or fallback
+ * Programmatically trigger Google Sign-In using Firebase Auth popup
  */
 export async function triggerGoogleSignIn(): Promise<User> {
-  // 1. Try Google Identity Services OAuth2 Token Client (direct JS callback, no stuck popup!)
-  if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
-    try {
-      const user = await new Promise<User>((resolve, reject) => {
-        let isResolved = false;
-        
-        try {
-          const client = window.google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: 'openid email profile',
-            callback: async (tokenResponse: any) => {
-              if (isResolved) return;
-              if (tokenResponse.error) {
-                isResolved = true;
-                if (tokenResponse.error === 'popup_closed_by_user' || tokenResponse.error === 'access_denied') {
-                  const err: any = new Error('Sign-in cancelled.');
-                  err.code = 'auth/popup-closed-by-user';
-                  reject(err);
-                  return;
-                }
-                reject(new Error(tokenResponse.error_description || tokenResponse.error));
-                return;
-              }
-
-              if (tokenResponse.access_token) {
-                isResolved = true;
-                try {
-                  const credential = GoogleAuthProvider.credential(null, tokenResponse.access_token);
-                  const userCredential = await signInWithCredential(auth, credential);
-                  const u = userCredential.user;
-                  globalAuthSuccessCallbacks.forEach(cb => {
-                    try { cb(u); } catch {}
-                  });
-                  resolve(u);
-                } catch (authErr) {
-                  reject(authErr);
-                }
-              }
-            },
-            error_callback: (nonOAuthErr: any) => {
-              if (isResolved) return;
-              isResolved = true;
-              reject(new Error(nonOAuthErr?.message || 'Google Sign-In prompt was closed.'));
-            }
-          });
-
-          client.requestAccessToken({ prompt: 'select_account' });
-        } catch (initErr) {
-          reject(initErr);
-        }
-      });
-
-      return user;
-    } catch (gsiErr: any) {
-      if (gsiErr.code === 'auth/popup-closed-by-user') {
-        throw gsiErr;
-      }
-      console.warn("Google OAuth2 Token Client note:", gsiErr?.message || gsiErr);
-    }
-  }
-
-  // 2. Fallback to Firebase standard popup
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
     globalAuthSuccessCallbacks.forEach(cb => {
-      try { cb(result.user); } catch {}
+      try {
+        cb(user);
+      } catch (e) {
+        console.warn("Auth callback error:", e);
+      }
     });
-    return result.user;
-  } catch (popupErr: any) {
-    console.error("Firebase signInWithPopup error:", popupErr);
-    throw popupErr;
+    return user;
+  } catch (error: any) {
+    if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+      const err: any = new Error('Sign-in cancelled.');
+      err.code = 'auth/popup-closed-by-user';
+      throw err;
+    }
+    console.error("Firebase Google signInWithPopup error:", error);
+    throw error;
   }
 }

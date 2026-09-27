@@ -115,7 +115,7 @@ const DEFAULT_STATUS_DATA: SystemStatusData = {
       name: 'Modules & Simulation Engines',
       category: 'Curriculum & Engines',
       status: 'Operational',
-      description: 'Interactive budgeting modules, Wage Simulator, AP topics, and client progress persistence.'
+      description: 'Interactive budgeting modules, Wage Simulator, and client progress persistence.'
     },
     teacherFeatures: {
       id: 'teacherFeatures',
@@ -866,61 +866,175 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
 
             {/* Individual Core Services Grid */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Individual Service Components
-              </h4>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Individual Service Components
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Customize title, category tag, and public description for each section or add new categories.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newId = `service_${Date.now()}`;
+                    setEditStatusData({
+                      ...editStatusData,
+                      services: {
+                        ...editStatusData.services,
+                        [newId]: {
+                          id: newId,
+                          name: 'New Service Section',
+                          category: 'Platform System',
+                          status: 'Operational',
+                          description: 'Description of this section and service availability.'
+                        }
+                      }
+                    });
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#7F7FFA]/10 hover:bg-[#7F7FFA]/20 text-[#7F7FFA] font-bold text-xs transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Section</span>
+                </button>
+              </div>
 
-              <div className="space-y-3">
-                {Object.entries(editStatusData.services).map(([key, service]) => (
-                  <div key={key} className="p-4 rounded-2xl border border-slate-200/80 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
+              <div className="space-y-4">
+                {Object.entries(editStatusData.services).map(([key, service]) => {
+                  const isCustom = !['googleSso', 'emailPhoneAuth', 'modules', 'teacherFeatures', 'certificateDownload'].includes(key);
+                  return (
+                  <div key={key} className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 bg-white space-y-3 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                       <div className="flex items-center gap-2">
-                        <h5 className="text-sm font-bold text-slate-900">{service.name}</h5>
-                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold">
-                          {service.category}
+                        <span className="px-2.5 py-1 rounded-lg bg-[#7F7FFA]/10 text-[#7F7FFA] text-[11px] font-bold uppercase tracking-wider">
+                          {key}
                         </span>
+                        <span className="text-xs text-slate-500 font-medium">Service Component</span>
+                        {isCustom && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newServices = { ...editStatusData.services };
+                              delete newServices[key];
+                              setEditStatusData({
+                                ...editStatusData,
+                                services: newServices
+                              });
+                            }}
+                            className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors ml-1 cursor-pointer"
+                            title="Delete this section"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-1 max-w-xl leading-relaxed">
-                        {service.description}
-                      </p>
+
+                      {/* Status Selector Buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {(['Operational', 'Issues Observed', 'Not Operational'] as ServiceStatus[]).map((st) => (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => {
+                              setEditStatusData({
+                                ...editStatusData,
+                                services: {
+                                  ...editStatusData.services,
+                                  [key]: { ...service, status: st }
+                                }
+                              });
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              service.status === st
+                                ? st === 'Operational'
+                                  ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-400'
+                                  : st === 'Issues Observed'
+                                  ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-400'
+                                  : 'bg-rose-100 text-rose-800 ring-1 ring-rose-400'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            {st === 'Operational' ? 'Active' : st === 'Issues Observed' ? 'Degraded' : 'Down'}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {(['Operational', 'Issues Observed', 'Not Operational'] as ServiceStatus[]).map((st) => (
-                        <button
-                          key={st}
-                          type="button"
-                          onClick={() => {
+                    {/* Editable Title and Category Sub-Tag */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Section / Service Title
+                        </label>
+                        <input
+                          type="text"
+                          value={service.name}
+                          onChange={(e) => {
                             setEditStatusData({
                               ...editStatusData,
                               services: {
                                 ...editStatusData.services,
-                                [key]: { ...service, status: st }
+                                [key]: { ...service, name: e.target.value }
                               }
                             });
                           }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            service.status === st
-                              ? st === 'Operational'
-                                ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-400'
-                                : st === 'Issues Observed'
-                                ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-400'
-                                : 'bg-rose-100 text-rose-800 ring-1 ring-rose-400'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                          }`}
-                        >
-                          {st === 'Operational' ? 'Active' : st === 'Issues Observed' ? 'Degraded' : 'Down'}
-                        </button>
-                      ))}
+                          placeholder="e.g. Google SSO"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-800 focus:bg-white focus:border-[#7F7FFA] outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Category / Sub-Tag
+                        </label>
+                        <input
+                          type="text"
+                          value={service.category}
+                          onChange={(e) => {
+                            setEditStatusData({
+                              ...editStatusData,
+                              services: {
+                                ...editStatusData.services,
+                                [key]: { ...service, category: e.target.value }
+                              }
+                            });
+                          }}
+                          placeholder="e.g. Authentication"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-800 focus:bg-white focus:border-[#7F7FFA] outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Editable Description */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={service.description}
+                        onChange={(e) => {
+                          setEditStatusData({
+                            ...editStatusData,
+                            services: {
+                              ...editStatusData.services,
+                              [key]: { ...service, description: e.target.value }
+                            }
+                          });
+                        }}
+                        placeholder="Component description shown on public status page"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-700 leading-relaxed focus:bg-white focus:border-[#7F7FFA] outline-none resize-none transition-colors"
+                      />
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             </div>
 
             {/* Custom Category / Auxiliary Service */}
             {editStatusData.customCategory && (
-              <div className="p-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 space-y-3">
+              <div className="p-4 sm:p-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-[#7F7FFA]" />
@@ -946,48 +1060,83 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
                 </div>
 
                 {editStatusData.customCategory.enabled && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <input
-                      type="text"
-                      placeholder="Service Name (e.g., Gemini AI Explanations)"
-                      value={editStatusData.customCategory.name}
-                      onChange={(e) => setEditStatusData({
-                        ...editStatusData,
-                        customCategory: {
-                          ...editStatusData.customCategory!,
-                          name: e.target.value
-                        }
-                      })}
-                      className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Category (e.g., Intelligence)"
-                      value={editStatusData.customCategory.category}
-                      onChange={(e) => setEditStatusData({
-                        ...editStatusData,
-                        customCategory: {
-                          ...editStatusData.customCategory!,
-                          category: e.target.value
-                        }
-                      })}
-                      className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs"
-                    />
-                    <select
-                      value={editStatusData.customCategory.status}
-                      onChange={(e) => setEditStatusData({
-                        ...editStatusData,
-                        customCategory: {
-                          ...editStatusData.customCategory!,
-                          status: e.target.value as ServiceStatus
-                        }
-                      })}
-                      className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold"
-                    >
-                      <option value="Operational">Operational</option>
-                      <option value="Issues Observed">Issues Observed</option>
-                      <option value="Not Operational">Not Operational</option>
-                    </select>
+                  <div className="space-y-3 pt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Service Title
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Gemini AI Explanations"
+                          value={editStatusData.customCategory.name}
+                          onChange={(e) => setEditStatusData({
+                            ...editStatusData,
+                            customCategory: {
+                              ...editStatusData.customCategory!,
+                              name: e.target.value
+                            }
+                          })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:border-[#7F7FFA] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Category Tag
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Intelligence"
+                          value={editStatusData.customCategory.category}
+                          onChange={(e) => setEditStatusData({
+                            ...editStatusData,
+                            customCategory: {
+                              ...editStatusData.customCategory!,
+                              category: e.target.value
+                            }
+                          })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:border-[#7F7FFA] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Status
+                        </label>
+                        <select
+                          value={editStatusData.customCategory.status}
+                          onChange={(e) => setEditStatusData({
+                            ...editStatusData,
+                            customCategory: {
+                              ...editStatusData.customCategory!,
+                              status: e.target.value as ServiceStatus
+                            }
+                          })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:border-[#7F7FFA] outline-none"
+                        >
+                          <option value="Operational">Operational</option>
+                          <option value="Issues Observed">Issues Observed</option>
+                          <option value="Not Operational">Not Operational</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={editStatusData.customCategory.description}
+                        onChange={(e) => setEditStatusData({
+                          ...editStatusData,
+                          customCategory: {
+                            ...editStatusData.customCategory!,
+                            description: e.target.value
+                          }
+                        })}
+                        placeholder="Custom category description shown on public status page"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-700 leading-relaxed focus:border-[#7F7FFA] outline-none resize-none"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -1039,7 +1188,6 @@ export const BeginFinAdminView: React.FC<Props> = ({ user, onBack }) => {
                       Unit {idx + 1}: {m.translations?.en?.title || m.id}
                     </option>
                   ))}
-                  <option value="ap-unit1">AP Business & Personal Finance: Unit 1</option>
                 </select>
               </div>
 

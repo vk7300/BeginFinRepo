@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db, doc, onSnapshot } from '../firebase';
 import type { ServiceStatus, SystemStatusData } from '../components/StatusView';
 
@@ -9,10 +9,56 @@ export interface SystemStatusNotice {
   type: 'info' | 'warning' | 'alert' | 'success';
 }
 
+const DISMISS_STORAGE_KEY = 'beginfin_status_notice_dismissed';
+
+let activeNoticeKey: string | null = null;
+const statusListeners = new Set<() => void>();
+
+function getDismissedKey(): string | null {
+  try {
+    return sessionStorage.getItem(DISMISS_STORAGE_KEY) || localStorage.getItem(DISMISS_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function dismissCurrentStatusNotice() {
+  const key = activeNoticeKey || 'dismissed';
+  try {
+    sessionStorage.setItem(DISMISS_STORAGE_KEY, key);
+    localStorage.setItem(DISMISS_STORAGE_KEY, key);
+  } catch {}
+  statusListeners.forEach((fn) => fn());
+}
+
 export function useSystemStatus() {
   const [overall, setOverall] = useState<ServiceStatus>('Operational');
-  const [notice, setNotice] = useState<SystemStatusNotice | null>(null);
+  const [rawNotice, setRawNotice] = useState<SystemStatusNotice | null>(null);
+  const [isDismissed, setIsDismissed] = useState<boolean>(() => {
+    const dismissedKey = getDismissedKey();
+    return Boolean(dismissedKey);
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Sync dismissal state across all components and tabs
+  useEffect(() => {
+    const handleDismissUpdate = () => {
+      setIsDismissed(true);
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === DISMISS_STORAGE_KEY) {
+        setIsDismissed(true);
+      }
+    };
+
+    statusListeners.add(handleDismissUpdate);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      statusListeners.delete(handleDismissUpdate);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,14 +89,21 @@ export function useSystemStatus() {
           setOverall(calculatedOverall);
 
           if (data.showCustomMessage && (data.customMessageTitle || data.customMessage)) {
-            setNotice({
+            const key = `${data.customMessageTitle || ''}:${data.customMessage || ''}`;
+            activeNoticeKey = key;
+            const dismissed = getDismissedKey() === key;
+            setIsDismissed(dismissed);
+
+            setRawNotice({
               show: true,
               title: data.customMessageTitle || '',
               message: data.customMessage || '',
               type: data.customMessageType || 'info'
             });
           } else {
-            setNotice(null);
+            activeNoticeKey = null;
+            setIsDismissed(false);
+            setRawNotice(null);
           }
         }
         setIsLoading(false);
@@ -79,5 +132,12 @@ export function useSystemStatus() {
     };
   }, []);
 
-  return { overall, notice, isLoading };
+  const dismissNotice = useCallback(() => {
+    dismissCurrentStatusNotice();
+    setIsDismissed(true);
+  }, []);
+
+  const notice = (!isDismissed && rawNotice) ? rawNotice : null;
+
+  return { overall, notice, rawNotice, isDismissed, dismissNotice, isLoading };
 }

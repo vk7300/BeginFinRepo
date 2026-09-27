@@ -1,4 +1,4 @@
-export {};
+export * from '../types';
 
 declare global {
   interface Window {
@@ -6,3 +6,4 @@ declare global {
     googleTranslateElementInit: () => void;
   }
 }
+

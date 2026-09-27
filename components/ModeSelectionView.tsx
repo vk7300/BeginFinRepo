@@ -55,11 +55,7 @@ export const ModeSelectionView: React.FC<ModeSelectionViewProps> = ({
             type="button"
             disabled={isLoading}
             onClick={() => onSelectMode('student')}
-            className={`group w-full bg-white border rounded-[1.75rem] p-7 sm:p-8 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#7F7FFA]/40 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentMode === 'student' 
-                ? 'border-[#7F7FFA] shadow-[0_12px_32px_rgba(127,127,250,0.16)] ring-1 ring-[#7F7FFA]' 
-                : 'border-slate-200/90 hover:border-[#7F7FFA] hover:shadow-[0_16px_36px_rgba(127,127,250,0.14)] hover:-translate-y-0.5'
-            }`}
+            className="group w-full bg-white border border-slate-200/90 hover:border-[#7F7FFA] hover:shadow-[0_16px_36px_rgba(127,127,250,0.14)] hover:-translate-y-0.5 rounded-[1.75rem] p-7 sm:p-8 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#7F7FFA]/40 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div>
               {/* Soft Iris Icon Badge */}
@@ -77,13 +73,6 @@ export const ModeSelectionView: React.FC<ModeSelectionViewProps> = ({
                 Learn at your own pace.
               </p>
             </div>
-
-            {currentMode === 'student' && (
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-[#7F7FFA] uppercase tracking-wider">
-                <span>Current Mode</span>
-                <span className="w-2 h-2 rounded-full bg-[#7F7FFA]" />
-              </div>
-            )}
           </button>
 
           {/* Teacher Mode Card */}
@@ -92,11 +81,7 @@ export const ModeSelectionView: React.FC<ModeSelectionViewProps> = ({
             type="button"
             disabled={isLoading}
             onClick={() => onSelectMode('teacher')}
-            className={`group w-full bg-white border rounded-[1.75rem] p-7 sm:p-8 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentMode === 'teacher' 
-                ? 'border-emerald-500 shadow-[0_12px_32px_rgba(16,185,129,0.16)] ring-1 ring-emerald-500' 
-                : 'border-slate-200/90 hover:border-emerald-500 hover:shadow-[0_16px_36px_rgba(16,185,129,0.14)] hover:-translate-y-0.5'
-            }`}
+            className="group w-full bg-white border border-slate-200/90 hover:border-emerald-500 hover:shadow-[0_16px_36px_rgba(16,185,129,0.14)] hover:-translate-y-0.5 rounded-[1.75rem] p-7 sm:p-8 text-left transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div>
               {/* Soft Emerald Icon Badge */}
@@ -114,13 +99,6 @@ export const ModeSelectionView: React.FC<ModeSelectionViewProps> = ({
                 Teach your way
               </p>
             </div>
-
-            {currentMode === 'teacher' && (
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
-                <span>Current Mode</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              </div>
-            )}
           </button>
 
         </div>
