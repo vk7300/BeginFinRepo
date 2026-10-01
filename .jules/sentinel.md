@@ -1,0 +1,4 @@
+## 2024-05-18 - Client State Trust Fallback Pattern
+**Vulnerability:** Authorization bypass via client-provided data fallback.
+  **Learning:** In containerized environments or setups where Admin SDK IAM permissions might occasionally fail or be misconfigured, developers may attempt to gracefully degrade by trusting client-supplied state (e.g., falling back to `req.body.completedModules` when reading from the server's database fails). This architectural pattern creates a critical security flaw because it prioritizes a "successful" response over a secure one, allowing malicious clients to inject verified state.
+**Detection:** Look for patterns where a server-side data fetch failure (like a database query) is handled by reading the same or equivalent data from the incoming request payload (`req.body`, `req.query`, etc.) before making an authorization or business logic decision.
