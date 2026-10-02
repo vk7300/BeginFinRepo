@@ -1,0 +1,4 @@
+## 2026-10-02 - Overly Permissive CORS Configuration
+**Vulnerability:** Overly permissive CORS configuration allowing any origin with credentials.
+  **Learning:** The developer intended to provide a permissive fallback for unknown external MCP (Model Context Protocol) connectors. However, by blindly allowing all origins (`callback(null, true)`) while also having `credentials: true` enabled, they effectively bypassed CORS entirely, allowing any third-party site to send credentialed requests to the API. This highlights the risk of prioritizing functionality/connectivity over strict security boundaries in CORS configurations.
+**Detection:** Look for `app.use(cors({...}))` configurations, specifically the `origin` callback function. If the `else` or default case returns `callback(null, true)` (meaning allow the origin) when the origin is not explicitly recognized, it is a vulnerability, especially when `credentials: true` is set.
